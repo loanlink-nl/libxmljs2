@@ -1,9 +1,10 @@
 {
-  "name": "libxmljs2",
-  "author": "marudor",
+  "name": "@loanlink/libxmljs2",
+  "author": "LoanLink",
   "contributors": [
     "Jeff Smick",
-    "Marco Rogers"
+    "Marco Rogers",
+    "Max Stevens"
   ],
   "packageManager": "pnpm@8.10.2+sha256.487609e857f1c11780cc98dd0bfe4c8a8b11c7f23bc3a4493ac7d263d6fb6c8c",
   "description": "libxml bindings for v8 javascript engine",
@@ -18,10 +19,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "http://github.com/marudor/libxmljs2.git"
+    "url": "http://github.com/Capital-Management-Group/libxmljs2.git"
   },
   "bugs": {
-    "url": "http://github.com/marudor/libxmljs2/issues"
+    "url": "http://github.com/Capital-Management-Group/libxmljs2/issues"
   },
   "main": "./index",
   "license": "MIT",
