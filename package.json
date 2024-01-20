@@ -19,10 +19,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "http://github.com/Capital-Management-Group/libxmljs2.git"
+    "url": "http://github.com/loanlink-nl/libxmljs2.git"
   },
   "bugs": {
-    "url": "http://github.com/Capital-Management-Group/libxmljs2/issues"
+    "url": "http://github.com/loanlink-nl/libxmljs2/issues"
   },
   "main": "./index",
   "license": "MIT",
