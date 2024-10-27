@@ -1,5 +1,5 @@
 {
-  "name": "@loanlink/libxmljs2",
+  "name": "@loanlink-nl/libxmljs2",
   "author": "LoanLink",
   "contributors": [
     "Jeff Smick",
@@ -16,6 +16,7 @@
   "description": "libxml bindings for v8 javascript engine",
   "version": "0.32.0",
   "scripts": {
+    "prepare": "npm run build",
     "build": "node-pre-gyp install --build-from-source",
     "install": "node-pre-gyp install --fallback-to-build --loglevel http",
     "test": "node --expose_gc ./node_modules/jest/bin/jest.js",
@@ -58,5 +59,8 @@
     "prettier": "^2.8.7",
     "tsd": "^0.28.1",
     "typescript": "^5.0.4"
+  },
+  "publishConfig": {
+    "@loanlink-nl:registry": "https://npm.pkg.github.com/loanlink-nl"
   }
 }
