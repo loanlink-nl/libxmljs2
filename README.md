@@ -1,6 +1,8 @@
-# NO LONGER MAINTAINED
+# @loanlink-nl/libxmljs2
 
-# Libxmljs2
+This fork adds the node xpath to the return type when doing xsd validation.
+
+---
 
 LibXML bindings for [node.js](http://nodejs.org/)
 This package was forked as the original one is fairly unmaintained.
