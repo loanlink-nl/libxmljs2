@@ -10,7 +10,7 @@ namespace libxmljs {
 class HtmlDocument : public XmlDocument {
 public:
   explicit HtmlDocument(xmlDoc *doc) : XmlDocument(doc) {}
-  static void Initialize(v8::Local<v8::Object> target);
+  static void Initialize(Napi::Env env, Napi::Object target);
 };
 
 } // namespace libxmljs

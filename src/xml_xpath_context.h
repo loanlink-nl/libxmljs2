@@ -14,7 +14,7 @@ public:
   ~XmlXpathContext();
 
   void register_ns(const xmlChar *prefix, const xmlChar *uri);
-  v8::Local<v8::Value> evaluate(const xmlChar *xpath);
+  Napi::Value evaluate(Napi::Env env, const xmlChar *xpath);
 
   xmlXPathContext *ctxt;
 };

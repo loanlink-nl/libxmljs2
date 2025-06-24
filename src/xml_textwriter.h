@@ -4,48 +4,50 @@
 
 #include "libxmljs.h"
 #include <libxml/xmlwriter.h>
-#include <node.h>
 
 namespace libxmljs {
 
-class XmlTextWriter : public Nan::ObjectWrap {
+class XmlTextWriter : public Napi::ObjectWrap<XmlTextWriter> {
 public:
   XmlTextWriter();
   virtual ~XmlTextWriter();
+  
+  // N-API constructor
+  XmlTextWriter(const Napi::CallbackInfo& info);
 
-  static void Initialize(v8::Local<v8::Object> target);
+  static void Initialize(Napi::Env env, Napi::Object target);
 
-  static NAN_METHOD(NewTextWriter);
+  static Napi::Value NewTextWriter(const Napi::CallbackInfo& info);
 
-  static NAN_METHOD(OpenMemory);
+  static Napi::Value OpenMemory(const Napi::CallbackInfo& info);
 
-  static NAN_METHOD(BufferContent);
+  static Napi::Value BufferContent(const Napi::CallbackInfo& info);
 
-  static NAN_METHOD(BufferEmpty);
+  static Napi::Value BufferEmpty(const Napi::CallbackInfo& info);
 
-  static NAN_METHOD(StartDocument);
+  static Napi::Value StartDocument(const Napi::CallbackInfo& info);
 
-  static NAN_METHOD(EndDocument);
+  static Napi::Value EndDocument(const Napi::CallbackInfo& info);
 
-  static NAN_METHOD(StartElementNS);
+  static Napi::Value StartElementNS(const Napi::CallbackInfo& info);
 
-  static NAN_METHOD(EndElement);
+  static Napi::Value EndElement(const Napi::CallbackInfo& info);
 
-  static NAN_METHOD(StartAttributeNS);
+  static Napi::Value StartAttributeNS(const Napi::CallbackInfo& info);
 
-  static NAN_METHOD(EndAttribute);
+  static Napi::Value EndAttribute(const Napi::CallbackInfo& info);
 
-  static NAN_METHOD(StartCdata);
+  static Napi::Value StartCdata(const Napi::CallbackInfo& info);
 
-  static NAN_METHOD(EndCdata);
+  static Napi::Value EndCdata(const Napi::CallbackInfo& info);
 
-  static NAN_METHOD(StartComment);
+  static Napi::Value StartComment(const Napi::CallbackInfo& info);
 
-  static NAN_METHOD(EndComment);
+  static Napi::Value EndComment(const Napi::CallbackInfo& info);
 
-  static NAN_METHOD(WriteString);
+  static Napi::Value WriteString(const Napi::CallbackInfo& info);
 
-  static NAN_METHOD(OutputMemory);
+  static Napi::Value OutputMemory(const Napi::CallbackInfo& info);
 
 private:
   xmlTextWriterPtr textWriter;

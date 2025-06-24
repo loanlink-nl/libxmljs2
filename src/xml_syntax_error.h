@@ -15,9 +15,9 @@ public:
   // helper method for xml library
   static void PushToArray(void *errs, xmlError *error);
 
-  // create a v8 object for the syntax eror
-  // TODO make it a v8 Erorr object
-  static v8::Local<v8::Value> BuildSyntaxError(xmlError *error);
+  // create a N-API object for the syntax error
+  // TODO make it a N-API Error object
+  static Napi::Value BuildSyntaxError(Napi::Env env, xmlError *error);
 };
 
 } // namespace libxmljs
