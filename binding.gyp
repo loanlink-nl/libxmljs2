@@ -1,14 +1,18 @@
 {
+    "variables" : {
+        "openssl_fips": "",
+    },
     "targets": [
         {
             "target_name": "xmljs",
             "product_extension": "node",
             "type": "shared_library",
-            "include_dirs": ["vendor/libxml/include", "<!(node -e \"require('nan')\")"],
+            "include_dirs": ["vendor/libxml/include", "<!(node -e \"console.log(require('node-addon-api').include_dir)\")"],
             "cflags": ["-Wall"],
+            "cflags_cc": ["-std=c++20"],
             "xcode_settings": {"OTHER_CFLAGS": ["-Wall"]},
             "win_delay_load_hook": "true",
-            "defines": ["LIBXML_XINCLUDE_ENABLED", "LIBXML_SCHEMATRON_ENABLED", "BUILDING_NODE_EXTENSION"],
+            "defines": ["LIBXML_XINCLUDE_ENABLED", "LIBXML_SCHEMATRON_ENABLED", "BUILDING_NODE_EXTENSION", "NAPI_DISABLE_CPP_EXCEPTIONS"],
             "sources": [
                 "src/libxmljs.cc",
                 "src/xml_attribute.cc",
@@ -70,8 +74,18 @@
                         # node-gyp 2.x doesn't add this anymore
                         # https://github.com/TooTallNate/node-gyp/pull/612
                         "xcode_settings": {
-                            "CLANG_CXX_LANGUAGE_STANDARD": "c++17",
+                            "CLANG_CXX_LANGUAGE_STANDARD": "c++20",
                             "OTHER_LDFLAGS": ["-undefined dynamic_lookup"],
+                        },
+                    },
+                ],
+                [
+                    'OS=="win"',
+                    {
+                        "msvs_settings": {
+                            "VCCLCompilerTool": {
+                                "AdditionalOptions": ["/std:c++20"],
+                            },
                         },
                     },
                 ]

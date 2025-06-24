@@ -2,32 +2,30 @@
 #ifndef SRC_LIBXMLJS_H_
 #define SRC_LIBXMLJS_H_
 
-#include "nan.h"
-#include <node.h>
-#include <v8.h>
+#include <napi.h>
 
-#define LIBXMLJS_ARGUMENT_TYPE_CHECK(arg, type, err)                           \
-  if (!arg->type()) {                                                          \
-    return Nan::ThrowTypeError(err);                                           \
+#define LIBXMLJS_ARGUMENT_TYPE_CHECK(env, arg, type, err)                      \
+  if (!arg.type()) {                                                           \
+    Napi::TypeError::New(env, err).ThrowAsJavaScriptException();               \
+    return env.Undefined();                                                    \
   }
 
-#define NAN_CONSTRUCTOR_CHECK(name)                                            \
+#define NAPI_CONSTRUCTOR_CHECK(env, info, name)                               \
   if (!info.IsConstructCall()) {                                               \
-    Nan::ThrowTypeError("Class constructor " #name                             \
-                        " cannot be invoked without 'new'");                   \
-    return;                                                                    \
+    Napi::TypeError::New(env, "Class constructor " #name                       \
+                        " cannot be invoked without 'new'").ThrowAsJavaScriptException(); \
+    return env.Undefined();                                                    \
   }
 
-#define DOCUMENT_ARG_CHECK                                                     \
-  if (info.Length() == 0 || info[0]->IsNullOrUndefined()) {                    \
-    Nan::ThrowError("document argument required");                             \
-    return;                                                                    \
+#define DOCUMENT_ARG_CHECK(env, info)                                         \
+  if (info.Length() == 0 || info[0].IsNull() || info[0].IsUndefined()) {       \
+    Napi::Error::New(env, "document argument required").ThrowAsJavaScriptException(); \
+    return env.Undefined();                                                    \
   }                                                                            \
-  Local<Object> doc = Nan::To<Object>(info[0]).ToLocalChecked();               \
-  if (!XmlDocument::constructor_template.Get(Isolate::GetCurrent())            \
-           ->HasInstance(doc)) {                                               \
-    Nan::ThrowError("document argument must be an instance of Document");      \
-    return;                                                                    \
+  Napi::Object doc = info[0].As<Napi::Object>();                               \
+  if (!doc.InstanceOf(XmlDocument::constructor.Value())) {                     \
+    Napi::Error::New(env, "document argument must be an instance of Document").ThrowAsJavaScriptException(); \
+    return env.Undefined();                                                    \
   }
 
 namespace libxmljs {
