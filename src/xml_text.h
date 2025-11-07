@@ -10,30 +10,30 @@ class XmlText : public XmlNode {
 public:
   explicit XmlText(xmlNode *node);
 
-  static void Initialize(v8::Local<v8::Object> target);
+  static void Initialize(Napi::Object target);
 
-  static Nan::Persistent<v8::FunctionTemplate> constructor_template;
+  static Napi::FunctionReference constructor;
 
   // create new xml element to wrap the node
-  static v8::Local<v8::Object> New(xmlNode *node);
+  static Napi::Object New(xmlNode *node);
 
 protected:
-  static NAN_METHOD(New);
-  static NAN_METHOD(Text);
-  static NAN_METHOD(Replace);
-  static NAN_METHOD(Path);
-  static NAN_METHOD(Name);
+  static Napi::Value New(const Napi::CallbackInfo &info);
+  static Napi::Value Text(const Napi::CallbackInfo &info);
+  static Napi::Value Replace(const Napi::CallbackInfo &info);
+  static Napi::Value Path(const Napi::CallbackInfo &info);
+  static Napi::Value Name(const Napi::CallbackInfo &info);
 
-  static NAN_METHOD(NextElement);
-  static NAN_METHOD(PrevElement);
-  static NAN_METHOD(AddPrevSibling);
-  static NAN_METHOD(AddNextSibling);
+  static Napi::Value NextElement(const Napi::CallbackInfo &info);
+  static Napi::Value PrevElement(const Napi::CallbackInfo &info);
+  static Napi::Value AddPrevSibling(const Napi::CallbackInfo &info);
+  static Napi::Value AddNextSibling(const Napi::CallbackInfo &info);
 
-  v8::Local<v8::Value> get_next_element();
-  v8::Local<v8::Value> get_prev_element();
-  v8::Local<v8::Value> get_content();
-  v8::Local<v8::Value> get_path();
-  v8::Local<v8::Value> get_name();
+  Napi::Value get_next_element();
+  Napi::Value get_prev_element();
+  Napi::Value get_content();
+  Napi::Value get_path();
+  Napi::Value get_name();
   void set_content(const char *content);
   void replace_text(const char *content);
   void replace_element(xmlNode *element);

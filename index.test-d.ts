@@ -1,1 +1,1 @@
-import * as libxml from '.'
+import * as libxml from ".";

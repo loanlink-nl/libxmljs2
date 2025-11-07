@@ -1,105 +1,105 @@
-const libxml = require('../index');
+const libxml = require("../index");
 
-describe('traversal', () => {
-  it('built', () => {
-    const doc = new libxml.Document();
-    const child = doc.node('root').node('child');
-    const sibling = doc.root().node('sibling');
-    const gchild = child.node('grandchild');
+describe("traversal", () => {
+	it("built", () => {
+		const doc = new libxml.Document();
+		const child = doc.node("root").node("child");
+		const sibling = doc.root().node("sibling");
+		const gchild = child.node("grandchild");
 
-    // access document
-    expect(gchild.doc()).toBe(doc);
-    expect(doc.root().parent()).toBe(doc);
+		// access document
+		expect(gchild.doc()).toBe(doc);
+		expect(doc.root().parent()).toBe(doc);
 
-    expect(gchild.parent()).toBe(child);
-    expect(doc.child(0).child(0)).toBe(gchild);
+		expect(gchild.parent()).toBe(child);
+		expect(doc.child(0).child(0)).toBe(gchild);
 
-    expect(doc.child(1)).toBe(sibling);
-  });
+		expect(doc.child(1)).toBe(sibling);
+	});
 
-  it('children', () => {
-    const children = [];
-    const doc = new libxml.Document();
-    const root = doc.node('root');
+	it("children", () => {
+		const children = [];
+		const doc = new libxml.Document();
+		const root = doc.node("root");
 
-    children.push(
-      root.node('child'),
-      root.node('sibling1'),
-      root.node('sibling2')
-    );
+		children.push(
+			root.node("child"),
+			root.node("sibling1"),
+			root.node("sibling2"),
+		);
 
-    expect(doc.childNodes().length).toBe(children.length);
-    for (const [i, child] of children.entries()) {
-      expect(doc.child(i)).toBe(child);
-    }
-  });
+		expect(doc.childNodes().length).toBe(children.length);
+		for (const [i, child] of children.entries()) {
+			expect(doc.child(i)).toBe(child);
+		}
+	});
 
-  it('siblings', () => {
-    const children = [];
-    const doc = new libxml.Document();
-    const root = doc.node('root');
+	it("siblings", () => {
+		const children = [];
+		const doc = new libxml.Document();
+		const root = doc.node("root");
 
-    children.push(
-      root.node('prevSibling'),
-      root.node('child'),
-      root.node('nextSibling')
-    );
-    expect(children[1].prevSibling()).toBe(children[0]);
-    expect(children[1].nextSibling()).toBe(children[2]);
-    expect(children[0].prevSibling()).toBe(null);
-    expect(children[2].nextSibling()).toBe(null);
-  });
+		children.push(
+			root.node("prevSibling"),
+			root.node("child"),
+			root.node("nextSibling"),
+		);
+		expect(children[1].prevSibling()).toBe(children[0]);
+		expect(children[1].nextSibling()).toBe(children[2]);
+		expect(children[0].prevSibling()).toBe(null);
+		expect(children[2].nextSibling()).toBe(null);
+	});
 
-  it('parsed', () => {
-    const doc = libxml.parseXml(
-      '<?xml version="1.0"?>' +
-        '<root><child><grandchild /></child><sibling/></root>'
-    );
+	it("parsed", () => {
+		const doc = libxml.parseXml(
+			'<?xml version="1.0"?>' +
+				"<root><child><grandchild /></child><sibling/></root>",
+		);
 
-    expect(doc.child(0).doc()).toBe(doc);
-    expect(doc.child(1).doc()).toBe(doc);
-    expect(doc.child(0).child(0).doc()).toBe(doc);
-    expect(doc.root().parent()).toBe(doc);
+		expect(doc.child(0).doc()).toBe(doc);
+		expect(doc.child(1).doc()).toBe(doc);
+		expect(doc.child(0).child(0).doc()).toBe(doc);
+		expect(doc.root().parent()).toBe(doc);
 
-    // down and back up
-    expect(doc.child(0).child(0).parent().name()).toBe('child');
+		// down and back up
+		expect(doc.child(0).child(0).parent().name()).toBe("child");
 
-    // propertly access inner nodes
-    expect(doc.child(0).child(0).name()).toBe('grandchild');
+		// propertly access inner nodes
+		expect(doc.child(0).child(0).name()).toBe("grandchild");
 
-    // sibling nodes
-    expect(doc.child(1).name()).toBe('sibling');
-  });
+		// sibling nodes
+		expect(doc.child(1).name()).toBe("sibling");
+	});
 
-  it('parsed_children', () => {
-    const doc = libxml.parseXml(
-      '<?xml version="1.0"?>' +
-        '<root><prevSibling /><child /><nextSibling /></root>'
-    );
-    const children = ['prevSibling', 'child', 'nextSibling'];
+	it("parsed_children", () => {
+		const doc = libxml.parseXml(
+			'<?xml version="1.0"?>' +
+				"<root><prevSibling /><child /><nextSibling /></root>",
+		);
+		const children = ["prevSibling", "child", "nextSibling"];
 
-    // childNodes
-    expect(doc.childNodes().length).toBe(3);
-    for (const [i, child_] of children.entries()) {
-      expect(doc.child(i).name()).toBe(child_);
-    }
+		// childNodes
+		expect(doc.childNodes().length).toBe(3);
+		for (const [i, child_] of children.entries()) {
+			expect(doc.child(i).name()).toBe(child_);
+		}
 
-    // check prev/next sibling
-    let child = doc.child(1);
+		// check prev/next sibling
+		let child = doc.child(1);
 
-    expect(child.name()).toBe('child');
-    expect(child.prevSibling().name()).toBe(children[0]);
-    expect(child.nextSibling().name()).toBe(children[2]);
-    expect(child.prevSibling().prevSibling()).toBe(null);
-    expect(child.nextSibling().nextSibling()).toBe(null);
+		expect(child.name()).toBe("child");
+		expect(child.prevSibling().name()).toBe(children[0]);
+		expect(child.nextSibling().name()).toBe(children[2]);
+		expect(child.prevSibling().prevSibling()).toBe(null);
+		expect(child.nextSibling().nextSibling()).toBe(null);
 
-    // prev/next Element
-    child = doc.child(1);
+		// prev/next Element
+		child = doc.child(1);
 
-    expect(child.name()).toBe('child');
-    expect(child.prevElement().name()).toBe(children[0]);
-    expect(child.nextElement().name()).toBe(children[2]);
-    expect(child.prevElement().prevElement()).toBe(null);
-    expect(child.nextElement().nextElement()).toBe(null);
-  });
+		expect(child.name()).toBe("child");
+		expect(child.prevElement().name()).toBe(children[0]);
+		expect(child.nextElement().name()).toBe(children[2]);
+		expect(child.prevElement().prevElement()).toBe(null);
+		expect(child.nextElement().nextElement()).toBe(null);
+	});
 });

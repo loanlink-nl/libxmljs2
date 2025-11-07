@@ -1,195 +1,195 @@
 /* eslint-disable unicorn/text-encoding-identifier-case */
-const fs = require('node:fs');
-const libxml = require('../index');
+const fs = require("node:fs");
+const libxml = require("../index");
 
 function make_error(object) {
-  const err = new Error(object.message);
+	const err = new Error(object.message);
 
-  err.domain = object.domain;
-  err.code = object.code;
-  err.level = object.level;
-  err.line = object.line;
-  err.column = object.column;
+	err.domain = object.domain;
+	err.code = object.code;
+	err.level = object.level;
+	err.line = object.line;
+	err.column = object.column;
 
-  return err;
+	return err;
 }
 
-describe('html parser', () => {
-  it('parse', () => {
-    const filename = `${__dirname}/fixtures/parser.html`;
+describe("html parser", () => {
+	it("parse", () => {
+		const filename = `${__dirname}/fixtures/parser.html`;
 
-    function attempt_parse(encoding) {
-      // eslint-disable-next-line no-sync
-      const str = fs.readFileSync(filename, encoding);
+		function attempt_parse(encoding) {
+			// eslint-disable-next-line no-sync
+			const str = fs.readFileSync(filename, encoding);
 
-      const doc = libxml.parseHtml(str);
+			const doc = libxml.parseHtml(str);
 
-      expect(doc.root().name()).toBe('html');
-      expect(doc.get('head/title').text()).toBe('Test HTML document');
-      expect(doc.get('body/span').text()).toBe('HTML content!');
-    }
+			expect(doc.root().name()).toBe("html");
+			expect(doc.get("head/title").text()).toBe("Test HTML document");
+			expect(doc.get("body/span").text()).toBe("HTML content!");
+		}
 
-    // Parse via a string
-    attempt_parse('utf8');
+		// Parse via a string
+		attempt_parse("utf8");
 
-    // Parse via a Buffer
-    attempt_parse(null);
-  });
+		// Parse via a Buffer
+		attempt_parse(null);
+	});
 
-  // Although libxml defaults to a utf-8 encoding, if not specifically specified
-  // it will guess the encoding based on meta http-equiv tags available
-  // This test shows that the "guessed" encoding can be overridden
-  it('parse force encoding', () => {
-    const filename = `${__dirname}/fixtures/parser.euc_jp.html`;
+	// Although libxml defaults to a utf-8 encoding, if not specifically specified
+	// it will guess the encoding based on meta http-equiv tags available
+	// This test shows that the "guessed" encoding can be overridden
+	it("parse force encoding", () => {
+		const filename = `${__dirname}/fixtures/parser.euc_jp.html`;
 
-    function attempt_parse(encoding, opts) {
-      // eslint-disable-next-line no-sync
-      const str = fs.readFileSync(filename, encoding);
+		function attempt_parse(encoding, opts) {
+			// eslint-disable-next-line no-sync
+			const str = fs.readFileSync(filename, encoding);
 
-      const doc = libxml.parseHtml(str, opts);
+			const doc = libxml.parseHtml(str, opts);
 
-      expect(doc.root().name()).toBe('html');
+			expect(doc.root().name()).toBe("html");
 
-      // make sure libxml rewrite the meta charset of this document
+			// make sure libxml rewrite the meta charset of this document
 
-      // calling toString on the document ensure that it is converted to the
-      // correct internal format and the new meta tag is replaced
-      doc.root().toString();
-      const fixedCharset = doc.find('/html/head/meta/@content')[0].value();
+			// calling toString on the document ensure that it is converted to the
+			// correct internal format and the new meta tag is replaced
+			doc.root().toString();
+			const fixedCharset = doc.find("/html/head/meta/@content")[0].value();
 
-      expect(
-        fixedCharset.indexOf(opts.encoding.toUpperCase()) !== -1
-      ).toBeTruthy();
+			expect(
+				fixedCharset.indexOf(opts.encoding.toUpperCase()) !== -1,
+			).toBeTruthy();
 
-      expect(doc.get('head/title').text()).toBe('テスト');
-      expect(doc.get('body/div').text()).toBe('テスト');
-    }
+			expect(doc.get("head/title").text()).toBe("テスト");
+			expect(doc.get("body/div").text()).toBe("テスト");
+		}
 
-    // Parse via a string
-    attempt_parse('utf8', { encoding: 'UTF-8' });
+		// Parse via a string
+		attempt_parse("utf8", { encoding: "UTF-8" });
 
-    // Parse via a Buffer
-    attempt_parse(null, { encoding: 'UTF-8' });
-  });
+		// Parse via a Buffer
+		attempt_parse(null, { encoding: "UTF-8" });
+	});
 
-  it('parse Synonym', () => {
-    expect(libxml.parseHtml).toBe(libxml.parseHtmlString);
-  });
+	it("parse Synonym", () => {
+		expect(libxml.parseHtml).toBe(libxml.parseHtmlString);
+	});
 
-  it('recoverable parse', () => {
-    const recoverableFile = `${__dirname}/fixtures/warnings/amp.html`;
-    // eslint-disable-next-line no-sync
-    const str = fs.readFileSync(recoverableFile, 'utf8');
-    const recoverableErrors = [
-      make_error({
-        domain: 5,
-        code: 23,
-        message: "htmlParseEntityRef: expecting ';'\n",
-        level: 2,
-        line: 12,
-        column: 27,
-      }),
-      make_error({
-        domain: 5,
-        code: 68,
-        message: 'htmlParseEntityRef: no name\n',
-        level: 2,
-        line: 12,
-        column: 38,
-      }),
-      make_error({
-        domain: 5,
-        code: 23,
-        message: "htmlParseEntityRef: expecting ';'\n",
-        level: 2,
-        line: 14,
-        column: 4,
-      }),
-      make_error({
-        domain: 5,
-        code: 68,
-        message: 'htmlParseEntityRef: no name\n',
-        level: 2,
-        line: 15,
-        column: 4,
-      }),
-    ];
+	it("recoverable parse", () => {
+		const recoverableFile = `${__dirname}/fixtures/warnings/amp.html`;
+		// eslint-disable-next-line no-sync
+		const str = fs.readFileSync(recoverableFile, "utf8");
+		const recoverableErrors = [
+			make_error({
+				domain: 5,
+				code: 23,
+				message: "htmlParseEntityRef: expecting ';'\n",
+				level: 2,
+				line: 12,
+				column: 27,
+			}),
+			make_error({
+				domain: 5,
+				code: 68,
+				message: "htmlParseEntityRef: no name\n",
+				level: 2,
+				line: 12,
+				column: 38,
+			}),
+			make_error({
+				domain: 5,
+				code: 23,
+				message: "htmlParseEntityRef: expecting ';'\n",
+				level: 2,
+				line: 14,
+				column: 4,
+			}),
+			make_error({
+				domain: 5,
+				code: 68,
+				message: "htmlParseEntityRef: no name\n",
+				level: 2,
+				line: 15,
+				column: 4,
+			}),
+		];
 
-    const doc = libxml.parseHtml(str);
+		const doc = libxml.parseHtml(str);
 
-    expect(doc.errors.length).toBe(4);
-    for (const [i, recoverableError] of recoverableErrors.entries()) {
-      expect(doc.errors[i].domain).toBe(recoverableError.domain);
-      expect(doc.errors[i].code).toBe(recoverableError.code);
-      expect(doc.errors[i].message).toBe(recoverableError.message);
-      expect(doc.errors[i].level).toBe(recoverableError.level);
-      expect(doc.errors[i].line).toBe(recoverableError.line);
-    }
-  });
+		expect(doc.errors.length).toBe(4);
+		for (const [i, recoverableError] of recoverableErrors.entries()) {
+			expect(doc.errors[i].domain).toBe(recoverableError.domain);
+			expect(doc.errors[i].code).toBe(recoverableError.code);
+			expect(doc.errors[i].message).toBe(recoverableError.message);
+			expect(doc.errors[i].level).toBe(recoverableError.level);
+			expect(doc.errors[i].line).toBe(recoverableError.line);
+		}
+	});
 
-  it('parseOptions', () => {
-    let doc = libxml
-      .parseHtml('<a/>', { doctype: false, implied: false })
-      .toString();
+	it("parseOptions", () => {
+		let doc = libxml
+			.parseHtml("<a/>", { doctype: false, implied: false })
+			.toString();
 
-    expect(doc.indexOf('DOCTYPE') === -1).toBeTruthy();
-    expect(doc.indexOf('body') === -1).toBeTruthy();
-    expect(doc.indexOf('<html>') === -1).toBeTruthy();
+		expect(doc.indexOf("DOCTYPE") === -1).toBeTruthy();
+		expect(doc.indexOf("body") === -1).toBeTruthy();
+		expect(doc.indexOf("<html>") === -1).toBeTruthy();
 
-    doc = libxml
-      .parseHtml('<a/>', { doctype: false, implied: true })
-      .toString();
-    expect(doc.indexOf('DOCTYPE') === -1).toBeTruthy();
-    expect(doc.indexOf('body') > -1).toBeTruthy();
-    expect(doc.indexOf('<html>') > -1).toBeTruthy();
+		doc = libxml
+			.parseHtml("<a/>", { doctype: false, implied: true })
+			.toString();
+		expect(doc.indexOf("DOCTYPE") === -1).toBeTruthy();
+		expect(doc.indexOf("body") > -1).toBeTruthy();
+		expect(doc.indexOf("<html>") > -1).toBeTruthy();
 
-    doc = libxml.parseHtml('<a/>', { implied: false }).toString();
-    expect(doc.indexOf('DOCTYPE') > -1).toBeTruthy();
-    expect(doc.indexOf('body') === -1).toBeTruthy();
-    expect(doc.indexOf('<html>') === -1).toBeTruthy();
-  });
+		doc = libxml.parseHtml("<a/>", { implied: false }).toString();
+		expect(doc.indexOf("DOCTYPE") > -1).toBeTruthy();
+		expect(doc.indexOf("body") === -1).toBeTruthy();
+		expect(doc.indexOf("<html>") === -1).toBeTruthy();
+	});
 
-  it('toString', () => {
-    let doc = new libxml.Document();
+	it("toString", () => {
+		let doc = new libxml.Document();
 
-    expect(doc.toString({ declaration: false }) === null).toBeTruthy();
-    expect(
-      doc.toString({ declaration: false, type: 'html' }).length === 1
-    ).toBeTruthy();
+		expect(doc.toString({ declaration: false }) === null).toBeTruthy();
+		expect(
+			doc.toString({ declaration: false, type: "html" }).length === 1,
+		).toBeTruthy();
 
-    doc = libxml.parseHtml('<a></a>');
-    expect(doc.toString().indexOf('<?xml') === -1).toBeTruthy();
-    expect(doc.toString({ type: 'xml' }).indexOf('<?xml') > -1).toBeTruthy();
-    expect(doc.toString({ type: 'xhtml' }).indexOf('<?xml') > -1).toBeTruthy();
-    expect(
-      doc.toString({ type: 'xml', selfCloseEmpty: true }).indexOf('<a/>') > -1
-    ).toBeTruthy();
-  });
+		doc = libxml.parseHtml("<a></a>");
+		expect(doc.toString().indexOf("<?xml") === -1).toBeTruthy();
+		expect(doc.toString({ type: "xml" }).indexOf("<?xml") > -1).toBeTruthy();
+		expect(doc.toString({ type: "xhtml" }).indexOf("<?xml") > -1).toBeTruthy();
+		expect(
+			doc.toString({ type: "xml", selfCloseEmpty: true }).indexOf("<a/>") > -1,
+		).toBeTruthy();
+	});
 
-  it('toString with encoding', () => {
-    let doc = libxml.parseHtml('<a>Something&nbsp;with a space</a>');
-    expect(doc.toString({ type: 'xhtml' })).toEqual(
-      expect.not.stringContaining('&nbsp;')
-    );
-    expect(doc.toString({ type: 'xhtml', encoding: 'UTF-8' })).toEqual(
-      doc.toString({ type: 'xhtml' })
-    );
-    expect(doc.toString({ type: 'xhtml', encoding: 'HTML' })).toEqual(
-      expect.stringContaining('&nbsp;')
-    );
-    expect(doc.toString({ type: 'xhtml', encoding: 'ascii' })).toEqual(
-      expect.stringContaining('&#160;')
-    );
+	it("toString with encoding", () => {
+		let doc = libxml.parseHtml("<a>Something&nbsp;with a space</a>");
+		expect(doc.toString({ type: "xhtml" })).toEqual(
+			expect.not.stringContaining("&nbsp;"),
+		);
+		expect(doc.toString({ type: "xhtml", encoding: "UTF-8" })).toEqual(
+			doc.toString({ type: "xhtml" }),
+		);
+		expect(doc.toString({ type: "xhtml", encoding: "HTML" })).toEqual(
+			expect.stringContaining("&nbsp;"),
+		);
+		expect(doc.toString({ type: "xhtml", encoding: "ascii" })).toEqual(
+			expect.stringContaining("&#160;"),
+		);
 
-    doc = libxml.parseHtml('<a>Something with an emoji 😀</a>');
-    expect(doc.toString({ type: 'xhtml', encoding: 'utf8' })).toEqual(
-      expect.stringContaining('😀')
-    );
-    expect(doc.toString({ type: 'xhtml', encoding: 'HTML' })).toEqual(
-      expect.stringContaining('&#128512')
-    );
-    expect(doc.toString({ type: 'xhtml', encoding: 'ascii' })).toEqual(
-      expect.stringContaining('&#128512')
-    );
-  });
+		doc = libxml.parseHtml("<a>Something with an emoji 😀</a>");
+		expect(doc.toString({ type: "xhtml", encoding: "utf8" })).toEqual(
+			expect.stringContaining("😀"),
+		);
+		expect(doc.toString({ type: "xhtml", encoding: "HTML" })).toEqual(
+			expect.stringContaining("&#128512"),
+		);
+		expect(doc.toString({ type: "xhtml", encoding: "ascii" })).toEqual(
+			expect.stringContaining("&#128512"),
+		);
+	});
 });

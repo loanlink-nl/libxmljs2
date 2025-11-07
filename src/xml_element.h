@@ -11,46 +11,46 @@ class XmlElement : public XmlNode {
 public:
   explicit XmlElement(xmlNode *node);
 
-  static void Initialize(v8::Local<v8::Object> target);
+  static void Initialize(Napi::Env env, Napi::Object target);
 
-  static Nan::Persistent<v8::FunctionTemplate> constructor_template;
+  static Napi::FunctionReference constructor;
 
   // create new xml element to wrap the node
-  static v8::Local<v8::Object> New(xmlNode *node);
+  static Napi::Object New(Napi::Env env, xmlNode *node);
 
 protected:
-  static NAN_METHOD(New);
-  static NAN_METHOD(Name);
-  static NAN_METHOD(Attr);
-  static NAN_METHOD(Attrs);
-  static NAN_METHOD(Find);
-  static NAN_METHOD(Text);
-  static NAN_METHOD(Path);
-  static NAN_METHOD(Child);
-  static NAN_METHOD(ChildNodes);
-  static NAN_METHOD(AddChild);
-  static NAN_METHOD(AddCData);
-  static NAN_METHOD(NextElement);
-  static NAN_METHOD(PrevElement);
-  static NAN_METHOD(AddPrevSibling);
-  static NAN_METHOD(AddNextSibling);
-  static NAN_METHOD(Replace);
+  static Napi::Value New(const Napi::CallbackInfo &info);
+  static Napi::Value Name(const Napi::CallbackInfo &info);
+  static Napi::Value Attr(const Napi::CallbackInfo &info);
+  static Napi::Value Attrs(const Napi::CallbackInfo &info);
+  static Napi::Value Find(const Napi::CallbackInfo &info);
+  static Napi::Value Text(const Napi::CallbackInfo &info);
+  static Napi::Value Path(const Napi::CallbackInfo &info);
+  static Napi::Value Child(const Napi::CallbackInfo &info);
+  static Napi::Value ChildNodes(const Napi::CallbackInfo &info);
+  static Napi::Value AddChild(const Napi::CallbackInfo &info);
+  static Napi::Value AddCData(const Napi::CallbackInfo &info);
+  static Napi::Value NextElement(const Napi::CallbackInfo &info);
+  static Napi::Value PrevElement(const Napi::CallbackInfo &info);
+  static Napi::Value AddPrevSibling(const Napi::CallbackInfo &info);
+  static Napi::Value AddNextSibling(const Napi::CallbackInfo &info);
+  static Napi::Value Replace(const Napi::CallbackInfo &info);
 
   void set_name(const char *name);
 
-  v8::Local<v8::Value> get_name();
-  v8::Local<v8::Value> get_child(int32_t idx);
-  v8::Local<v8::Value> get_child_nodes();
-  v8::Local<v8::Value> get_path();
-  v8::Local<v8::Value> get_attr(const char *name);
-  v8::Local<v8::Value> get_attrs();
+  Napi::Value get_name();
+  Napi::Value get_child(int32_t idx);
+  Napi::Value get_child_nodes();
+  Napi::Value get_path();
+  Napi::Value get_attr(const char *name);
+  Napi::Value get_attrs();
   void set_attr(const char *name, const char *value);
   void add_cdata(xmlNode *cdata);
   void unlink_children();
   void set_content(const char *content);
-  v8::Local<v8::Value> get_content();
-  v8::Local<v8::Value> get_next_element();
-  v8::Local<v8::Value> get_prev_element();
+  Napi::Value get_content();
+  Napi::Value get_next_element();
+  Napi::Value get_prev_element();
   void replace_element(xmlNode *element);
   void replace_text(const char *content);
   bool child_will_merge(xmlNode *child);

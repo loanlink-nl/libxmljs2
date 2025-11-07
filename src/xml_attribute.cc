@@ -1,114 +1,108 @@
 // Copyright 2009, Squish Tech, LLC.
 #include "xml_attribute.h"
+#include <cassert>
 
-using namespace v8;
+using namespace Napi;
 namespace libxmljs {
 
-Nan::Persistent<FunctionTemplate> XmlAttribute::constructor_template;
+Napi::FunctionReference XmlAttribute::constructor;
 
-NAN_METHOD(XmlAttribute::New) {
-  Nan::HandleScope scope;
+Napi::Value XmlAttribute::New(const Napi::CallbackInfo &info) {
+  Napi::Env env = info.Env();
+  Napi::HandleScope scope(env);
 
-  return info.GetReturnValue().Set(info.This());
+  // This constructor is called from JavaScript, which we don't support
+  // Attributes are created internally through New(env, xmlAttr*)
+  return info.This();
 }
 
-Local<Object> XmlAttribute::New(xmlNode *xml_obj, const xmlChar *name,
-                                const xmlChar *value) {
-  Nan::EscapableHandleScope scope;
+Napi::Object XmlAttribute::New(Napi::Env env, xmlNode *xml_obj, const xmlChar *name,
+                               const xmlChar *value) {
+  Napi::EscapableHandleScope scope(env);
   xmlAttr *attr = xmlSetProp(xml_obj, name, value);
   assert(attr);
 
-  if (attr->_private) {
-    return scope.Escape(static_cast<XmlNode *>(xml_obj->_private)->handle());
-  }
-
+  // For now, always create a new wrapper even if one exists
+  // TODO: Store JS object reference to return existing wrapper
   XmlAttribute *attribute = new XmlAttribute(attr);
-  Local<Object> obj =
-      Nan::NewInstance(
-          Nan::GetFunction(Nan::New(constructor_template)).ToLocalChecked())
-          .ToLocalChecked();
-  attribute->Wrap(obj);
-  return scope.Escape(obj);
+  Napi::Object obj = constructor.New({});
+  return scope.Escape(obj).ToObject();
 }
 
-Local<Object> XmlAttribute::New(xmlAttr *attr) {
-  Nan::EscapableHandleScope scope;
+Napi::Object XmlAttribute::New(Napi::Env env, xmlAttr *attr) {
+  Napi::EscapableHandleScope scope(env);
   assert(attr->type == XML_ATTRIBUTE_NODE);
 
-  if (attr->_private) {
-    return scope.Escape(static_cast<XmlNode *>(attr->_private)->handle());
-  }
-
+  // For now, always create a new wrapper even if one exists
+  // TODO: Store JS object reference to return existing wrapper
   XmlAttribute *attribute = new XmlAttribute(attr);
-  Local<Object> obj =
-      Nan::NewInstance(
-          Nan::GetFunction(Nan::New(constructor_template)).ToLocalChecked())
-          .ToLocalChecked();
-  attribute->Wrap(obj);
-  return scope.Escape(obj);
+  Napi::Object obj = constructor.New({});
+  return scope.Escape(obj).ToObject();
 }
 
-NAN_METHOD(XmlAttribute::Name) {
-  Nan::HandleScope scope;
-  XmlAttribute *attr = Nan::ObjectWrap::Unwrap<XmlAttribute>(info.This());
+Napi::Value XmlAttribute::Name(const Napi::CallbackInfo &info) {
+  Napi::Env env = info.Env();
+  Napi::HandleScope scope(env);
+  XmlAttribute *attr = static_cast<XmlAttribute *>(Napi::ObjectWrap<XmlNode>::Unwrap(info.This().As<Napi::Object>()));
   assert(attr);
 
-  return info.GetReturnValue().Set(attr->get_name());
+  return attr->get_name(env);
 }
 
-NAN_METHOD(XmlAttribute::Value) {
-  Nan::HandleScope scope;
-  XmlAttribute *attr = Nan::ObjectWrap::Unwrap<XmlAttribute>(info.This());
+Napi::Value XmlAttribute::Value(const Napi::CallbackInfo &info) {
+  Napi::Env env = info.Env();
+  Napi::HandleScope scope(env);
+  XmlAttribute *attr = static_cast<XmlAttribute *>(Napi::ObjectWrap<XmlNode>::Unwrap(info.This().As<Napi::Object>()));
   assert(attr);
 
   // attr.value('new value');
   if (info.Length() > 0) {
-    attr->set_value(*Nan::Utf8String(info[0]));
-    return info.GetReturnValue().Set(info.This());
+    attr->set_value(info[0].As<Napi::String>().Utf8Value().c_str());
+    return info.This();
   }
 
   // attr.value();
-  return info.GetReturnValue().Set(attr->get_value());
+  return attr->get_value(env);
 }
 
-NAN_METHOD(XmlAttribute::Node) {
-  Nan::HandleScope scope;
-  XmlAttribute *attr = Nan::ObjectWrap::Unwrap<XmlAttribute>(info.This());
+Napi::Value XmlAttribute::Node(const Napi::CallbackInfo &info) {
+  Napi::Env env = info.Env();
+  Napi::HandleScope scope(env);
+  XmlAttribute *attr = static_cast<XmlAttribute *>(Napi::ObjectWrap<XmlNode>::Unwrap(info.This().As<Napi::Object>()));
   assert(attr);
 
-  return info.GetReturnValue().Set(attr->get_element());
+  return attr->get_element(env);
 }
 
-NAN_METHOD(XmlAttribute::Namespace) {
-  Nan::HandleScope scope;
-  XmlAttribute *attr = Nan::ObjectWrap::Unwrap<XmlAttribute>(info.This());
+Napi::Value XmlAttribute::Namespace(const Napi::CallbackInfo &info) {
+  Napi::Env env = info.Env();
+  Napi::HandleScope scope(env);
+  XmlAttribute *attr = static_cast<XmlAttribute *>(Napi::ObjectWrap<XmlNode>::Unwrap(info.This().As<Napi::Object>()));
   assert(attr);
 
-  return info.GetReturnValue().Set(attr->get_namespace());
+  return attr->get_namespace(env);
 }
 
-Local<Value> XmlAttribute::get_name() {
-  Nan::EscapableHandleScope scope;
+Napi::Value XmlAttribute::get_name(Napi::Env env) {
+  Napi::EscapableHandleScope scope(env);
   if (xml_obj->name)
-    return scope.Escape(
-        Nan::New<String>((const char *)xml_obj->name, xmlStrlen(xml_obj->name))
-            .ToLocalChecked());
+    return scope.Escape(Napi::String::New(env, (const char *)xml_obj->name,
+                                          xmlStrlen(xml_obj->name)));
 
-  return scope.Escape(Nan::Null());
+  return scope.Escape(env.Null());
 }
 
-Local<Value> XmlAttribute::get_value() {
-  Nan::EscapableHandleScope scope;
+Napi::Value XmlAttribute::get_value(Napi::Env env) {
+  Napi::EscapableHandleScope scope(env);
   xmlChar *value = xmlNodeGetContent(xml_obj);
   if (value != NULL) {
-    Local<String> ret_value =
-        Nan::New<String>((const char *)value, xmlStrlen(value))
-            .ToLocalChecked();
+    Napi::String ret_value =
+        Napi::String::New(env, (const char *)value, xmlStrlen(value));
     xmlFree(value);
     return scope.Escape(ret_value);
   }
 
-  return scope.Escape(Nan::Null());
+  return scope.Escape(env.Null());
 }
 
 void XmlAttribute::set_value(const char *value) {
@@ -141,33 +135,34 @@ void XmlAttribute::set_value(const char *value) {
   }
 }
 
-Local<Value> XmlAttribute::get_element() {
-  Nan::EscapableHandleScope scope;
-  return scope.Escape(XmlElement::New(xml_obj->parent));
+Napi::Value XmlAttribute::get_element(Napi::Env env) {
+  Napi::EscapableHandleScope scope(env);
+  return scope.Escape(XmlElement::New(env, xml_obj->parent));
 }
 
-Local<Value> XmlAttribute::get_namespace() {
-  Nan::EscapableHandleScope scope;
+Napi::Value XmlAttribute::get_namespace(Napi::Env env) {
+  Napi::EscapableHandleScope scope(env);
   if (!xml_obj->ns) {
-    return scope.Escape(Nan::Null());
+    return scope.Escape(env.Null());
   }
-  return scope.Escape(XmlNamespace::New(xml_obj->ns));
+  return scope.Escape(XmlNamespace::New(env, xml_obj->ns));
 }
 
-void XmlAttribute::Initialize(Local<Object> target) {
-  Nan::HandleScope scope;
-  Local<FunctionTemplate> tmpl = Nan::New<FunctionTemplate>(XmlAttribute::New);
-  constructor_template.Reset(tmpl);
-  tmpl->Inherit(Nan::New(XmlNode::constructor_template));
-  tmpl->InstanceTemplate()->SetInternalFieldCount(1);
-
-  Nan::SetPrototypeMethod(tmpl, "name", XmlAttribute::Name);
-  Nan::SetPrototypeMethod(tmpl, "value", XmlAttribute::Value);
-  Nan::SetPrototypeMethod(tmpl, "node", XmlAttribute::Node);
-  Nan::SetPrototypeMethod(tmpl, "namespace", XmlAttribute::Namespace);
-
-  Nan::Set(target, Nan::New<String>("Attribute").ToLocalChecked(),
-           Nan::GetFunction(tmpl).ToLocalChecked());
+void XmlAttribute::Initialize(Napi::Env env, Napi::Object target) {
+  Napi::HandleScope scope(env);
+  
+  Napi::Function func = Napi::Function::New<XmlAttribute::New>(env, "Attribute");
+  constructor = Napi::Persistent(func);
+  constructor.SuppressDestruct();
+  
+  // Set up prototype methods
+  Napi::Object proto = func.Get("prototype").As<Napi::Object>();
+  proto.Set("name", Napi::Function::New<XmlAttribute::Name>(env));
+  proto.Set("value", Napi::Function::New<XmlAttribute::Value>(env));
+  proto.Set("node", Napi::Function::New<XmlAttribute::Node>(env));
+  proto.Set("namespace", Napi::Function::New<XmlAttribute::Namespace>(env));
+  
+  target.Set("Attribute", func);
 }
 
 } // namespace libxmljs

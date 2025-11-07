@@ -1,6 +1,7 @@
 // Copyright 2009, Squish Tech, LLC.
 
-#include <node.h>
+#include <napi.h>
+#include <uv.h>
 
 #include <cstring>
 
@@ -11,49 +12,49 @@
 #include "xml_text.h"
 #include "xml_xpath_context.h"
 
-using namespace v8;
+using namespace Napi;
 
 namespace libxmljs {
 
-Nan::Persistent<FunctionTemplate> XmlText::constructor_template;
+Napi::FunctionReference XmlText::constructor;
 
-Local<Value> XmlText::get_path() {
-  Nan::EscapableHandleScope scope;
+Napi::Value XmlText::get_path() {
+  Napi::EscapableHandleScope scope(env);
   xmlChar *path = xmlGetNodePath(xml_obj);
   const char *return_path = path ? reinterpret_cast<char *>(path) : "";
   int str_len = xmlStrlen((const xmlChar *)return_path);
-  Local<String> js_obj =
-      Nan::New<String>(return_path, str_len).ToLocalChecked();
+  Napi::String js_obj = Napi::String::New(env, return_path, str_len);
   xmlFree(path);
   return scope.Escape(js_obj);
 }
 
 // doc, name, content
-NAN_METHOD(XmlText::New) {
+Napi::Value XmlText::New(const Napi::CallbackInfo &info) {
   NAN_CONSTRUCTOR_CHECK(Text)
-  Nan::HandleScope scope;
+  Napi::HandleScope scope(env);
 
   // if we were created for an existing xml node, then we don't need
   // to create a new node on the document
   if (info.Length() == 0) {
-    return info.GetReturnValue().Set(info.This());
+    return return info.This();
   }
 
   DOCUMENT_ARG_CHECK
-  if (!info[1]->IsString()) {
-    Nan::ThrowError("content argument must be of type string");
-    return;
+  if (!info[1].IsString()) {
+    Napi::Error::New(env, "content argument must be of type string")
+        .ThrowAsJavaScriptException();
+    return env.Null();
   }
 
-  XmlDocument *document = Nan::ObjectWrap::Unwrap<XmlDocument>(doc);
+  XmlDocument *document = doc.Unwrap<XmlDocument>();
   assert(document);
 
-  Local<Value> contentOpt;
-  if (info[1]->IsString()) {
+  Napi::Value contentOpt;
+  if (info[1].IsString()) {
     contentOpt = info[1];
   }
-  Nan::Utf8String contentRaw(contentOpt);
-  const char *content = (contentRaw.length()) ? *contentRaw : NULL;
+  std::string contentRaw = contentOpt.As<Napi::String>();
+  const char *content = (contentRaw.Length()) ? *contentRaw : NULL;
 
   xmlNode *textNode =
       xmlNewDocText(document->xml_obj, (const xmlChar *)content);
@@ -63,54 +64,52 @@ NAN_METHOD(XmlText::New) {
   element->Wrap(info.This());
 
   // this prevents the document from going away
-  Nan::Set(info.This(), Nan::New<String>("document").ToLocalChecked(),
-           info[0])
-      .Check();
+  (info.This()).Set(Napi::String::New(env, "document"), info[0]).Check();
 
-  return info.GetReturnValue().Set(info.This());
+  return return info.This();
 }
 
-NAN_METHOD(XmlText::NextElement) {
-  Nan::HandleScope scope;
-  XmlText *element = Nan::ObjectWrap::Unwrap<XmlText>(info.This());
+Napi::Value XmlText::NextElement(const Napi::CallbackInfo &info) {
+  Napi::HandleScope scope(env);
+  XmlText *element = info.This().Unwrap<XmlText>();
   assert(element);
 
-  return info.GetReturnValue().Set(element->get_next_element());
+  return return element->get_next_element();
 }
 
-NAN_METHOD(XmlText::PrevElement) {
-  Nan::HandleScope scope;
-  XmlText *element = Nan::ObjectWrap::Unwrap<XmlText>(info.This());
+Napi::Value XmlText::PrevElement(const Napi::CallbackInfo &info) {
+  Napi::HandleScope scope(env);
+  XmlText *element = info.This().Unwrap<XmlText>();
   assert(element);
 
-  return info.GetReturnValue().Set(element->get_prev_element());
+  return return element->get_prev_element();
 }
 
-NAN_METHOD(XmlText::Text) {
-  Nan::HandleScope scope;
-  XmlText *element = Nan::ObjectWrap::Unwrap<XmlText>(info.This());
+Napi::Value XmlText::Text(const Napi::CallbackInfo &info) {
+  Napi::HandleScope scope(env);
+  XmlText *element = info.This().Unwrap<XmlText>();
   assert(element);
 
   if (info.Length() == 0) {
-    return info.GetReturnValue().Set(element->get_content());
+    return return element->get_content();
   } else {
-    element->set_content(*Nan::Utf8String(info[0]));
+    element->set_content(info[0].As<Napi::String>().Utf8Value().c_str());
   }
 
-  return info.GetReturnValue().Set(info.This());
+  return return info.This();
 }
 
-NAN_METHOD(XmlText::AddPrevSibling) {
-  XmlText *text = Nan::ObjectWrap::Unwrap<XmlText>(info.This());
+Napi::Value XmlText::AddPrevSibling(const Napi::CallbackInfo &info) {
+  XmlText *text = info.This().Unwrap<XmlText>();
   assert(text);
 
-  XmlNode *new_sibling = Nan::ObjectWrap::Unwrap<XmlNode>(
-      Nan::To<Object>(info[0]).ToLocalChecked());
+  XmlNode *new_sibling =
+      Napi::ObjectWrap::Unwrap<XmlNode>(info[0].To<Napi::Object>());
   assert(new_sibling);
 
   xmlNode *imported_sibling = text->import_node(new_sibling->xml_obj);
   if (imported_sibling == NULL) {
-    return Nan::ThrowError(
+    return Napi::ThrowError(
         "Could not add sibling. Failed to copy node to new Document.");
   } else if ((new_sibling->xml_obj == imported_sibling) &&
              text->prev_sibling_will_merge(imported_sibling)) {
@@ -118,20 +117,20 @@ NAN_METHOD(XmlText::AddPrevSibling) {
   }
   text->add_prev_sibling(imported_sibling);
 
-  return info.GetReturnValue().Set(info[0]);
+  return return info[0];
 }
 
-NAN_METHOD(XmlText::AddNextSibling) {
-  XmlText *text = Nan::ObjectWrap::Unwrap<XmlText>(info.This());
+Napi::Value XmlText::AddNextSibling(const Napi::CallbackInfo &info) {
+  XmlText *text = info.This().Unwrap<XmlText>();
   assert(text);
 
-  XmlNode *new_sibling = Nan::ObjectWrap::Unwrap<XmlNode>(
-      Nan::To<Object>(info[0]).ToLocalChecked());
+  XmlNode *new_sibling =
+      Napi::ObjectWrap::Unwrap<XmlNode>(info[0].To<Napi::Object>());
   assert(new_sibling);
 
   xmlNode *imported_sibling = text->import_node(new_sibling->xml_obj);
   if (imported_sibling == NULL) {
-    return Nan::ThrowError(
+    return Napi::ThrowError(
         "Could not add sibling. Failed to copy node to new Document.");
   } else if ((new_sibling->xml_obj == imported_sibling) &&
              text->next_sibling_will_merge(imported_sibling)) {
@@ -139,47 +138,47 @@ NAN_METHOD(XmlText::AddNextSibling) {
   }
   text->add_next_sibling(imported_sibling);
 
-  return info.GetReturnValue().Set(info[0]);
+  return return info[0];
 }
 
-NAN_METHOD(XmlText::Replace) {
-  XmlText *element = Nan::ObjectWrap::Unwrap<XmlText>(info.This());
+Napi::Value XmlText::Replace(const Napi::CallbackInfo &info) {
+  XmlText *element = info.This().Unwrap<XmlText>();
   assert(element);
 
-  if (info[0]->IsString()) {
-    element->replace_text(*Nan::Utf8String(info[0]));
+  if (info[0].IsString()) {
+    element->replace_text(info[0].As<Napi::String>().Utf8Value().c_str());
   } else {
-    XmlText *new_sibling = Nan::ObjectWrap::Unwrap<XmlText>(
-        Nan::To<Object>(info[0]).ToLocalChecked());
+    XmlText *new_sibling =
+        Napi::ObjectWrap::Unwrap<XmlText>(info[0].To<Napi::Object>());
     assert(new_sibling);
 
     xmlNode *imported_sibling = element->import_node(new_sibling->xml_obj);
     if (imported_sibling == NULL) {
-      return Nan::ThrowError(
+      return Napi::ThrowError(
           "Could not replace. Failed to copy node to new Document.");
     }
     element->replace_element(imported_sibling);
   }
 
-  return info.GetReturnValue().Set(info[0]);
+  return return info[0];
 }
 
-NAN_METHOD(XmlText::Path) {
-  Nan::HandleScope scope;
-  XmlText *text = Nan::ObjectWrap::Unwrap<XmlText>(info.This());
+Napi::Value XmlText::Path(const Napi::CallbackInfo &info) {
+  Napi::HandleScope scope(env);
+  XmlText *text = info.This().Unwrap<XmlText>();
   assert(text);
 
-  return info.GetReturnValue().Set(text->get_path());
+  return return text->get_path();
 }
 
-NAN_METHOD(XmlText::Name) {
-  Nan::HandleScope scope;
-  XmlText *text = Nan::ObjectWrap::Unwrap<XmlText>(info.This());
+Napi::Value XmlText::Name(const Napi::CallbackInfo &info) {
+  Napi::HandleScope scope(env);
+  XmlText *text = info.This().Unwrap<XmlText>();
   assert(text);
 
   if (info.Length() == 0)
-    return info.GetReturnValue().Set(text->get_name());
-  return info.GetReturnValue().Set(info.This());
+    return return text->get_name();
+  return return info.This();
 }
 
 void XmlText::set_content(const char *content) {
@@ -189,34 +188,32 @@ void XmlText::set_content(const char *content) {
   xmlFree(encoded);
 }
 
-Local<Value> XmlText::get_content() {
-  Nan::EscapableHandleScope scope;
+Napi::Value XmlText::get_content() {
+  Napi::EscapableHandleScope scope(env);
   xmlChar *content = xmlNodeGetContent(xml_obj);
   if (content) {
-    Local<String> ret_content =
-        Nan::New<String>((const char *)content).ToLocalChecked();
+    Napi::String ret_content = Napi::String::New(env, (const char *)content);
     xmlFree(content);
     return scope.Escape(ret_content);
   }
 
-  return scope.Escape(Nan::New<String>("").ToLocalChecked());
+  return scope.Escape(Napi::String::New(env, ""));
 }
 
-Local<Value> XmlText::get_name() {
-  Nan::EscapableHandleScope scope;
+Napi::Value XmlText::get_name() {
+  Napi::EscapableHandleScope scope(env);
   if (xml_obj->name)
-    return scope.Escape(
-        Nan::New<String>((const char *)xml_obj->name).ToLocalChecked());
+    return scope.Escape(Napi::String::New(env, (const char *)xml_obj->name));
   else
-    return scope.Escape(Nan::Undefined());
+    return scope.Escape(env.Undefined());
 }
 
-Local<Value> XmlText::get_next_element() {
-  Nan::EscapableHandleScope scope;
+Napi::Value XmlText::get_next_element() {
+  Napi::EscapableHandleScope scope(env);
 
   xmlNode *sibling = xml_obj->next;
   if (!sibling)
-    return scope.Escape(Nan::Null());
+    return scope.Escape(env.Null());
 
   while (sibling && sibling->type != XML_ELEMENT_NODE)
     sibling = sibling->next;
@@ -225,15 +222,15 @@ Local<Value> XmlText::get_next_element() {
     return scope.Escape(XmlText::New(sibling));
   }
 
-  return scope.Escape(Nan::Null());
+  return scope.Escape(env.Null());
 }
 
-Local<Value> XmlText::get_prev_element() {
-  Nan::EscapableHandleScope scope;
+Napi::Value XmlText::get_prev_element() {
+  Napi::EscapableHandleScope scope(env);
 
   xmlNode *sibling = xml_obj->prev;
   if (!sibling)
-    return scope.Escape(Nan::Null());
+    return scope.Escape(env.Null());
 
   while (sibling && sibling->type != XML_ELEMENT_NODE) {
     sibling = sibling->prev;
@@ -243,20 +240,18 @@ Local<Value> XmlText::get_prev_element() {
     return scope.Escape(XmlText::New(sibling));
   }
 
-  return scope.Escape(Nan::Null());
+  return scope.Escape(env.Null());
 }
 
-Local<Object> XmlText::New(xmlNode *node) {
-  Nan::EscapableHandleScope scope;
+Napi::Object XmlText::New(xmlNode *node) {
+  Napi::EscapableHandleScope scope(env);
   if (node->_private) {
     return scope.Escape(static_cast<XmlNode *>(node->_private)->handle());
   }
 
   XmlText *text = new XmlText(node);
-  Local<Object> obj =
-      Nan::NewInstance(
-          Nan::GetFunction(Nan::New(constructor_template)).ToLocalChecked())
-          .ToLocalChecked();
+  Napi::Object obj =
+      Napi::NewInstance(Napi::GetFunction(Napi::New(env, constructor)));
   text->Wrap(obj);
   return scope.Escape(obj);
 }
@@ -288,33 +283,31 @@ bool XmlText::prev_sibling_will_merge(xmlNode *child) {
   return (child->type == XML_TEXT_NODE);
 }
 
-void XmlText::Initialize(Local<Object> target) {
-  Nan::HandleScope scope;
-  Local<FunctionTemplate> tmpl = Nan::New<FunctionTemplate>(New);
+void XmlText::Initialize(Napi::Object target) {
+  Napi::HandleScope scope(env);
+  Napi::FunctionReference tmpl = Napi::Function::New(env, New);
 
-  constructor_template.Reset(tmpl);
+  constructor.Reset(tmpl);
 
-  tmpl->Inherit(Nan::New(XmlNode::constructor_template));
-  tmpl->InstanceTemplate()->SetInternalFieldCount(1);
+  tmpl->Inherit(Napi::New(env, XmlNode::constructor));
 
-  Nan::SetPrototypeMethod(tmpl, "nextElement", XmlText::NextElement);
+  Napi::SetPrototypeMethod(tmpl, "nextElement", XmlText::NextElement);
 
-  Nan::SetPrototypeMethod(tmpl, "prevElement", XmlText::PrevElement);
+  Napi::SetPrototypeMethod(tmpl, "prevElement", XmlText::PrevElement);
 
-  Nan::SetPrototypeMethod(tmpl, "text", XmlText::Text);
+  Napi::SetPrototypeMethod(tmpl, "text", XmlText::Text);
 
-  Nan::SetPrototypeMethod(tmpl, "replace", XmlText::Replace);
+  Napi::SetPrototypeMethod(tmpl, "replace", XmlText::Replace);
 
-  Nan::SetPrototypeMethod(tmpl, "path", XmlText::Path);
+  Napi::SetPrototypeMethod(tmpl, "path", XmlText::Path);
 
-  Nan::SetPrototypeMethod(tmpl, "name", XmlText::Name);
+  Napi::SetPrototypeMethod(tmpl, "name", XmlText::Name);
 
-  Nan::SetPrototypeMethod(tmpl, "addPrevSibling", XmlText::AddPrevSibling);
+  Napi::SetPrototypeMethod(tmpl, "addPrevSibling", XmlText::AddPrevSibling);
 
-  Nan::SetPrototypeMethod(tmpl, "addNextSibling", XmlText::AddNextSibling);
+  Napi::SetPrototypeMethod(tmpl, "addNextSibling", XmlText::AddNextSibling);
 
-  Nan::Set(target, Nan::New<String>("Text").ToLocalChecked(),
-           Nan::GetFunction(tmpl).ToLocalChecked());
+  (target).Set(Napi::String::New(env, "Text"), Napi::GetFunction(tmpl));
 }
 
 } // namespace libxmljs
