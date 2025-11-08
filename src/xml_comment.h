@@ -10,19 +10,19 @@ class XmlComment : public XmlNode {
 public:
   explicit XmlComment(xmlNode *node);
 
-  static void Initialize(v8::Local<v8::Object> target);
+  static void Initialize(Napi::Object target);
 
-  static Nan::Persistent<v8::FunctionTemplate> constructor_template;
+  static Napi::FunctionReference constructor;
 
   // create new xml comment to wrap the node
-  static v8::Local<v8::Object> New(xmlNode *node);
+  static Napi::Object New(xmlNode *node);
 
 protected:
-  static NAN_METHOD(New);
-  static NAN_METHOD(Text);
+  static Napi::Value New(const Napi::CallbackInfo& info);
+  static Napi::Value Text(const Napi::CallbackInfo& info);
 
   void set_content(const char *content);
-  v8::Local<v8::Value> get_content();
+  Napi::Value get_content();
 };
 
 } // namespace libxmljs

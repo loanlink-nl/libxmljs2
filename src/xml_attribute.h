@@ -10,29 +10,29 @@ namespace libxmljs {
 
 class XmlAttribute : public XmlNode {
 public:
-  explicit XmlAttribute(xmlAttr *node)
-      : XmlNode(reinterpret_cast<xmlNode *>(node)) {}
+  // explicit XmlAttribute(xmlAttr *node)
+  //     : XmlNode(reinterpret_cast<xmlNode *>(node)) {}
 
-  static void Initialize(v8::Local<v8::Object> target);
-  static Nan::Persistent<v8::FunctionTemplate> constructor_template;
+  static void Initialize(Napi::Object target);
+  static Napi::FunctionReference constructor;
 
-  static v8::Local<v8::Object> New(xmlNode *xml_obj, const xmlChar *name,
-                                   const xmlChar *value);
+  XmlAttribute(const Napi::CallbackInfo &info);
 
-  static v8::Local<v8::Object> New(xmlAttr *attr);
+  static Napi::Object New(const Napi::CallbackInfo &info, xmlNode *xml_obj,
+                          const xmlChar *name, const xmlChar *value);
+  static Napi::Object New(const Napi::CallbackInfo &info, xmlAttr *attr);
 
 protected:
-  static NAN_METHOD(New);
-  static NAN_METHOD(Name);
-  static NAN_METHOD(Value);
-  static NAN_METHOD(Node);
-  static NAN_METHOD(Namespace);
+  static Napi::Value Name(const Napi::CallbackInfo &info);
+  static Napi::Value Value(const Napi::CallbackInfo &info);
+  static Napi::Value Node(const Napi::CallbackInfo &info);
+  static Napi::Value Namespace(const Napi::CallbackInfo &info);
 
-  v8::Local<v8::Value> get_name();
-  v8::Local<v8::Value> get_value();
+  Napi::Value get_name();
+  Napi::Value get_value();
   void set_value(const char *value);
-  v8::Local<v8::Value> get_element();
-  v8::Local<v8::Value> get_namespace();
+  Napi::Value get_element();
+  Napi::Value get_namespace();
 };
 
 } // namespace libxmljs

@@ -1,7 +1,5 @@
 // Copyright 2009, Squish Tech, LLC.
 
-#include <v8.h>
-
 #include <libxml/xmlmemory.h>
 
 #include "libxmljs.h"
@@ -11,7 +9,7 @@
 #include "xml_sax_parser.h"
 #include "xml_textwriter.h"
 
-using namespace v8;
+using namespace Napi;
 namespace libxmljs {
 
 // ensure destruction at exit time
@@ -32,7 +30,7 @@ void adjustExternalMemory() {
 
   if (abs(diff) > nan_adjust_external_memory_threshold) {
     xml_memory_used += diff;
-    Nan::AdjustExternalMemory(diff);
+    Napi::AdjustExternalMemory(diff);
   }
 }
 
@@ -168,12 +166,12 @@ LibXMLJS::LibXMLJS() {
 
 LibXMLJS::~LibXMLJS() { xmlCleanupParser(); }
 
-Local<Object> listFeatures() {
-  Nan::EscapableHandleScope scope;
-  Local<Object> target = Nan::New<Object>();
+Napi::Object listFeatures() {
+  Napi::EscapableHandleScope scope(env);
+  Napi::Object target = Napi::Object::New(env);
 #define FEAT(x)                                                                \
-  Nan::Set(target, Nan::New<String>(#x).ToLocalChecked(),                      \
-           Nan::New<Boolean>(xmlHasFeature(XML_WITH_##x)))
+  (target).Set(Napi::String::New(env, #x),                                     \
+               Napi::Boolean::New(env, xmlHasFeature(XML_WITH_##x)))
   // See enum xmlFeature in parser.h
   FEAT(THREAD);
   FEAT(TREE);
@@ -211,42 +209,43 @@ Local<Object> listFeatures() {
   return scope.Escape(target);
 }
 
-NAN_METHOD(XmlMemUsed) {
-  Nan::HandleScope scope;
-  return info.GetReturnValue().Set(Nan::New<Int32>(xmlMemUsed()));
+Napi::Value XmlMemUsed(const Napi::CallbackInfo &info) {
+  Napi::HandleScope scope(env);
+  return Napi::Int32::New(env, xmlMemUsed());
 }
 
-NAN_METHOD(XmlNodeCount) {
-  Nan::HandleScope scope;
-  return info.GetReturnValue().Set(Nan::New<Int32>(nodeCount));
+Napi::Value XmlNodeCount(const Napi::CallbackInfo &info) {
+  Napi::HandleScope scope(env);
+  return Napi::Int32::New(env, nodeCount);
 }
 
-NAN_MODULE_INIT(init) {
-  Nan::HandleScope scope;
+Napi::Object init(Napi::Env env, Napi::Object exports) {
+  Napi::HandleScope scope(env);
 
-  XmlDocument::Initialize(target);
-  XmlSaxParser::Initialize(target);
-  XmlTextWriter::Initialize(target);
+  XmlDocument::Initialize(env, target, module);
+  XmlSaxParser::Initialize(env, target, module);
+  XmlTextWriter::Initialize(env, target, module);
 
-  Nan::Set(target, Nan::New<String>("libxml_version").ToLocalChecked(),
-           Nan::New<String>(LIBXML_DOTTED_VERSION).ToLocalChecked());
+  (target).Set(Napi::String::New(env, "libxml_version"),
+               Napi::String::New(env, LIBXML_DOTTED_VERSION));
 
-  Nan::Set(target, Nan::New<String>("libxml_parser_version").ToLocalChecked(),
-           Nan::New<String>(xmlParserVersion).ToLocalChecked());
+  (target).Set(Napi::String::New(env, "libxml_parser_version"),
+               Napi::String::New(env, xmlParserVersion));
 
-  Nan::Set(target, Nan::New<String>("libxml_debug_enabled").ToLocalChecked(),
-           Nan::New<Boolean>(debugging));
+  (target).Set(Napi::String::New(env, "libxml_debug_enabled"),
+               Napi::Boolean::New(env, debugging));
 
-  Nan::Set(target, Nan::New<String>("features").ToLocalChecked(),
-           listFeatures());
+  (target).Set(Napi::String::New(env, "features"), listFeatures());
 
-  Nan::Set(target, Nan::New<String>("libxml").ToLocalChecked(), target);
+  (target).Set(Napi::String::New(env, "libxml"), target);
 
-  Nan::SetMethod(target, "xmlMemUsed", XmlMemUsed);
+  exports.Set(Napi::String::New(env, "xmlMemUsed"),
+              Napi::Function::New(env, XmlMemUsed));
 
-  Nan::SetMethod(target, "xmlNodeCount", XmlNodeCount);
+  exports.Set(Napi::String::New(env, "xmlNodeCount"),
+              Napi::Function::New(env, XmlNodeCount));
 }
 
-NODE_MODULE(xmljs, init)
+NODE_API_MODULE(xmljs, init)
 
 } // namespace libxmljs
