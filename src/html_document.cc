@@ -3,7 +3,7 @@
 
 namespace libxmljs {
 
-void HtmlDocument::Initialize(Napi::Env env, Napi::Object exports) {
+void HtmlDocument::Init(Napi::Env env, Napi::Object exports) {
   // HtmlDocument inherits from XmlDocument
   // No additional initialization needed at this time
 }

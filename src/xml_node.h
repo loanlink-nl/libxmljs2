@@ -26,27 +26,26 @@ public:
   // the doc ref'd by this proxy
   xmlDoc *doc;
 
-  static void Initialize(Napi::Env env, Napi::Object exports);
   static Napi::FunctionReference constructor;
 
   // create new XmlElement, XmlAttribute, etc. to wrap a libxml xmlNode
   static Napi::Value NewInstance(Napi::Env env, xmlNode *node);
 
-  static Napi::Function GetClass(Napi::Env env, Napi::Object exports);
+  static Napi::Function Init(Napi::Env env, Napi::Object exports);
+
+  Napi::Value Doc(const Napi::CallbackInfo &info);
+  Napi::Value Namespace(const Napi::CallbackInfo &info);
+  Napi::Value Namespaces(const Napi::CallbackInfo &info);
+  Napi::Value Parent(const Napi::CallbackInfo &info);
+  Napi::Value NextSibling(const Napi::CallbackInfo &info);
+  Napi::Value PrevSibling(const Napi::CallbackInfo &info);
+  Napi::Value LineNumber(const Napi::CallbackInfo &info);
+  Napi::Value Type(const Napi::CallbackInfo &info);
+  Napi::Value ToString(const Napi::CallbackInfo &info);
+  Napi::Value Remove(const Napi::CallbackInfo &info);
+  Napi::Value Clone(const Napi::CallbackInfo &info);
 
 protected:
-  static Napi::Value Doc(const Napi::CallbackInfo &info);
-  static Napi::Value Namespace(const Napi::CallbackInfo &info);
-  static Napi::Value Namespaces(const Napi::CallbackInfo &info);
-  static Napi::Value Parent(const Napi::CallbackInfo &info);
-  static Napi::Value NextSibling(const Napi::CallbackInfo &info);
-  static Napi::Value PrevSibling(const Napi::CallbackInfo &info);
-  static Napi::Value LineNumber(const Napi::CallbackInfo &info);
-  static Napi::Value Type(const Napi::CallbackInfo &info);
-  static Napi::Value ToString(const Napi::CallbackInfo &info);
-  static Napi::Value Remove(const Napi::CallbackInfo &info);
-  static Napi::Value Clone(const Napi::CallbackInfo &info);
-
   Napi::Value get_doc(Napi::Env env);
   Napi::Value remove_namespace(Napi::Env env);
   Napi::Value get_namespace(Napi::Env env);

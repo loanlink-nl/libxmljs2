@@ -14,7 +14,7 @@ libxmljs::XmlSaxParser *LXJS_GET_PARSER_FROM_CONTEXT(void *context) {
 #define EMIT_SYMBOL_STRING "emit"
 
 // Global reference to the emit symbol string
-static Napi::Reference<Napi::String> emit_symbol;
+static Napi::Symbol emit_symbol;
 
 namespace libxmljs {
 
@@ -100,7 +100,7 @@ void XmlSaxParser::Callback(const char *what, int argc, Napi::Value *argv) {
 
   // get the 'emit' function from ourselves
   Napi::Object self = this->Value();
-  Napi::Value emit_v = self.Get(emit_symbol.Value());
+  Napi::Value emit_v = self.Get(emit_symbol);
 
   if (!emit_v.IsFunction()) {
     return;
@@ -376,10 +376,11 @@ void XmlSaxParser::error(void *context, const char *msg, ...) {
   free(message);
 }
 
-Napi::Object XmlSaxParser::Initialize(Napi::Env env, Napi::Object exports) {
+Napi::Object XmlSaxParser::Init(Napi::Env env, Napi::Object exports) {
   // Initialize the emit_symbol reference
-  emit_symbol = Napi::Reference<Napi::String>::New(
-      Napi::String::New(env, EMIT_SYMBOL_STRING), 1);
+  // emit_symbol = Napi::Reference<Napi::String>::New(
+  //     Napi::String::New(env, EMIT_SYMBOL_STRING));
+  emit_symbol = Napi::Symbol::New(env, EMIT_SYMBOL_STRING);
 
   // SAX Parser
   Napi::Function parser_func =

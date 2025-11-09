@@ -13,7 +13,7 @@ namespace libxmljs {
 
 Napi::FunctionReference XmlTextWriter::constructor;
 
-XmlTextWriter::XmlTextWriter(const Napi::CallbackInfo& info)
+XmlTextWriter::XmlTextWriter(const Napi::CallbackInfo &info)
     : Napi::ObjectWrap<XmlTextWriter>(info) {
   textWriter = NULL;
   writerBuffer = NULL;
@@ -44,12 +44,12 @@ XmlTextWriter::~XmlTextWriter() {
   }
 }
 
-Napi::Value XmlTextWriter::OpenMemory(const Napi::CallbackInfo& info) {
+Napi::Value XmlTextWriter::OpenMemory(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   return env.Undefined();
 }
 
-Napi::Value XmlTextWriter::BufferContent(const Napi::CallbackInfo& info) {
+Napi::Value XmlTextWriter::BufferContent(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   // Flush the output buffer of the libxml writer instance in order to push all
@@ -71,13 +71,13 @@ void XmlTextWriter::clearBuffer() {
   xmlBufferEmpty(writerBuffer);
 }
 
-Napi::Value XmlTextWriter::BufferEmpty(const Napi::CallbackInfo& info) {
+Napi::Value XmlTextWriter::BufferEmpty(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   clearBuffer();
   return env.Undefined();
 }
 
-Napi::Value XmlTextWriter::StartDocument(const Napi::CallbackInfo& info) {
+Napi::Value XmlTextWriter::StartDocument(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   const char *version = nullptr;
@@ -105,15 +105,15 @@ Napi::Value XmlTextWriter::StartDocument(const Napi::CallbackInfo& info) {
     }
   }
 
-  int result = xmlTextWriterStartDocument(textWriter, version, encoding,
-                                          standalone);
+  int result =
+      xmlTextWriterStartDocument(textWriter, version, encoding, standalone);
 
   THROW_ON_ERROR(env, "Failed to start document");
 
   return Napi::Number::New(env, (double)result);
 }
 
-Napi::Value XmlTextWriter::EndDocument(const Napi::CallbackInfo& info) {
+Napi::Value XmlTextWriter::EndDocument(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   int result = xmlTextWriterEndDocument(textWriter);
@@ -123,7 +123,7 @@ Napi::Value XmlTextWriter::EndDocument(const Napi::CallbackInfo& info) {
   return Napi::Number::New(env, (double)result);
 }
 
-Napi::Value XmlTextWriter::StartElementNS(const Napi::CallbackInfo& info) {
+Napi::Value XmlTextWriter::StartElementNS(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   const xmlChar *prefix = nullptr;
@@ -154,7 +154,7 @@ Napi::Value XmlTextWriter::StartElementNS(const Napi::CallbackInfo& info) {
   return Napi::Number::New(env, (double)result);
 }
 
-Napi::Value XmlTextWriter::EndElement(const Napi::CallbackInfo& info) {
+Napi::Value XmlTextWriter::EndElement(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   int result = xmlTextWriterEndElement(textWriter);
@@ -164,7 +164,7 @@ Napi::Value XmlTextWriter::EndElement(const Napi::CallbackInfo& info) {
   return Napi::Number::New(env, (double)result);
 }
 
-Napi::Value XmlTextWriter::StartAttributeNS(const Napi::CallbackInfo& info) {
+Napi::Value XmlTextWriter::StartAttributeNS(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   const xmlChar *prefix = nullptr;
@@ -187,15 +187,15 @@ Napi::Value XmlTextWriter::StartAttributeNS(const Napi::CallbackInfo& info) {
     namespaceURI = (const xmlChar *)nsStr.c_str();
   }
 
-  int result = xmlTextWriterStartAttributeNS(textWriter, prefix, name,
-                                              namespaceURI);
+  int result =
+      xmlTextWriterStartAttributeNS(textWriter, prefix, name, namespaceURI);
 
   THROW_ON_ERROR(env, "Failed to start attribute");
 
   return Napi::Number::New(env, (double)result);
 }
 
-Napi::Value XmlTextWriter::EndAttribute(const Napi::CallbackInfo& info) {
+Napi::Value XmlTextWriter::EndAttribute(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   int result = xmlTextWriterEndAttribute(textWriter);
@@ -205,7 +205,7 @@ Napi::Value XmlTextWriter::EndAttribute(const Napi::CallbackInfo& info) {
   return Napi::Number::New(env, (double)result);
 }
 
-Napi::Value XmlTextWriter::StartCdata(const Napi::CallbackInfo& info) {
+Napi::Value XmlTextWriter::StartCdata(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   int result = xmlTextWriterStartCDATA(textWriter);
@@ -215,7 +215,7 @@ Napi::Value XmlTextWriter::StartCdata(const Napi::CallbackInfo& info) {
   return Napi::Number::New(env, (double)result);
 }
 
-Napi::Value XmlTextWriter::EndCdata(const Napi::CallbackInfo& info) {
+Napi::Value XmlTextWriter::EndCdata(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   int result = xmlTextWriterEndCDATA(textWriter);
@@ -225,7 +225,7 @@ Napi::Value XmlTextWriter::EndCdata(const Napi::CallbackInfo& info) {
   return Napi::Number::New(env, (double)result);
 }
 
-Napi::Value XmlTextWriter::StartComment(const Napi::CallbackInfo& info) {
+Napi::Value XmlTextWriter::StartComment(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   int result = xmlTextWriterStartComment(textWriter);
@@ -235,7 +235,7 @@ Napi::Value XmlTextWriter::StartComment(const Napi::CallbackInfo& info) {
   return Napi::Number::New(env, (double)result);
 }
 
-Napi::Value XmlTextWriter::EndComment(const Napi::CallbackInfo& info) {
+Napi::Value XmlTextWriter::EndComment(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   int result = xmlTextWriterEndComment(textWriter);
@@ -245,7 +245,7 @@ Napi::Value XmlTextWriter::EndComment(const Napi::CallbackInfo& info) {
   return Napi::Number::New(env, (double)result);
 }
 
-Napi::Value XmlTextWriter::WriteString(const Napi::CallbackInfo& info) {
+Napi::Value XmlTextWriter::WriteString(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   std::string stringStr;
@@ -253,15 +253,15 @@ Napi::Value XmlTextWriter::WriteString(const Napi::CallbackInfo& info) {
     stringStr = info[0].As<Napi::String>().Utf8Value();
   }
 
-  int result = xmlTextWriterWriteString(textWriter,
-                                         (const xmlChar *)stringStr.c_str());
+  int result =
+      xmlTextWriterWriteString(textWriter, (const xmlChar *)stringStr.c_str());
 
   THROW_ON_ERROR(env, "Failed to write string");
 
   return Napi::Number::New(env, (double)result);
 }
 
-Napi::Value XmlTextWriter::OutputMemory(const Napi::CallbackInfo& info) {
+Napi::Value XmlTextWriter::OutputMemory(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   bool clear = true;
@@ -278,23 +278,25 @@ Napi::Value XmlTextWriter::OutputMemory(const Napi::CallbackInfo& info) {
   return content;
 }
 
-void XmlTextWriter::Initialize(Napi::Env env, Napi::Object exports) {
-  Napi::Function func = DefineClass(env, "TextWriter", {
-    InstanceMethod("toString", &XmlTextWriter::BufferContent),
-    InstanceMethod("outputMemory", &XmlTextWriter::OutputMemory),
-    InstanceMethod("clear", &XmlTextWriter::BufferEmpty),
-    InstanceMethod("startDocument", &XmlTextWriter::StartDocument),
-    InstanceMethod("endDocument", &XmlTextWriter::EndDocument),
-    InstanceMethod("startElementNS", &XmlTextWriter::StartElementNS),
-    InstanceMethod("endElement", &XmlTextWriter::EndElement),
-    InstanceMethod("startAttributeNS", &XmlTextWriter::StartAttributeNS),
-    InstanceMethod("endAttribute", &XmlTextWriter::EndAttribute),
-    InstanceMethod("startCdata", &XmlTextWriter::StartCdata),
-    InstanceMethod("endCdata", &XmlTextWriter::EndCdata),
-    InstanceMethod("startComment", &XmlTextWriter::StartComment),
-    InstanceMethod("endComment", &XmlTextWriter::EndComment),
-    InstanceMethod("writeString", &XmlTextWriter::WriteString),
-  });
+void XmlTextWriter::Init(Napi::Env env, Napi::Object exports) {
+  Napi::Function func = DefineClass(
+      env, "TextWriter",
+      {
+          InstanceMethod("toString", &XmlTextWriter::BufferContent),
+          InstanceMethod("outputMemory", &XmlTextWriter::OutputMemory),
+          InstanceMethod("clear", &XmlTextWriter::BufferEmpty),
+          InstanceMethod("startDocument", &XmlTextWriter::StartDocument),
+          InstanceMethod("endDocument", &XmlTextWriter::EndDocument),
+          InstanceMethod("startElementNS", &XmlTextWriter::StartElementNS),
+          InstanceMethod("endElement", &XmlTextWriter::EndElement),
+          InstanceMethod("startAttributeNS", &XmlTextWriter::StartAttributeNS),
+          InstanceMethod("endAttribute", &XmlTextWriter::EndAttribute),
+          InstanceMethod("startCdata", &XmlTextWriter::StartCdata),
+          InstanceMethod("endCdata", &XmlTextWriter::EndCdata),
+          InstanceMethod("startComment", &XmlTextWriter::StartComment),
+          InstanceMethod("endComment", &XmlTextWriter::EndComment),
+          InstanceMethod("writeString", &XmlTextWriter::WriteString),
+      });
 
   constructor = Napi::Persistent(func);
   constructor.SuppressDestruct();

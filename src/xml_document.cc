@@ -248,7 +248,7 @@ Napi::Value XmlDocument::Type(const Napi::CallbackInfo &info) {
 
 // not called from node
 // private api
-Napi::Object XmlDocument::New(Napi::Env env, xmlDoc *doc) {
+Napi::Object XmlDocument::NewInstance(Napi::Env env, xmlDoc *doc) {
   if (doc->_private) {
     return static_cast<XmlDocument *>(doc->_private)->Value();
   }
@@ -454,7 +454,7 @@ Napi::Value XmlDocument::FromHtml(const Napi::CallbackInfo &info) {
     return env.Undefined();
   }
 
-  Napi::Object doc_handle = XmlDocument::New(env, doc);
+  Napi::Object doc_handle = XmlDocument::NewInstance(env, doc);
   doc_handle.Set("errors", ctx.errors);
 
   // create the xml document handle to return
@@ -535,7 +535,7 @@ Napi::Value XmlDocument::FromXml(const Napi::CallbackInfo &info) {
     }
   }
 
-  Napi::Object doc_handle = XmlDocument::New(env, doc);
+  Napi::Object doc_handle = XmlDocument::NewInstance(env, doc);
   doc_handle.Set("errors", ctx.errors);
 
   xmlNode *root_node = xmlDocGetRootElement(doc);
@@ -718,7 +718,7 @@ Napi::Value XmlDocument::SchematronValidate(const Napi::CallbackInfo &info) {
 
 /// this is a blank object with prototype methods
 /// not exposed to the user and not called from js
-Napi::Value XmlDocument::New(const Napi::CallbackInfo &info) {
+Napi::Value XmlDocument::NewInstance(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   if (!info.IsConstructCall()) {
@@ -760,8 +760,8 @@ XmlDocument::~XmlDocument() {
   xmlFreeDoc(xml_obj);
 }
 
-void XmlDocument::Initialize(Napi::Env env, Napi::Object exports) {
-  Napi::Function func =
+void XmlDocument::Init(Napi::Env env, Napi::Object exports) {
+  Napi::Function ctor =
       DefineClass(env, "Document",
                   {
                       InstanceMethod("root", &XmlDocument::Root),
@@ -772,20 +772,20 @@ void XmlDocument::Initialize(Napi::Env env, Napi::Object exports) {
                       InstanceMethod("rngValidate", &XmlDocument::RngValidate),
                       InstanceMethod("schematronValidate",
                                      &XmlDocument::SchematronValidate),
-                      StaticMethod("_setDtd", &XmlDocument::SetDtd),
+                      InstanceMethod("_setDtd", &XmlDocument::SetDtd),
                       InstanceMethod("getDtd", &XmlDocument::GetDtd),
                       InstanceMethod("type", &XmlDocument::Type),
                   });
 
-  constructor = Napi::Persistent(func);
+  constructor = Napi::Persistent(ctor);
   constructor.SuppressDestruct();
 
-  exports.Set("Document", func);
+  exports.Set("Document", ctor);
   exports.Set("fromXml", Napi::Function::New(env, XmlDocument::FromXml));
   exports.Set("fromHtml", Napi::Function::New(env, XmlDocument::FromHtml));
 
   SetupXmlNodeInheritance(env, exports);
 
-  XmlNamespace::Initialize(env, exports);
+  XmlNamespace::Init(env, exports);
 }
 } // namespace libxmljs

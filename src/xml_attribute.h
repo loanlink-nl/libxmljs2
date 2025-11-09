@@ -13,7 +13,7 @@ public:
   XmlAttribute(const Napi::CallbackInfo &info);
   virtual ~XmlAttribute();
 
-  static Napi::Function GetClass(Napi::Env env, Napi::Object exports);
+  static Napi::Function Init(Napi::Env env, Napi::Object exports);
   static Napi::FunctionReference constructor;
 
   static Napi::Value NewInstance(Napi::Env env, xmlNode *xml_obj,
@@ -22,10 +22,10 @@ public:
   static Napi::Value NewInstance(Napi::Env env, xmlAttr *attr);
 
 protected:
-  static Napi::Value Name(const Napi::CallbackInfo &info);
-  static Napi::Value Value(const Napi::CallbackInfo &info);
-  static Napi::Value Node(const Napi::CallbackInfo &info);
-  static Napi::Value Namespace(const Napi::CallbackInfo &info);
+  Napi::Value Name(const Napi::CallbackInfo &info);
+  Napi::Value Value(const Napi::CallbackInfo &info);
+  Napi::Value Node(const Napi::CallbackInfo &info);
+  Napi::Value Namespace(const Napi::CallbackInfo &info);
 
   Napi::Value get_name(Napi::Env env);
   Napi::Value get_value(Napi::Env env);

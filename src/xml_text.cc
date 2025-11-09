@@ -50,7 +50,7 @@ XmlText::XmlText(const Napi::CallbackInfo &info) : XmlNode<XmlText>(info) {
     return;
   }
 
-  Napi::Object docObj = info[0].As<Napi::Object>();
+  Napi::Object docObj = info[0].ToObject();
   XmlDocument *document = Napi::ObjectWrap<XmlDocument>::Unwrap(docObj);
   if (document == nullptr) {
     Napi::Error::New(env, "Invalid document argument")
@@ -349,19 +349,31 @@ bool XmlText::prev_sibling_will_merge(xmlNode *child) {
   return (child->type == XML_TEXT_NODE);
 }
 
-Napi::Function XmlText::GetClass(Napi::Env env, Napi::Object exports) {
-  Napi::Function func =
-      DefineClass(env, "Text",
-                  {
-                      ObjectWrap<XmlText>::StaticMethod("nextElement", &XmlText::NextElement),
-                      ObjectWrap<XmlText>::StaticMethod("prevElement", &XmlText::PrevElement),
-                      ObjectWrap<XmlText>::StaticMethod("text", &XmlText::Text),
-                      ObjectWrap<XmlText>::StaticMethod("replace", &XmlText::Replace),
-                      ObjectWrap<XmlText>::StaticMethod("path", &XmlText::Path),
-                      ObjectWrap<XmlText>::StaticMethod("name", &XmlText::Name),
-                      ObjectWrap<XmlText>::StaticMethod("addPrevSibling", &XmlText::AddPrevSibling),
-                      ObjectWrap<XmlText>::StaticMethod("addNextSibling", &XmlText::AddNextSibling),
-                  });
+Napi::Function XmlText::Init(Napi::Env env, Napi::Object exports) {
+  Napi::Function func = DefineClass(
+      env, "Text",
+      {
+          InstanceMethod("nextElement", &XmlText::NextElement),
+          InstanceMethod("prevElement", &XmlText::PrevElement),
+          InstanceMethod("text", &XmlText::Text),
+          InstanceMethod("replace", &XmlText::Replace),
+          InstanceMethod("path", &XmlText::Path),
+          InstanceMethod("name", &XmlText::Name),
+          InstanceMethod("addPrevSibling", &XmlText::AddPrevSibling),
+          InstanceMethod("addNextSibling", &XmlText::AddNextSibling),
+
+          InstanceMethod("doc", &XmlNode::Doc),
+          InstanceMethod("parent", &XmlNode::Parent),
+          InstanceMethod("namespace", &XmlNode::Namespace),
+          InstanceMethod("namespaces", &XmlNode::Namespaces),
+          InstanceMethod("prevSibling", &XmlNode::PrevSibling),
+          InstanceMethod("nextSibling", &XmlNode::NextSibling),
+          InstanceMethod("line", &XmlNode::LineNumber),
+          InstanceMethod("type", &XmlNode::Type),
+          InstanceMethod("toString", &XmlNode::ToString),
+          InstanceMethod("remove", &XmlNode::Remove),
+          InstanceMethod("clone", &XmlNode::Clone),
+      });
 
   constructor = Napi::Persistent(func);
   constructor.SuppressDestruct();

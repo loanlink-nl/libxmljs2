@@ -156,12 +156,25 @@ Napi::Value XmlProcessingInstruction::get_content(Napi::Env env) {
   return Napi::String::New(env, "");
 }
 
-Napi::Function XmlProcessingInstruction::GetClass(Napi::Env env, Napi::Object exports) {
+Napi::Function XmlProcessingInstruction::Init(Napi::Env env,
+                                              Napi::Object exports) {
   Napi::Function func =
       DefineClass(env, "ProcessingInstruction",
                   {
-                      ObjectWrap<XmlProcessingInstruction>::StaticMethod("name", &XmlProcessingInstruction::Name),
-                      ObjectWrap<XmlProcessingInstruction>::StaticMethod("text", &XmlProcessingInstruction::Text),
+                      InstanceMethod("name", &XmlProcessingInstruction::Name),
+                      InstanceMethod("text", &XmlProcessingInstruction::Text),
+
+                      InstanceMethod("doc", &XmlNode::Doc),
+                      InstanceMethod("parent", &XmlNode::Parent),
+                      InstanceMethod("namespace", &XmlNode::Namespace),
+                      InstanceMethod("namespaces", &XmlNode::Namespaces),
+                      InstanceMethod("prevSibling", &XmlNode::PrevSibling),
+                      InstanceMethod("nextSibling", &XmlNode::NextSibling),
+                      InstanceMethod("line", &XmlNode::LineNumber),
+                      InstanceMethod("type", &XmlNode::Type),
+                      InstanceMethod("toString", &XmlNode::ToString),
+                      InstanceMethod("remove", &XmlNode::Remove),
+                      InstanceMethod("clone", &XmlNode::Clone),
                   });
 
   constructor = Napi::Persistent(func);

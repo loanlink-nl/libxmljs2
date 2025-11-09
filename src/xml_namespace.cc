@@ -147,12 +147,12 @@ Napi::Value XmlNamespace::get_prefix(Napi::Env env) {
   return env.Null();
 }
 
-void XmlNamespace::Initialize(Napi::Env env, Napi::Object exports) {
+void XmlNamespace::Init(Napi::Env env, Napi::Object exports) {
   Napi::Function func =
       DefineClass(env, "Namespace",
                   {
-                      StaticMethod("href", &XmlNamespace::Href),
-                      StaticMethod("prefix", &XmlNamespace::Prefix),
+                      InstanceMethod("href", &XmlNamespace::Href),
+                      InstanceMethod("prefix", &XmlNamespace::Prefix),
                   });
 
   constructor = Napi::Persistent(func);

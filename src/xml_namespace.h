@@ -15,14 +15,14 @@ public:
   xmlNs *xml_obj;
   xmlDoc *context; // reference-managed context
 
-  static void Initialize(Napi::Env env, Napi::Object exports);
+  static void Init(Napi::Env env, Napi::Object exports);
   static Napi::FunctionReference constructor;
 
   static Napi::Value NewInstance(Napi::Env env, xmlNs *ns);
 
 protected:
-  static Napi::Value Href(const Napi::CallbackInfo &info);
-  static Napi::Value Prefix(const Napi::CallbackInfo &info);
+  Napi::Value Href(const Napi::CallbackInfo &info);
+  Napi::Value Prefix(const Napi::CallbackInfo &info);
 
   Napi::Value get_href(Napi::Env env);
   Napi::Value get_prefix(Napi::Env env);

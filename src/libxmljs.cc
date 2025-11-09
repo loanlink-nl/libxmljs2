@@ -228,9 +228,11 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   // Store the global environment for memory adjustments
   globalEnv = env;
 
-  XmlDocument::Initialize(env, exports);
-  // XmlTextWriter::Initialize(env, exports);
-  // XmlSaxParser::Initialize(env, exports);
+  XmlDocument::Init(env, exports);
+  XmlTextWriter::Init(env, exports);
+  XmlSaxParser::Init(env, exports);
+
+  SetupXmlNodeInheritance(env, exports);
 
   exports.Set("libxml_version", Napi::String::New(env, LIBXML_DOTTED_VERSION));
 

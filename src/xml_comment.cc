@@ -107,11 +107,24 @@ Napi::Value XmlComment::NewInstance(Napi::Env env, xmlNode *node) {
   return scope.Escape(instance).ToObject();
 }
 
-Napi::Function XmlComment::GetClass(Napi::Env env, Napi::Object exports) {
-  Napi::Function func = DefineClass(env, "Comment",
-                                    {
-                                        ObjectWrap<XmlComment>::StaticMethod("text", &XmlComment::Text),
-                                    });
+Napi::Function XmlComment::Init(Napi::Env env, Napi::Object exports) {
+  Napi::Function func =
+      DefineClass(env, "Comment",
+                  {
+                      InstanceMethod("text", &XmlComment::Text),
+
+                      InstanceMethod("doc", &XmlNode::Doc),
+                      InstanceMethod("parent", &XmlNode::Parent),
+                      InstanceMethod("namespace", &XmlNode::Namespace),
+                      InstanceMethod("namespaces", &XmlNode::Namespaces),
+                      InstanceMethod("prevSibling", &XmlNode::PrevSibling),
+                      InstanceMethod("nextSibling", &XmlNode::NextSibling),
+                      InstanceMethod("line", &XmlNode::LineNumber),
+                      InstanceMethod("type", &XmlNode::Type),
+                      InstanceMethod("toString", &XmlNode::ToString),
+                      InstanceMethod("remove", &XmlNode::Remove),
+                      InstanceMethod("clone", &XmlNode::Clone),
+                  });
 
   constructor = Napi::Persistent(func);
   constructor.SuppressDestruct();

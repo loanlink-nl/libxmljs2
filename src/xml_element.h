@@ -12,29 +12,27 @@ public:
   XmlElement(const Napi::CallbackInfo &info);
   virtual ~XmlElement();
 
-  static Napi::Function GetClass(Napi::Env env, Napi::Object exports);
-
-  static Napi::FunctionReference constructor;
+  static Napi::Function Init(Napi::Env env, Napi::Object exports);
 
   // create new xml element to wrap the node
   static Napi::Value NewInstance(Napi::Env env, xmlNode *node);
 
 protected:
-  static Napi::Value Name(const Napi::CallbackInfo &info);
-  static Napi::Value Attr(const Napi::CallbackInfo &info);
-  static Napi::Value Attrs(const Napi::CallbackInfo &info);
-  static Napi::Value Find(const Napi::CallbackInfo &info);
-  static Napi::Value Text(const Napi::CallbackInfo &info);
-  static Napi::Value Path(const Napi::CallbackInfo &info);
-  static Napi::Value Child(const Napi::CallbackInfo &info);
-  static Napi::Value ChildNodes(const Napi::CallbackInfo &info);
-  static Napi::Value AddChild(const Napi::CallbackInfo &info);
-  static Napi::Value AddCData(const Napi::CallbackInfo &info);
-  static Napi::Value NextElement(const Napi::CallbackInfo &info);
-  static Napi::Value PrevElement(const Napi::CallbackInfo &info);
-  static Napi::Value AddPrevSibling(const Napi::CallbackInfo &info);
-  static Napi::Value AddNextSibling(const Napi::CallbackInfo &info);
-  static Napi::Value Replace(const Napi::CallbackInfo &info);
+  Napi::Value Name(const Napi::CallbackInfo &info);
+  Napi::Value Attr(const Napi::CallbackInfo &info);
+  Napi::Value Attrs(const Napi::CallbackInfo &info);
+  Napi::Value Find(const Napi::CallbackInfo &info);
+  Napi::Value Text(const Napi::CallbackInfo &info);
+  Napi::Value Path(const Napi::CallbackInfo &info);
+  Napi::Value Child(const Napi::CallbackInfo &info);
+  Napi::Value ChildNodes(const Napi::CallbackInfo &info);
+  Napi::Value AddChild(const Napi::CallbackInfo &info);
+  Napi::Value AddCData(const Napi::CallbackInfo &info);
+  Napi::Value NextElement(const Napi::CallbackInfo &info);
+  Napi::Value PrevElement(const Napi::CallbackInfo &info);
+  Napi::Value AddPrevSibling(const Napi::CallbackInfo &info);
+  Napi::Value AddNextSibling(const Napi::CallbackInfo &info);
+  Napi::Value Replace(const Napi::CallbackInfo &info);
 
   void set_name(const char *name);
 
@@ -54,6 +52,9 @@ protected:
   void replace_element(xmlNode *element);
   void replace_text(const char *content);
   bool child_will_merge(xmlNode *child);
+
+private:
+  static Napi::FunctionReference constructor;
 };
 
 } // namespace libxmljs

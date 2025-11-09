@@ -10,7 +10,7 @@ class XmlProcessingInstruction : public XmlNode<XmlProcessingInstruction> {
 public:
   explicit XmlProcessingInstruction(const Napi::CallbackInfo &info);
 
-  static Napi::Function GetClass(Napi::Env env, Napi::Object exports);
+  static Napi::Function Init(Napi::Env env, Napi::Object exports);
 
   static Napi::FunctionReference constructor;
 
@@ -18,8 +18,8 @@ public:
   static Napi::Value NewInstance(Napi::Env env, xmlNode *node);
 
 protected:
-  static Napi::Value Name(const Napi::CallbackInfo &info);
-  static Napi::Value Text(const Napi::CallbackInfo &info);
+  Napi::Value Name(const Napi::CallbackInfo &info);
+  Napi::Value Text(const Napi::CallbackInfo &info);
 
   void set_name(const char *name);
 

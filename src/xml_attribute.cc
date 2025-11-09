@@ -7,8 +7,7 @@ Napi::FunctionReference XmlAttribute::constructor;
 
 XmlAttribute::XmlAttribute(const Napi::CallbackInfo &info) : XmlNode(info) {}
 
-XmlAttribute::~XmlAttribute() {
-}
+XmlAttribute::~XmlAttribute() {}
 
 Napi::Value XmlAttribute::NewInstance(Napi::Env env, xmlNode *xml_obj,
                                       const xmlChar *name,
@@ -157,23 +156,34 @@ AttributeConstructorCallback(const Napi::CallbackInfo &info) {
   return info.This();
 }
 
-Napi::Function XmlAttribute::GetClass(Napi::Env env, Napi::Object exports) {
-  Napi::Function func =
-      Napi::Function::New(env, AttributeConstructorCallback, "Attribute");
+Napi::Function XmlAttribute::Init(Napi::Env env, Napi::Object exports) {
+  Napi::Function ctor =
+      DefineClass(env, "Attribute",
+                  {
+                      InstanceMethod("name", &XmlAttribute::Name),
+                      InstanceMethod("value", &XmlAttribute::Value),
+                      InstanceMethod("node", &XmlAttribute::Node),
+                      InstanceMethod("namespace", &XmlAttribute::Namespace),
 
-  // Add instance methods to the prototype
-  Napi::Object proto = func.Get("prototype").As<Napi::Object>();
-  proto.Set("name", Napi::Function::New(env, XmlAttribute::Name));
-  proto.Set("value", Napi::Function::New(env, XmlAttribute::Value));
-  proto.Set("node", Napi::Function::New(env, XmlAttribute::Node));
-  proto.Set("namespace", Napi::Function::New(env, XmlAttribute::Namespace));
+                      InstanceMethod("doc", &XmlNode::Doc),
+                      InstanceMethod("parent", &XmlNode::Parent),
+                      InstanceMethod("namespace", &XmlNode::Namespace),
+                      InstanceMethod("namespaces", &XmlNode::Namespaces),
+                      InstanceMethod("prevSibling", &XmlNode::PrevSibling),
+                      InstanceMethod("nextSibling", &XmlNode::NextSibling),
+                      InstanceMethod("line", &XmlNode::LineNumber),
+                      InstanceMethod("type", &XmlNode::Type),
+                      InstanceMethod("toString", &XmlNode::ToString),
+                      InstanceMethod("remove", &XmlNode::Remove),
+                      InstanceMethod("clone", &XmlNode::Clone),
+                  });
 
-  constructor = Napi::Persistent(func);
+  constructor = Napi::Persistent(ctor);
   constructor.SuppressDestruct();
 
-  exports.Set("Attribute", func);
+  exports.Set("Attribute", ctor);
 
-  return func;
+  return ctor;
 }
 
 } // namespace libxmljs

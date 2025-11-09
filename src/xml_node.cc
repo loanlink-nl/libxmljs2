@@ -18,53 +18,37 @@ template <class T> Napi::FunctionReference XmlNode<T>::constructor;
 template <class T>
 XmlNode<T>::XmlNode(const Napi::CallbackInfo &info)
     : Napi::ObjectWrap<T>(info) {
-  printf("DEBUG: XmlNode::XmlNode called with %zu args\n", info.Length());
-  fflush(stdout);
   Napi::Env env = info.Env();
-  
+
   // If called with no arguments, the derived class constructor will set xml_obj
   if (info.Length() == 0) {
-    printf("DEBUG: XmlNode::XmlNode no args, derived class will set xml_obj\n");
-    fflush(stdout);
     this->xml_obj = NULL;
     this->ancestor = NULL;
     this->doc = NULL;
     return;
   }
-  
+
   if (info[0].IsExternal()) {
-    printf("DEBUG: XmlNode::XmlNode has external arg\n");
-    fflush(stdout);
     auto external = info[0].As<Napi::External<xmlNode>>();
     xmlNode *data = external.Data();
-    printf("DEBUG: XmlNode::XmlNode external data: %p\n", data);
-    fflush(stdout);
     this->xml_obj = data;
   } else {
-    printf("DEBUG: XmlNode::XmlNode THROWING ERROR - info.Length()=%zu, isExternal=%d\n", 
-           info.Length(), info.Length() > 0 ? info[0].IsExternal() : 0);
-    fflush(stdout);
     Napi::TypeError::New(env, "Invalid arguments").ThrowAsJavaScriptException();
     return;
   }
 
-  printf("DEBUG: XmlNode::XmlNode setting _private\n");
-  fflush(stdout);
   this->xml_obj->_private = this;
   this->ancestor = NULL;
 
   if ((xml_obj->doc != NULL) && (xml_obj->doc->_private != NULL)) {
-    printf("DEBUG: XmlNode::XmlNode referencing document\n");
-    fflush(stdout);
     this->doc = xml_obj->doc;
-    static_cast<XmlDocument *>(this->doc->_private)->Ref();
+
+    XmlDocument *doc = static_cast<XmlDocument *>(this->doc->_private);
+
+    // doc->Ref();
   }
 
-  printf("DEBUG: XmlNode::XmlNode ref_wrapped_ancestor\n");
-  fflush(stdout);
   this->ref_wrapped_ancestor();
-  printf("DEBUG: XmlNode::XmlNode complete\n");
-  fflush(stdout);
 }
 
 template <class T> Napi::Value XmlNode<T>::Doc(const Napi::CallbackInfo &info) {
@@ -551,7 +535,7 @@ template <class T> void XmlNode<T>::unref_wrapped_ancestor() {
 }
 
 template <class T> Napi::Value XmlNode<T>::get_doc(Napi::Env env) {
-  return XmlDocument::New(env, xml_obj->doc);
+  return XmlDocument::NewInstance(env, xml_obj->doc);
 }
 
 template <class T> Napi::Value XmlNode<T>::remove_namespace(Napi::Env env) {
@@ -617,7 +601,7 @@ template <class T> Napi::Value XmlNode<T>::get_parent(Napi::Env env) {
     return XmlElement::NewInstance(env, xml_obj->parent);
   }
 
-  return XmlDocument::New(env, xml_obj->doc);
+  return XmlDocument::NewInstance(env, xml_obj->doc);
 }
 
 template <class T> Napi::Value XmlNode<T>::get_prev_sibling(Napi::Env env) {
@@ -751,23 +735,24 @@ template <class T> Napi::Value XmlNode<T>::get_type(Napi::Env env) {
 }
 
 template <class T>
-Napi::Function XmlNode<T>::GetClass(Napi::Env env, Napi::Object exports) {
+Napi::Function XmlNode<T>::Init(Napi::Env env, Napi::Object exports) {
   Napi::Function func = Napi::ObjectWrap<T>::DefineClass(
       env, "XmlNode",
       {
-          Napi::ObjectWrap<T>::StaticMethod("doc", &XmlNode::Doc),
-          Napi::ObjectWrap<T>::StaticMethod("parent", &XmlNode::Parent),
-          Napi::ObjectWrap<T>::StaticMethod("namespace", &XmlNode::Namespace),
-          Napi::ObjectWrap<T>::StaticMethod("namespaces", &XmlNode::Namespaces),
-          Napi::ObjectWrap<T>::StaticMethod("prevSibling",
-                                            &XmlNode::PrevSibling),
-          Napi::ObjectWrap<T>::StaticMethod("nextSibling",
-                                            &XmlNode::NextSibling),
-          Napi::ObjectWrap<T>::StaticMethod("line", &XmlNode::LineNumber),
-          Napi::ObjectWrap<T>::StaticMethod("type", &XmlNode::Type),
-          Napi::ObjectWrap<T>::StaticMethod("toString", &XmlNode::ToString),
-          Napi::ObjectWrap<T>::StaticMethod("remove", &XmlNode::Remove),
-          Napi::ObjectWrap<T>::StaticMethod("clone", &XmlNode::Clone),
+          Napi::ObjectWrap<T>::InstanceMethod("doc", &XmlNode::Doc),
+          Napi::ObjectWrap<T>::InstanceMethod("parent", &XmlNode::Parent),
+          Napi::ObjectWrap<T>::InstanceMethod("namespace", &XmlNode::Namespace),
+          Napi::ObjectWrap<T>::InstanceMethod("namespaces",
+                                              &XmlNode::Namespaces),
+          Napi::ObjectWrap<T>::InstanceMethod("prevSibling",
+                                              &XmlNode::PrevSibling),
+          Napi::ObjectWrap<T>::InstanceMethod("nextSibling",
+                                              &XmlNode::NextSibling),
+          Napi::ObjectWrap<T>::InstanceMethod("line", &XmlNode::LineNumber),
+          Napi::ObjectWrap<T>::InstanceMethod("type", &XmlNode::Type),
+          Napi::ObjectWrap<T>::InstanceMethod("toString", &XmlNode::ToString),
+          Napi::ObjectWrap<T>::InstanceMethod("remove", &XmlNode::Remove),
+          Napi::ObjectWrap<T>::InstanceMethod("clone", &XmlNode::Clone),
       });
 
   constructor = Napi::Persistent(func);
@@ -778,13 +763,13 @@ Napi::Function XmlNode<T>::GetClass(Napi::Env env, Napi::Object exports) {
 
 // The magic happens here
 Napi::Value SetupXmlNodeInheritance(Napi::Env env, Napi::Object exports) {
-  Napi::Function XmlNode = XmlNodeInstance::GetClass(env, exports);
-  Napi::Function XmlElement = XmlElement::GetClass(env, exports);
-  Napi::Function XmlText = XmlText::GetClass(env, exports);
-  Napi::Function XmlComment = XmlComment::GetClass(env, exports);
+  Napi::Function XmlNode = XmlNodeInstance::Init(env, exports);
+  Napi::Function XmlElement = XmlElement::Init(env, exports);
+  Napi::Function XmlText = XmlText::Init(env, exports);
+  Napi::Function XmlComment = XmlComment::Init(env, exports);
   Napi::Function XmlProcessingInstruction =
-      XmlProcessingInstruction::GetClass(env, exports);
-  Napi::Function XmlAttribute = XmlAttribute::GetClass(env, exports);
+      XmlProcessingInstruction::Init(env, exports);
+  Napi::Function XmlAttribute = XmlAttribute::Init(env, exports);
 
   exports.Set("XmlNode", XmlNode);
   exports.Set("Element", XmlElement);
@@ -817,7 +802,14 @@ Napi::Value SetupXmlNodeInheritance(Napi::Env env, Napi::Object exports) {
   return exports;
 }
 
-XmlNodeInstance::~XmlNodeInstance() {
-}
+XmlNodeInstance::~XmlNodeInstance() {}
+
+// Explicit template instantiations for all XmlNode derivatives
+template class XmlNode<XmlElement>;
+template class XmlNode<XmlAttribute>;
+template class XmlNode<XmlText>;
+template class XmlNode<XmlComment>;
+template class XmlNode<XmlProcessingInstruction>;
+template class XmlNode<XmlNodeInstance>;
 
 } // namespace libxmljs

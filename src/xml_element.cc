@@ -13,7 +13,6 @@ namespace libxmljs {
 
 Napi::FunctionReference XmlElement::constructor;
 
-// doc, name, content
 XmlElement::XmlElement(const Napi::CallbackInfo &info) : XmlNode(info) {
   Napi::Env env = info.Env();
 
@@ -23,36 +22,38 @@ XmlElement::XmlElement(const Napi::CallbackInfo &info) : XmlNode(info) {
     return;
   }
 
-  XmlDocument *document =
-      Napi::ObjectWrap<XmlDocument>::Unwrap(info[0].As<Napi::Object>());
-  assert(document);
+  if (info.Length() == 3) {
+    XmlDocument *document =
+        Napi::ObjectWrap<XmlDocument>::Unwrap(info[0].As<Napi::Object>());
+    assert(document);
 
-  std::string name = info[1].As<Napi::String>().Utf8Value();
+    std::string name = info[1].As<Napi::String>().Utf8Value();
 
-  const char *content = NULL;
-  std::string contentStr;
-  if (info[2].IsString()) {
-    contentStr = info[2].As<Napi::String>().Utf8Value();
-    if (!contentStr.empty()) {
-      content = contentStr.c_str();
+    const char *content = NULL;
+    std::string contentStr;
+    if (info[2].IsString()) {
+      contentStr = info[2].As<Napi::String>().Utf8Value();
+      if (!contentStr.empty()) {
+        content = contentStr.c_str();
+      }
     }
+
+    xmlChar *encodedContent =
+        content
+            ? xmlEncodeSpecialChars(document->xml_obj, (const xmlChar *)content)
+            : NULL;
+    xmlNode *elem = xmlNewDocNode(
+        document->xml_obj, NULL, (const xmlChar *)name.c_str(), encodedContent);
+    if (encodedContent)
+      xmlFree(encodedContent);
+
+    XmlElement *element =
+        XmlNode::Unwrap(XmlNode::NewInstance(env, elem).ToObject());
+    elem->_private = element;
+
+    // this prevents the document from going away
+    info.This().As<Napi::Object>().Set("document", info[0]);
   }
-
-  xmlChar *encodedContent =
-      content
-          ? xmlEncodeSpecialChars(document->xml_obj, (const xmlChar *)content)
-          : NULL;
-  xmlNode *elem = xmlNewDocNode(document->xml_obj, NULL,
-                                (const xmlChar *)name.c_str(), encodedContent);
-  if (encodedContent)
-    xmlFree(encodedContent);
-
-  XmlElement *element =
-      XmlNode::Unwrap(XmlNode::NewInstance(env, elem).ToObject());
-  elem->_private = element;
-
-  // this prevents the document from going away
-  info.This().As<Napi::Object>().Set("document", info[0]);
 
   return;
 }
@@ -66,10 +67,11 @@ Napi::Value XmlElement::NewInstance(Napi::Env env, xmlNode *node) {
     return static_cast<XmlNode *>(node->_private)->Value();
   }
 
-  auto external = Napi::External<xmlNode>::New(env, node);
-  Napi::Object instance = constructor.New({external});
+  Napi::Value external = Napi::External<xmlNode>::New(env, &(*node));
 
-  return scope.Escape(instance).ToObject();
+  Napi::Object instance = XmlElement::constructor.New({external});
+
+  return scope.Escape(instance);
 }
 
 Napi::Value XmlElement::Name(const Napi::CallbackInfo &info) {
@@ -541,31 +543,37 @@ bool XmlElement::child_will_merge(xmlNode *child) {
           (xml_obj->last->name == child->name) && (xml_obj->last != child));
 }
 
-Napi::Function XmlElement::GetClass(Napi::Env env, Napi::Object exports) {
+Napi::Function XmlElement::Init(Napi::Env env, Napi::Object exports) {
   Napi::Function func = DefineClass(
       env, "Element",
       {
-          ObjectWrap<XmlElement>::StaticMethod("addChild",
-                                               &XmlElement::AddChild),
-          ObjectWrap<XmlElement>::StaticMethod("cdata", &XmlElement::AddCData),
-          ObjectWrap<XmlElement>::StaticMethod("_attr", &XmlElement::Attr),
-          ObjectWrap<XmlElement>::StaticMethod("attrs", &XmlElement::Attrs),
-          ObjectWrap<XmlElement>::StaticMethod("child", &XmlElement::Child),
-          ObjectWrap<XmlElement>::StaticMethod("childNodes",
-                                               &XmlElement::ChildNodes),
-          ObjectWrap<XmlElement>::StaticMethod("find", &XmlElement::Find),
-          ObjectWrap<XmlElement>::StaticMethod("nextElement",
-                                               &XmlElement::NextElement),
-          ObjectWrap<XmlElement>::StaticMethod("prevElement",
-                                               &XmlElement::PrevElement),
-          ObjectWrap<XmlElement>::StaticMethod("name", &XmlElement::Name),
-          ObjectWrap<XmlElement>::StaticMethod("path", &XmlElement::Path),
-          ObjectWrap<XmlElement>::StaticMethod("text", &XmlElement::Text),
-          ObjectWrap<XmlElement>::StaticMethod("addPrevSibling",
-                                               &XmlElement::AddPrevSibling),
-          ObjectWrap<XmlElement>::StaticMethod("addNextSibling",
-                                               &XmlElement::AddNextSibling),
-          ObjectWrap<XmlElement>::StaticMethod("replace", &XmlElement::Replace),
+          InstanceMethod("addChild", &XmlElement::AddChild),
+          InstanceMethod("cdata", &XmlElement::AddCData),
+          InstanceMethod("_attr", &XmlElement::Attr),
+          InstanceMethod("attrs", &XmlElement::Attrs),
+          InstanceMethod("child", &XmlElement::Child),
+          InstanceMethod("childNodes", &XmlElement::ChildNodes),
+          InstanceMethod("find", &XmlElement::Find),
+          InstanceMethod("nextElement", &XmlElement::NextElement),
+          InstanceMethod("prevElement", &XmlElement::PrevElement),
+          InstanceMethod("name", &XmlElement::Name),
+          InstanceMethod("path", &XmlElement::Path),
+          InstanceMethod("text", &XmlElement::Text),
+          InstanceMethod("addPrevSibling", &XmlElement::AddPrevSibling),
+          InstanceMethod("addNextSibling", &XmlElement::AddNextSibling),
+          InstanceMethod("replace", &XmlElement::Replace),
+
+          InstanceMethod("doc", &XmlNode::Doc),
+          InstanceMethod("parent", &XmlNode::Parent),
+          InstanceMethod("namespace", &XmlNode::Namespace),
+          InstanceMethod("namespaces", &XmlNode::Namespaces),
+          InstanceMethod("prevSibling", &XmlNode::PrevSibling),
+          InstanceMethod("nextSibling", &XmlNode::NextSibling),
+          InstanceMethod("line", &XmlNode::LineNumber),
+          InstanceMethod("type", &XmlNode::Type),
+          InstanceMethod("toString", &XmlNode::ToString),
+          InstanceMethod("remove", &XmlNode::Remove),
+          InstanceMethod("clone", &XmlNode::Clone),
       });
 
   constructor = Napi::Persistent(func);
