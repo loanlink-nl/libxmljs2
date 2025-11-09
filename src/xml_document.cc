@@ -61,72 +61,28 @@ Napi::Value XmlDocument::Version(const Napi::CallbackInfo &info) {
 Napi::Value XmlDocument::Root(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
-  printf("DEBUG: Root() called\n");
-  fflush(stdout);
-
-  printf("DEBUG: About to call xmlDocGetRootElement, xml_obj=%p\n",
-         (void *)xml_obj);
-  fflush(stdout);
-
   xmlNode *root = xmlDocGetRootElement(xml_obj);
 
-  printf("DEBUG: xmlDocGetRootElement returned, root=%p\n", (void *)root);
-  fflush(stdout);
-
   if (info.Length() == 0 || info[0].IsUndefined()) {
-    printf("DEBUG: Getter mode (no arguments)\n");
-    fflush(stdout);
-
     if (!root) {
-      printf("DEBUG: No root, returning null\n");
-      fflush(stdout);
       return env.Null();
     }
-
-    printf("DEBUG: About to call XmlElement::NewInstance\n");
-    fflush(stdout);
-
-    Napi::Value result = XmlElement::NewInstance(env, root);
-
-    printf("DEBUG: XmlElement::NewInstance returned successfully\n");
-    fflush(stdout);
-
-    return result;
+    return XmlElement::NewInstance(env, root);
   }
 
-  printf("DEBUG: Setter mode (has arguments)\n");
-  fflush(stdout);
-
   if (root != NULL) {
-    printf("DEBUG: Document already has root, throwing error\n");
-    fflush(stdout);
     Napi::Error::New(env, "Holder document already has a root node")
         .ThrowAsJavaScriptException();
     return env.Undefined();
   }
-
-  printf("DEBUG: About to unwrap element\n");
-  fflush(stdout);
 
   // set the element as the root element for the document
   // allows for proper retrieval of root later
   XmlElement *element =
       Napi::ObjectWrap<XmlElement>::Unwrap(info[0].As<Napi::Object>());
   assert(element);
-
-  printf("DEBUG: Element unwrapped, about to set as root\n");
-  fflush(stdout);
-
   xmlDocSetRootElement(xml_obj, element->xml_obj);
-
-  printf("DEBUG: Root set, about to ref ancestor\n");
-  fflush(stdout);
-
   element->ref_wrapped_ancestor();
-
-  printf("DEBUG: Ancestor ref'd, returning\n");
-  fflush(stdout);
-
   return info[0];
 }
 
