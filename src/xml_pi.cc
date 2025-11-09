@@ -1,5 +1,3 @@
-#include <node.h>
-
 #include <cstring>
 
 #include "libxmljs.h"
@@ -9,153 +7,169 @@
 #include "xml_pi.h"
 #include "xml_xpath_context.h"
 
-using namespace v8;
-
 namespace libxmljs {
 
-Nan::Persistent<FunctionTemplate>
-    XmlProcessingInstruction::constructor_template;
+Napi::FunctionReference XmlProcessingInstruction::constructor;
 
-// doc, content
-NAN_METHOD(XmlProcessingInstruction::New) {
-  NAN_CONSTRUCTOR_CHECK(ProcessingInstruction)
-  Nan::HandleScope scope;
+XmlProcessingInstruction::XmlProcessingInstruction(
+    const Napi::CallbackInfo &info)
+    : XmlNode(info) {
+  Napi::Env env = info.Env();
+
+  if (!info.IsConstructCall()) {
+    Napi::TypeError::New(
+        env, "ProcessingInstruction constructor must be called with new")
+        .ThrowAsJavaScriptException();
+    return;
+  }
 
   // if we were created for an existing xml node, then we don't need
   // to create a new node on the document
   if (info.Length() == 0) {
-    return info.GetReturnValue().Set(info.This());
-  }
-
-  DOCUMENT_ARG_CHECK
-  if (!info[1]->IsString()) {
-    Nan::ThrowError("name argument must be of type string");
     return;
   }
 
-  XmlDocument *document = Nan::ObjectWrap::Unwrap<XmlDocument>(doc);
-  assert(document);
-
-  Nan::Utf8String name(info[1]);
-
-  Local<Value> contentOpt;
-  if (info[2]->IsString()) {
-    contentOpt = info[2];
-  } else if (!info[2]->IsNullOrUndefined()) {
-    Nan::ThrowError("content argument must be of type string");
+  if (!info[0].IsObject()) {
+    Napi::TypeError::New(env, "Document argument must be an object")
+        .ThrowAsJavaScriptException();
     return;
   }
-  Nan::Utf8String contentRaw(contentOpt);
-  const char *content = (contentRaw.length()) ? *contentRaw : NULL;
 
-  xmlNode *pi = xmlNewDocPI(document->xml_obj, (const xmlChar *)*name,
+  if (!info[1].IsString()) {
+    Napi::TypeError::New(env, "name argument must be of type string")
+        .ThrowAsJavaScriptException();
+    return;
+  }
+
+  Napi::Object docObj = info[0].As<Napi::Object>();
+  XmlDocument *document = Napi::ObjectWrap<XmlDocument>::Unwrap(docObj);
+  if (document == nullptr) {
+    Napi::Error::New(env, "Invalid document argument")
+        .ThrowAsJavaScriptException();
+    return;
+  }
+
+  std::string name = info[1].As<Napi::String>().Utf8Value();
+
+  const char *content = nullptr;
+  std::string contentStr;
+  if (info.Length() > 2) {
+    if (info[2].IsString()) {
+      contentStr = info[2].As<Napi::String>().Utf8Value();
+      content = contentStr.c_str();
+    } else if (!info[2].IsNull() && !info[2].IsUndefined()) {
+      Napi::TypeError::New(env, "content argument must be of type string")
+          .ThrowAsJavaScriptException();
+      return;
+    }
+  }
+
+  xmlNode *pi = xmlNewDocPI(document->xml_obj, (const xmlChar *)name.c_str(),
                             (xmlChar *)content);
 
-  XmlProcessingInstruction *processing_instruction =
-      new XmlProcessingInstruction(pi);
-  pi->_private = processing_instruction;
-  processing_instruction->Wrap(info.This());
+  pi->_private = this;
 
   // this prevents the document from going away
-  Nan::Set(info.This(), Nan::New<String>("document").ToLocalChecked(),
-           info[0])
-      .Check();
-
-  return info.GetReturnValue().Set(info.This());
+  info.This().As<Napi::Object>().Set("document", info[0]);
 }
 
-NAN_METHOD(XmlProcessingInstruction::Name) {
-  Nan::HandleScope scope;
-  XmlProcessingInstruction *processing_instruction =
-      Nan::ObjectWrap::Unwrap<XmlProcessingInstruction>(info.This());
-  assert(processing_instruction);
+Napi::Value XmlProcessingInstruction::NewInstance(Napi::Env env,
+                                                  xmlNode *node) {
+  Napi::EscapableHandleScope scope(env);
 
-  if (info.Length() == 0)
-    return info.GetReturnValue().Set(processing_instruction->get_name());
-
-  Nan::Utf8String name(Nan::To<String>(info[0]).ToLocalChecked());
-  processing_instruction->set_name(*name);
-  return info.GetReturnValue().Set(info.This());
-}
-
-NAN_METHOD(XmlProcessingInstruction::Text) {
-  Nan::HandleScope scope;
-  XmlProcessingInstruction *processing_instruction =
-      Nan::ObjectWrap::Unwrap<XmlProcessingInstruction>(info.This());
-  assert(processing_instruction);
-
-  if (info.Length() == 0) {
-    return info.GetReturnValue().Set(processing_instruction->get_content());
-  } else {
-    processing_instruction->set_content(*Nan::Utf8String(info[0]));
+  if (node->_private) {
+    return static_cast<XmlNode *>(node->_private)->Value();
   }
 
-  return info.GetReturnValue().Set(info.This());
+  auto external = Napi::External<xmlNode>::New(env, node);
+  Napi::Object instance = constructor.New({external});
+  return scope.Escape(instance).ToObject();
+}
+
+Napi::Value XmlProcessingInstruction::Name(const Napi::CallbackInfo &info) {
+  Napi::Env env = info.Env();
+  XmlProcessingInstruction *processing_instruction =
+      Napi::ObjectWrap<XmlProcessingInstruction>::Unwrap(
+          info.This().As<Napi::Object>());
+
+  if (processing_instruction == nullptr) {
+    Napi::Error::New(env, "Invalid XmlProcessingInstruction instance")
+        .ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+
+  if (info.Length() == 0)
+    return processing_instruction->get_name(env);
+
+  std::string name = info[0].As<Napi::String>().Utf8Value();
+  processing_instruction->set_name(name.c_str());
+
+  return info.This();
+}
+
+Napi::Value XmlProcessingInstruction::Text(const Napi::CallbackInfo &info) {
+  Napi::Env env = info.Env();
+  XmlProcessingInstruction *processing_instruction =
+      Napi::ObjectWrap<XmlProcessingInstruction>::Unwrap(
+          info.This().As<Napi::Object>());
+
+  if (processing_instruction == nullptr) {
+    Napi::Error::New(env, "Invalid XmlProcessingInstruction instance")
+        .ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+
+  if (info.Length() == 0) {
+    return processing_instruction->get_content(env);
+  } else {
+    std::string content = info[0].As<Napi::String>().Utf8Value();
+    processing_instruction->set_content(content.c_str());
+  }
+
+  return info.This();
 }
 
 void XmlProcessingInstruction::set_name(const char *name) {
   xmlNodeSetName(xml_obj, (const xmlChar *)name);
 }
 
-Local<Value> XmlProcessingInstruction::get_name() {
-  Nan::EscapableHandleScope scope;
-  if (xml_obj->name)
-    return scope.Escape(
-        Nan::New<String>((const char *)xml_obj->name).ToLocalChecked());
-  else
-    return scope.Escape(Nan::Undefined());
+Napi::Value XmlProcessingInstruction::get_name(Napi::Env env) {
+  if (xml_obj->name) {
+    return Napi::String::New(env, (const char *)xml_obj->name);
+  } else {
+    return env.Undefined();
+  }
 }
 
 void XmlProcessingInstruction::set_content(const char *content) {
   xmlNodeSetContent(xml_obj, (xmlChar *)content);
 }
 
-Local<Value> XmlProcessingInstruction::get_content() {
-  Nan::EscapableHandleScope scope;
+Napi::Value XmlProcessingInstruction::get_content(Napi::Env env) {
   xmlChar *content = xmlNodeGetContent(xml_obj);
   if (content) {
-    Local<String> ret_content =
-        Nan::New<String>((const char *)content).ToLocalChecked();
+    Napi::String ret_content = Napi::String::New(env, (const char *)content);
     xmlFree(content);
-    return scope.Escape(ret_content);
+    return ret_content;
   }
 
-  return scope.Escape(Nan::New<String>("").ToLocalChecked());
+  return Napi::String::New(env, "");
 }
 
-Local<Object> XmlProcessingInstruction::New(xmlNode *node) {
-  Nan::EscapableHandleScope scope;
-  if (node->_private) {
-    return scope.Escape(static_cast<XmlNode *>(node->_private)->handle());
-  }
+Napi::Function XmlProcessingInstruction::GetClass(Napi::Env env, Napi::Object exports) {
+  Napi::Function func =
+      DefineClass(env, "ProcessingInstruction",
+                  {
+                      ObjectWrap<XmlProcessingInstruction>::StaticMethod("name", &XmlProcessingInstruction::Name),
+                      ObjectWrap<XmlProcessingInstruction>::StaticMethod("text", &XmlProcessingInstruction::Text),
+                  });
 
-  XmlProcessingInstruction *processing_instruction =
-      new XmlProcessingInstruction(node);
-  Local<Object> obj =
-      Nan::NewInstance(
-          Nan::GetFunction(Nan::New(constructor_template)).ToLocalChecked())
-          .ToLocalChecked();
-  processing_instruction->Wrap(obj);
-  return scope.Escape(obj);
-}
+  constructor = Napi::Persistent(func);
+  constructor.SuppressDestruct();
 
-XmlProcessingInstruction::XmlProcessingInstruction(xmlNode *node)
-    : XmlNode(node) {}
+  exports.Set("ProcessingInstruction", func);
 
-void XmlProcessingInstruction::Initialize(Local<Object> target) {
-  Nan::HandleScope scope;
-  Local<FunctionTemplate> t =
-      Nan::New<FunctionTemplate>(static_cast<NAN_METHOD((*))>(New));
-  t->Inherit(Nan::New(XmlNode::constructor_template));
-  t->InstanceTemplate()->SetInternalFieldCount(1);
-  constructor_template.Reset(t);
-
-  Nan::SetPrototypeMethod(t, "name", XmlProcessingInstruction::Name);
-
-  Nan::SetPrototypeMethod(t, "text", XmlProcessingInstruction::Text);
-
-  Nan::Set(target, Nan::New<String>("ProcessingInstruction").ToLocalChecked(),
-           Nan::GetFunction(t).ToLocalChecked());
+  return func;
 }
 
 } // namespace libxmljs

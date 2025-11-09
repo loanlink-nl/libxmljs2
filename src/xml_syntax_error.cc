@@ -7,22 +7,19 @@
 
 #include "xml_syntax_error.h"
 
-using namespace v8;
 namespace {
 
-void set_string_field(Local<Object> obj, const char *name, const char *value) {
-  Nan::HandleScope scope;
+void set_string_field(Napi::Env env, Napi::Object obj, const char *name,
+                      const char *value) {
   if (!value) {
     return;
   }
-  Nan::Set(obj, Nan::New<String>(name).ToLocalChecked(),
-           Nan::New<String>(value, strlen(value)).ToLocalChecked());
+  obj.Set(name, Napi::String::New(env, value, strlen(value)));
 }
 
-void set_numeric_field(Local<Object> obj, const char *name, const int value) {
-  Nan::HandleScope scope;
-  Nan::Set(obj, Nan::New<String>(name).ToLocalChecked(),
-           Nan::New<Int32>(value));
+void set_numeric_field(Napi::Env env, Napi::Object obj, const char *name,
+                       const int value) {
+  obj.Set(name, Napi::Number::New(env, value));
 }
 
 char *xmlCharToChar(xmlChar *xmlStr) {
@@ -41,50 +38,47 @@ char *xmlCharToChar(xmlChar *xmlStr) {
 
 namespace libxmljs {
 
-Local<Value> XmlSyntaxError::BuildSyntaxError(xmlError *error) {
-  Nan::EscapableHandleScope scope;
+Napi::Error XmlSyntaxError::BuildSyntaxError(Napi::Env env, xmlError *error) {
+  Napi::Error err = Napi::Error::New(env, error->message);
 
-  Local<Value> err =
-      Exception::Error(Nan::New<String>(error->message).ToLocalChecked());
-  Local<Object> out = Local<Object>::Cast(err);
-
-  set_numeric_field(out, "domain", error->domain);
-  set_numeric_field(out, "code", error->code);
-  set_string_field(out, "message", error->message);
-  set_numeric_field(out, "level", error->level);
-  set_numeric_field(out, "column", error->int2);
-  set_string_field(out, "file", error->file);
-  set_numeric_field(out, "line", error->line);
-  set_string_field(out, "str1", error->str1);
-  set_string_field(out, "str2", error->str2);
-  set_string_field(out, "str3", error->str3);
+  set_numeric_field(env, err.Value(), "domain", error->domain);
+  set_numeric_field(env, err.Value(), "code", error->code);
+  set_string_field(env, err.Value(), "message", error->message);
+  set_numeric_field(env, err.Value(), "level", error->level);
+  set_numeric_field(env, err.Value(), "column", error->int2);
+  set_string_field(env, err.Value(), "file", error->file);
+  set_numeric_field(env, err.Value(), "line", error->line);
+  set_string_field(env, err.Value(), "str1", error->str1);
+  set_string_field(env, err.Value(), "str2", error->str2);
+  set_string_field(env, err.Value(), "str3", error->str3);
 
   if (error->node) {
     xmlNode *node = static_cast<xmlNode *>(error->node);
     char *xpath = xmlCharToChar(xmlGetNodePath(node));
 
-    set_string_field(out, "xpath", xpath);
+    set_string_field(env, err.Value(), "xpath", xpath);
 
     free(xpath);
   }
 
   // only add if we have something interesting
   if (error->int1) {
-    set_numeric_field(out, "int1", error->int1);
+    set_numeric_field(env, err.Value(), "int1", error->int1);
   }
-  return scope.Escape(err);
+
+  return err;
 }
 
 void XmlSyntaxError::PushToArray(void *errs, xmlError *error) {
-  Nan::HandleScope scope;
-  Local<Array> errors = *reinterpret_cast<Local<Array> *>(errs);
-  // push method for array
-  Local<Function> push = Local<Function>::Cast(
-      Nan::Get(errors, Nan::New<String>("push").ToLocalChecked())
-          .ToLocalChecked());
+  ErrorArrayContext *ctx = static_cast<ErrorArrayContext *>(errs);
+  Napi::Env env = ctx->env;
+  Napi::Array errors = ctx->errors;
 
-  Local<Value> argv[1] = {XmlSyntaxError::BuildSyntaxError(error)};
-  Nan::Call(push, errors, 1, argv);
+  // Build the error object
+  Napi::Error error_obj = XmlSyntaxError::BuildSyntaxError(env, error);
+
+  // Push to array
+  errors.Set(errors.Length(), error_obj.Value());
 }
 
 } // namespace libxmljs

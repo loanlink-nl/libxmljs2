@@ -1,7 +1,5 @@
 // Copyright 2009, Squish Tech, LLC.
 
-#include <node.h>
-
 #include <libxml/parserInternals.h>
 
 #include "libxmljs.h"
@@ -15,12 +13,13 @@ libxmljs::XmlSaxParser *LXJS_GET_PARSER_FROM_CONTEXT(void *context) {
 
 #define EMIT_SYMBOL_STRING "emit"
 
-using namespace v8;
-Nan::Persistent<String> emit_symbol;
+// Global reference to the emit symbol string
+static Napi::Reference<Napi::String> emit_symbol;
 
 namespace libxmljs {
 
-XmlSaxParser::XmlSaxParser() : context_(NULL) {
+XmlSaxParser::XmlSaxParser(const Napi::CallbackInfo &info)
+    : Napi::ObjectWrap<XmlSaxParser>(info), context_(NULL) {
   xmlSAXHandler tmp = {
       0, // internalSubset;
       0, // isStandalone;
@@ -57,6 +56,14 @@ XmlSaxParser::XmlSaxParser() : context_(NULL) {
   };
 
   sax_handler_ = tmp;
+
+  // Check if we need to initialize as push parser
+  // This is determined by checking which constructor was called
+  // For SaxPushParser, we initialize immediately
+  if (info.Length() > 0 && info[0].IsBoolean() &&
+      info[0].As<Napi::Boolean>().Value()) {
+    initialize_push_parser();
+  }
 }
 
 XmlSaxParser::~XmlSaxParser() { this->releaseContext(); }
@@ -80,62 +87,47 @@ void XmlSaxParser::releaseContext() {
   }
 }
 
-NAN_METHOD(XmlSaxParser::NewParser) {
-  Nan::HandleScope scope;
-  XmlSaxParser *parser = new XmlSaxParser();
-  parser->Wrap(info.This());
-
-  return info.GetReturnValue().Set(info.This());
-}
-
-NAN_METHOD(XmlSaxParser::NewPushParser) {
-  Nan::HandleScope scope;
-  XmlSaxParser *parser = new XmlSaxParser();
-  parser->initialize_push_parser();
-  parser->Wrap(info.This());
-
-  return info.GetReturnValue().Set(info.This());
-}
-
-void XmlSaxParser::Callback(const char *what, int argc, Local<Value> argv[]) {
-  Nan::HandleScope scope;
+void XmlSaxParser::Callback(const char *what, int argc, Napi::Value *argv) {
+  Napi::Env env = this->Env();
+  Napi::HandleScope scope(env);
 
   // new arguments array with first argument being the event name
-  Local<Value> *args = new Local<Value>[argc + 1];
-  args[0] = Nan::New<String>(what).ToLocalChecked();
-  for (int i = 1; i <= argc; ++i) {
-    args[i] = argv[i - 1];
+  std::vector<napi_value> args;
+  args.push_back(Napi::String::New(env, what));
+  for (int i = 0; i < argc; ++i) {
+    args.push_back(argv[i]);
   }
 
   // get the 'emit' function from ourselves
-  Local<Value> emit_v =
-      Nan::Get(this->handle(), Nan::New(emit_symbol)).ToLocalChecked();
-  assert(emit_v->IsFunction());
+  Napi::Object self = this->Value();
+  Napi::Value emit_v = self.Get(emit_symbol.Value());
+
+  if (!emit_v.IsFunction()) {
+    return;
+  }
 
   // trigger the event
-  Nan::AsyncResource res("nan:makeCallback");
-  res.runInAsyncScope(this->handle(), Local<Function>::Cast(emit_v), argc + 1,
-                      args);
-
-  delete[] args;
+  Napi::Function emit_fn = emit_v.As<Napi::Function>();
+  emit_fn.Call(self, args);
 }
 
-NAN_METHOD(XmlSaxParser::Push) {
-  Nan::HandleScope scope;
-  LIBXMLJS_ARGUMENT_TYPE_CHECK(info[0], IsString,
-                               "Bad Argument: parseString requires a string");
+Napi::Value XmlSaxParser::Push(const Napi::CallbackInfo &info) {
+  Napi::Env env = info.Env();
 
-  XmlSaxParser *parser = Nan::ObjectWrap::Unwrap<XmlSaxParser>(info.This());
+  if (info.Length() < 1 || !info[0].IsString()) {
+    Napi::TypeError::New(env, "Bad Argument: parseString requires a string")
+        .ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
 
-  Nan::Utf8String parsable(Nan::To<String>(info[0]).ToLocalChecked());
+  std::string parsable = info[0].As<Napi::String>().Utf8Value();
 
-  bool terminate = info.Length() > 1
-                       ? Nan::To<Boolean>(info[1]).ToLocalChecked()->Value()
-                       : false;
+  bool terminate =
+      info.Length() > 1 ? info[1].As<Napi::Boolean>().Value() : false;
 
-  parser->push(*parsable, parsable.length(), terminate);
+  this->push(parsable.c_str(), parsable.length(), terminate);
 
-  return info.GetReturnValue().Set(Nan::True());
+  return Napi::Boolean::New(env, true);
 }
 
 void XmlSaxParser::initialize_push_parser() {
@@ -144,23 +136,24 @@ void XmlSaxParser::initialize_push_parser() {
   initializeContext();
 }
 
-void XmlSaxParser::push(const char *str, unsigned int size,
-                        bool terminate = false) {
+void XmlSaxParser::push(const char *str, unsigned int size, bool terminate) {
   xmlParseChunk(context_, str, size, terminate);
 }
 
-NAN_METHOD(XmlSaxParser::ParseString) {
-  Nan::HandleScope scope;
-  LIBXMLJS_ARGUMENT_TYPE_CHECK(info[0], IsString,
-                               "Bad Argument: parseString requires a string");
+Napi::Value XmlSaxParser::ParseString(const Napi::CallbackInfo &info) {
+  Napi::Env env = info.Env();
 
-  XmlSaxParser *parser = Nan::ObjectWrap::Unwrap<XmlSaxParser>(info.This());
+  if (info.Length() < 1 || !info[0].IsString()) {
+    Napi::TypeError::New(env, "Bad Argument: parseString requires a string")
+        .ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
 
-  Nan::Utf8String parsable(info[0]);
-  parser->parse_string(*parsable, parsable.length());
+  std::string parsable = info[0].As<Napi::String>().Utf8Value();
+  this->parse_string(parsable.c_str(), parsable.length());
 
   // TODO(sprsquish): return based on the parser
-  return info.GetReturnValue().Set(Nan::True());
+  return Napi::Boolean::New(env, true);
 }
 
 void XmlSaxParser::parse_string(const char *str, unsigned int size) {
@@ -190,22 +183,23 @@ void XmlSaxParser::start_element_ns(void *context, const xmlChar *localname,
                                     const xmlChar **namespaces,
                                     int nb_attributes, int nb_defaulted,
                                     const xmlChar **attributes) {
-  Nan::HandleScope scope;
   libxmljs::XmlSaxParser *parser = LXJS_GET_PARSER_FROM_CONTEXT(context);
+  Napi::Env env = parser->Env();
+  Napi::HandleScope scope(env);
 
   const int argc = 5;
   const xmlChar *nsPref, *nsUri, *attrLocal, *attrPref, *attrUri, *attrVal;
   int i, j;
 
-  Local<Array> elem;
+  Napi::Array elem;
 
   // Initialize argv with localname, prefix, and uri
-  Local<Value> argv[argc] = {
-      Nan::New<String>((const char *)localname).ToLocalChecked()};
+  Napi::Value argv[argc];
+  argv[0] = Napi::String::New(env, (const char *)localname);
 
   // Build attributes list
   // Each attribute is an array of [localname, prefix, URI, value, end]
-  Local<Array> attrList = Nan::New<Array>(nb_attributes);
+  Napi::Array attrList = Napi::Array::New(env, nb_attributes);
   if (attributes) {
     for (i = 0, j = 0; j < nb_attributes; i += 5, j++) {
       attrLocal = attributes[i + 0];
@@ -213,63 +207,53 @@ void XmlSaxParser::start_element_ns(void *context, const xmlChar *localname,
       attrUri = attributes[i + 2];
       attrVal = attributes[i + 3];
 
-      elem = Nan::New<Array>(4);
+      elem = Napi::Array::New(env, 4);
 
-      Nan::Set(elem, Nan::New<Integer>(0),
-               Nan::New<String>((const char *)attrLocal, xmlStrlen(attrLocal))
-                   .ToLocalChecked());
+      elem.Set(0u, Napi::String::New(env, (const char *)attrLocal,
+                                     xmlStrlen(attrLocal)));
+      elem.Set(1u, Napi::String::New(env, (const char *)attrPref,
+                                     xmlStrlen(attrPref)));
+      elem.Set(2u, Napi::String::New(env, (const char *)attrUri,
+                                     xmlStrlen(attrUri)));
+      elem.Set(3u, Napi::String::New(env, (const char *)attrVal,
+                                     attributes[i + 4] - attrVal));
 
-      Nan::Set(elem, Nan::New<Integer>(1),
-               Nan::New<String>((const char *)attrPref, xmlStrlen(attrPref))
-                   .ToLocalChecked());
-
-      Nan::Set(elem, Nan::New<Integer>(2),
-               Nan::New<String>((const char *)attrUri, xmlStrlen(attrUri))
-                   .ToLocalChecked());
-
-      Nan::Set(
-          elem, Nan::New<Integer>(3),
-          Nan::New<String>((const char *)attrVal, attributes[i + 4] - attrVal)
-              .ToLocalChecked());
-
-      Nan::Set(attrList, Nan::New<Integer>(j), elem);
+      attrList.Set(j, elem);
     }
   }
   argv[1] = attrList;
 
   if (prefix) {
-    argv[2] = Nan::New<String>((const char *)prefix).ToLocalChecked();
+    argv[2] = Napi::String::New(env, (const char *)prefix);
   } else {
-    argv[2] = Nan::Null();
+    argv[2] = env.Null();
   }
 
   if (uri) {
-    argv[3] = Nan::New<String>((const char *)uri).ToLocalChecked();
+    argv[3] = Napi::String::New(env, (const char *)uri);
   } else {
-    argv[3] = Nan::Null();
+    argv[3] = env.Null();
   }
 
   // Build namespace array of arrays [[prefix, ns], [prefix, ns]]
-  Local<Array> nsList = Nan::New<Array>(nb_namespaces);
+  Napi::Array nsList = Napi::Array::New(env, nb_namespaces);
   if (namespaces) {
     for (i = 0, j = 0; j < nb_namespaces; j++) {
       nsPref = namespaces[i++];
       nsUri = namespaces[i++];
 
-      elem = Nan::New<Array>(2);
+      elem = Napi::Array::New(env, 2);
       if (xmlStrlen(nsPref) == 0) {
-        Nan::Set(elem, Nan::New<Integer>(0), Nan::Null());
+        elem.Set(0u, env.Null());
       } else {
-        Nan::Set(elem, Nan::New<Integer>(0),
-                 Nan::New<String>((const char *)nsPref, xmlStrlen(nsPref))
-                     .ToLocalChecked());
+        elem.Set(0u, Napi::String::New(env, (const char *)nsPref,
+                                       xmlStrlen(nsPref)));
       }
 
-      Nan::Set(elem, Nan::New<Integer>(1),
-               Nan::New<String>((const char *)nsUri, xmlStrlen(nsUri))
-                   .ToLocalChecked());
+      elem.Set(1u,
+               Napi::String::New(env, (const char *)nsUri, xmlStrlen(nsUri)));
 
-      Nan::Set(nsList, Nan::New<Integer>(j), elem);
+      nsList.Set(j, elem);
     }
   }
   argv[4] = nsList;
@@ -279,49 +263,52 @@ void XmlSaxParser::start_element_ns(void *context, const xmlChar *localname,
 
 void XmlSaxParser::end_element_ns(void *context, const xmlChar *localname,
                                   const xmlChar *prefix, const xmlChar *uri) {
-  Nan::HandleScope scope;
   libxmljs::XmlSaxParser *parser = LXJS_GET_PARSER_FROM_CONTEXT(context);
+  Napi::Env env = parser->Env();
+  Napi::HandleScope scope(env);
 
-  Local<Value> argv[3];
-  argv[0] = Nan::New<String>((const char *)localname).ToLocalChecked();
+  Napi::Value argv[3];
+  argv[0] = Napi::String::New(env, (const char *)localname);
 
   if (prefix) {
-    argv[1] = Nan::New<String>((const char *)prefix).ToLocalChecked();
+    argv[1] = Napi::String::New(env, (const char *)prefix);
   } else {
-    argv[1] = Nan::Null();
+    argv[1] = env.Null();
   }
 
   if (uri) {
-    argv[2] = Nan::New<String>((const char *)uri).ToLocalChecked();
+    argv[2] = Napi::String::New(env, (const char *)uri);
   } else {
-    argv[2] = Nan::Null();
+    argv[2] = env.Null();
   }
 
   parser->Callback("endElementNS", 3, argv);
 }
 
 void XmlSaxParser::characters(void *context, const xmlChar *ch, int len) {
-  Nan::HandleScope scope;
   libxmljs::XmlSaxParser *parser = LXJS_GET_PARSER_FROM_CONTEXT(context);
+  Napi::Env env = parser->Env();
+  Napi::HandleScope scope(env);
 
-  Local<Value> argv[1] = {
-      Nan::New<String>((const char *)ch, len).ToLocalChecked()};
+  Napi::Value argv[1] = {Napi::String::New(env, (const char *)ch, len)};
   parser->Callback("characters", 1, argv);
 }
 
 void XmlSaxParser::comment(void *context, const xmlChar *value) {
-  Nan::HandleScope scope;
   libxmljs::XmlSaxParser *parser = LXJS_GET_PARSER_FROM_CONTEXT(context);
-  Local<Value> argv[1] = {
-      Nan::New<String>((const char *)value).ToLocalChecked()};
+  Napi::Env env = parser->Env();
+  Napi::HandleScope scope(env);
+
+  Napi::Value argv[1] = {Napi::String::New(env, (const char *)value)};
   parser->Callback("comment", 1, argv);
 }
 
 void XmlSaxParser::cdata_block(void *context, const xmlChar *value, int len) {
-  Nan::HandleScope scope;
   libxmljs::XmlSaxParser *parser = LXJS_GET_PARSER_FROM_CONTEXT(context);
-  Local<Value> argv[1] = {
-      Nan::New<String>((const char *)value, len).ToLocalChecked()};
+  Napi::Env env = parser->Env();
+  Napi::HandleScope scope(env);
+
+  Napi::Value argv[1] = {Napi::String::New(env, (const char *)value, len)};
   parser->Callback("cdata", 1, argv);
 }
 
@@ -354,16 +341,16 @@ static int vasprintf(char **buf, const char *fmt, va_list ap) {
 #endif /* WIN32 */
 
 void XmlSaxParser::warning(void *context, const char *msg, ...) {
-  Nan::HandleScope scope;
   libxmljs::XmlSaxParser *parser = LXJS_GET_PARSER_FROM_CONTEXT(context);
+  Napi::Env env = parser->Env();
+  Napi::HandleScope scope(env);
 
   char *message;
 
   va_list args;
   va_start(args, msg);
   if (vasprintf(&message, msg, args) >= 0) {
-    Local<Value> argv[1] = {
-        Nan::New<String>((const char *)message).ToLocalChecked()};
+    Napi::Value argv[1] = {Napi::String::New(env, (const char *)message)};
     parser->Callback("warning", 1, argv);
   }
 
@@ -372,16 +359,16 @@ void XmlSaxParser::warning(void *context, const char *msg, ...) {
 }
 
 void XmlSaxParser::error(void *context, const char *msg, ...) {
-  Nan::HandleScope scope;
   libxmljs::XmlSaxParser *parser = LXJS_GET_PARSER_FROM_CONTEXT(context);
+  Napi::Env env = parser->Env();
+  Napi::HandleScope scope(env);
 
   char *message;
 
   va_list args;
   va_start(args, msg);
   if (vasprintf(&message, msg, args) >= 0) {
-    Local<Value> argv[1] = {
-        Nan::New<String>((const char *)message).ToLocalChecked()};
+    Napi::Value argv[1] = {Napi::String::New(env, (const char *)message)};
     parser->Callback("error", 1, argv);
   }
 
@@ -389,36 +376,25 @@ void XmlSaxParser::error(void *context, const char *msg, ...) {
   free(message);
 }
 
-void XmlSaxParser::Initialize(Local<Object> target) {
-  Nan::HandleScope scope;
-
-  emit_symbol.Reset(Nan::New<String>(EMIT_SYMBOL_STRING).ToLocalChecked());
+Napi::Object XmlSaxParser::Initialize(Napi::Env env, Napi::Object exports) {
+  // Initialize the emit_symbol reference
+  emit_symbol = Napi::Reference<Napi::String>::New(
+      Napi::String::New(env, EMIT_SYMBOL_STRING), 1);
 
   // SAX Parser
-  Local<FunctionTemplate> parser_t = Nan::New<FunctionTemplate>(NewParser);
+  Napi::Function parser_func =
+      DefineClass(env, "SaxParser",
+                  {InstanceMethod("parseString", &XmlSaxParser::ParseString)});
 
-  Nan::Persistent<FunctionTemplate> sax_parser_template;
-  sax_parser_template.Reset(parser_t);
+  exports.Set("SaxParser", parser_func);
 
-  parser_t->InstanceTemplate()->SetInternalFieldCount(1);
+  // Push Parser - create a separate wrapper that passes true to constructor
+  Napi::Function push_parser_func = DefineClass(
+      env, "SaxPushParser", {InstanceMethod("push", &XmlSaxParser::Push)});
 
-  Nan::SetPrototypeMethod(parser_t, "parseString", XmlSaxParser::ParseString);
+  exports.Set("SaxPushParser", push_parser_func);
 
-  Nan::Set(target, Nan::New<String>("SaxParser").ToLocalChecked(),
-           Nan::GetFunction(parser_t).ToLocalChecked());
-
-  Local<FunctionTemplate> push_parser_t =
-      Nan::New<FunctionTemplate>(NewPushParser);
-
-  // Push Parser
-  Nan::Persistent<FunctionTemplate> sax_push_parser_template;
-  sax_push_parser_template.Reset(push_parser_t);
-
-  push_parser_t->InstanceTemplate()->SetInternalFieldCount(1);
-
-  Nan::SetPrototypeMethod(push_parser_t, "push", XmlSaxParser::Push);
-
-  Nan::Set(target, Nan::New<String>("SaxPushParser").ToLocalChecked(),
-           Nan::GetFunction(push_parser_t).ToLocalChecked());
+  return exports;
 }
+
 } // namespace libxmljs

@@ -5,19 +5,23 @@
 #include <libxml/xpath.h>
 
 #include "libxmljs.h"
+#include "xml_node.h"
 
 namespace libxmljs {
 
+// Utility class for XPath context operations
+// Not an ObjectWrap - just a utility class
 class XmlXpathContext {
 public:
   explicit XmlXpathContext(xmlNode *node);
   ~XmlXpathContext();
 
   void register_ns(const xmlChar *prefix, const xmlChar *uri);
-  v8::Local<v8::Value> evaluate(const xmlChar *xpath);
+  Napi::Value evaluate(Napi::Env env, const xmlChar *xpath);
 
   xmlXPathContext *ctxt;
 };
+
 } // namespace libxmljs
 
 #endif // SRC_XML_XPATH_CONTEXT_H_

@@ -44,6 +44,7 @@
 				"src/xml_text.cc",
 				"src/xml_pi.cc",
 				"src/xml_xpath_context.cc",
+				"src/html_document.cc",
 				"vendor/libxml/buf.c",
 				"vendor/libxml/catalog.c",
 				"vendor/libxml/chvalid.c",
