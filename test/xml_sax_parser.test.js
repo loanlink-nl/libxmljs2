@@ -146,7 +146,7 @@ describe('xml sax parser', () => {
 
   const filename = `${__dirname}/fixtures/sax_parser.xml`;
 
-  it.only('sax', () => {
+  it('sax', () => {
     const callbacks = clone(callbackTest);
     // eslint-disable-next-line no-sync
     const str = fs.readFileSync(filename, 'utf8');
