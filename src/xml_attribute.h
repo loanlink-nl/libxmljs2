@@ -11,7 +11,6 @@ namespace libxmljs {
 class XmlAttribute : public XmlNode<XmlAttribute> {
 public:
   XmlAttribute(const Napi::CallbackInfo &info);
-  virtual ~XmlAttribute();
 
   static Napi::Function Init(Napi::Env env, Napi::Object exports);
   static Napi::FunctionReference constructor;
@@ -23,7 +22,7 @@ public:
 
 protected:
   Napi::Value Name(const Napi::CallbackInfo &info);
-  Napi::Value Value(const Napi::CallbackInfo &info);
+  Napi::Value AttrValue(const Napi::CallbackInfo &info);
   Napi::Value Node(const Napi::CallbackInfo &info);
   Napi::Value Namespace(const Napi::CallbackInfo &info);
 

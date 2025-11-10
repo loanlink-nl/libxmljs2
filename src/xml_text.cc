@@ -28,30 +28,31 @@ XmlText::XmlText(const Napi::CallbackInfo &info) : XmlNode<XmlText>(info) {
 
   // if we were created for an existing xml node, then we don't need
   // to create a new node on the document
-  if (info.Length() == 0 || info[0].IsExternal()) {
-    return;
+  xmlNode *textNode;
+  if (info.Length() == 1 && info[0].IsExternal()) {
+    textNode = info[0].As<Napi::External<xmlNode>>().Data();
+  } else {
+    DOCUMENT_ARG_CHECK;
+
+    if (!info[1].IsString()) {
+      Napi::TypeError::New(env, "content argument must be of type string")
+          .ThrowAsJavaScriptException();
+      return;
+    }
+
+    Napi::Object docObj = info[0].ToObject();
+    XmlDocument *document = Napi::ObjectWrap<XmlDocument>::Unwrap(docObj);
+    if (document == nullptr) {
+      Napi::Error::New(env, "Invalid document argument")
+          .ThrowAsJavaScriptException();
+      return;
+    }
+
+    std::string content = info[1].ToString().Utf8Value();
+
+    textNode =
+        xmlNewDocText(document->xml_obj, (const xmlChar *)content.c_str());
   }
-
-  DOCUMENT_ARG_CHECK;
-
-  if (!info[1].IsString()) {
-    Napi::TypeError::New(env, "content argument must be of type string")
-        .ThrowAsJavaScriptException();
-    return;
-  }
-
-  Napi::Object docObj = info[0].ToObject();
-  XmlDocument *document = Napi::ObjectWrap<XmlDocument>::Unwrap(docObj);
-  if (document == nullptr) {
-    Napi::Error::New(env, "Invalid document argument")
-        .ThrowAsJavaScriptException();
-    return;
-  }
-
-  std::string content = info[1].ToString().Utf8Value();
-
-  xmlNode *textNode =
-      xmlNewDocText(document->xml_obj, (const xmlChar *)content.c_str());
 
   this->xml_obj = textNode;
   this->xml_obj->_private = this;
@@ -61,14 +62,15 @@ XmlText::XmlText(const Napi::CallbackInfo &info) : XmlNode<XmlText>(info) {
     this->doc = xml_obj->doc;
 
     XmlDocument *doc = static_cast<XmlDocument *>(this->doc->_private);
+    printf("ref doc text\n");
+    fflush(stdout);
     doc->Ref();
+    this->Value().Set("document", doc->Value());
   }
 
   this->Value().Set("_xmlNode",
                     Napi::External<xmlNode>::New(env, this->xml_obj));
   this->ref_wrapped_ancestor();
-
-  this->Value().Set("document", info[0]);
 }
 
 Napi::Value XmlText::NewInstance(Napi::Env env, xmlNode *node) {

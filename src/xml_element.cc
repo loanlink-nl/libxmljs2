@@ -18,15 +18,12 @@ Napi::FunctionReference XmlElement::constructor;
 XmlElement::XmlElement(const Napi::CallbackInfo &info) : XmlNode(info) {
   Napi::Env env = info.Env();
 
-  // if we were created for an existing xml node, then we don't need
-  // to create a new node on the document
-  if (info.Length() == 0 || info[0].IsExternal()) {
-    return;
-  }
+  xmlNode *elem;
+  if (info.Length() == 1 && info[0].IsExternal()) {
+    elem = info[0].As<Napi::External<xmlNode>>().Data();
+  } else if (info.Length() == 2 || info.Length() == 3) {
+    DOCUMENT_ARG_CHECK;
 
-  DOCUMENT_ARG_CHECK;
-
-  if (info.Length() == 2 || info.Length() == 3) {
     XmlDocument *document =
         Napi::ObjectWrap<XmlDocument>::Unwrap(info[0].ToObject());
     assert(document);
@@ -46,31 +43,34 @@ XmlElement::XmlElement(const Napi::CallbackInfo &info) : XmlNode(info) {
         content
             ? xmlEncodeSpecialChars(document->xml_obj, (const xmlChar *)content)
             : NULL;
-    xmlNode *elem = xmlNewDocNode(
-        document->xml_obj, NULL, (const xmlChar *)name.c_str(), encodedContent);
+    elem = xmlNewDocNode(document->xml_obj, NULL, (const xmlChar *)name.c_str(),
+                         encodedContent);
     if (encodedContent)
       xmlFree(encodedContent);
 
-    this->xml_obj = elem;
-    this->xml_obj->_private = this;
-    this->ancestor = NULL;
-
-    if ((xml_obj->doc != NULL) && (xml_obj->doc->_private != NULL)) {
-      this->doc = xml_obj->doc;
-
-      XmlDocument *doc = static_cast<XmlDocument *>(this->doc->_private);
-      doc->Ref();
-    }
-
-    this->Value().Set("_xmlNode",
-                      Napi::External<xmlNode>::New(env, this->xml_obj));
-    this->ref_wrapped_ancestor();
-
-    this->Value().Set("document", info[0]);
+  } else {
+    Napi::Error::New(env,
+                     "You must construct the element with 2 or 3 arguments")
+        .ThrowAsJavaScriptException();
+    return;
   }
-}
 
-XmlElement::~XmlElement() {}
+  this->xml_obj = elem;
+  this->xml_obj->_private = this;
+  this->ancestor = NULL;
+
+  if ((xml_obj->doc != NULL) && (xml_obj->doc->_private != NULL)) {
+    this->doc = xml_obj->doc;
+
+    XmlDocument *doc = static_cast<XmlDocument *>(this->doc->_private);
+    doc->Ref();
+    this->Value().Set("document", doc->Value());
+  }
+
+  this->Value().Set("_xmlNode",
+                    Napi::External<xmlNode>::New(env, this->xml_obj));
+  this->ref_wrapped_ancestor();
+}
 
 Napi::Value XmlElement::NewInstance(Napi::Env env, xmlNode *node) {
   Napi::EscapableHandleScope scope(env);

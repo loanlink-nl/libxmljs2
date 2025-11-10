@@ -66,6 +66,8 @@ XmlNamespace::XmlNamespace(const Napi::CallbackInfo &info)
     this->context = xml_obj->context;
     // a namespace must be created on a given node
     XmlDocument *doc = static_cast<XmlDocument *>(xml_obj->context->_private);
+    printf("ref doc ns\n");
+    fflush(stdout);
     doc->Ref();
   } else {
     this->context = NULL;
@@ -89,6 +91,8 @@ XmlNamespace::~XmlNamespace() {
     if (this->context->_private != NULL) {
       // release the hold and allow the document to be freed
       XmlDocument *doc = static_cast<XmlDocument *>(this->context->_private);
+      printf("Unref doc ns\n");
+      fflush(stdout);
       doc->Unref();
     }
     this->context = NULL;

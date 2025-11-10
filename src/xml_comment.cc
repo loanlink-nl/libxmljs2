@@ -11,33 +11,35 @@ namespace libxmljs {
 
 Napi::FunctionReference XmlComment::constructor;
 
+// JS-signature: (doc: Document, content?: string)
 XmlComment::XmlComment(const Napi::CallbackInfo &info) : XmlNode(info) {
   Napi::Env env = info.Env();
 
   // if we were created for an existing xml node, then we don't need
   // to create a new node on the document
-  if (info.Length() == 0 || info[0].IsExternal()) {
-    return;
+  xmlNode *comm;
+  if (info.Length() == 1 && info[0].IsExternal()) {
+    comm = info[0].As<Napi::External<xmlNode>>().Data();
+  } else {
+    DOCUMENT_ARG_CHECK;
+
+    Napi::Object docObj = info[0].ToObject();
+    XmlDocument *document = Napi::ObjectWrap<XmlDocument>::Unwrap(docObj);
+    if (document == nullptr) {
+      Napi::Error::New(env, "Invalid document argument")
+          .ThrowAsJavaScriptException();
+      return;
+    }
+
+    const char *content = nullptr;
+    std::string contentStr;
+    if (info.Length() > 1 && info[1].IsString()) {
+      contentStr = info[1].As<Napi::String>().Utf8Value();
+      content = contentStr.c_str();
+    }
+
+    comm = xmlNewDocComment(document->xml_obj, (xmlChar *)content);
   }
-
-  DOCUMENT_ARG_CHECK;
-
-  Napi::Object docObj = info[0].ToObject();
-  XmlDocument *document = Napi::ObjectWrap<XmlDocument>::Unwrap(docObj);
-  if (document == nullptr) {
-    Napi::Error::New(env, "Invalid document argument")
-        .ThrowAsJavaScriptException();
-    return;
-  }
-
-  const char *content = nullptr;
-  std::string contentStr;
-  if (info.Length() > 1 && info[1].IsString()) {
-    contentStr = info[1].As<Napi::String>().Utf8Value();
-    content = contentStr.c_str();
-  }
-
-  xmlNode *comm = xmlNewDocComment(document->xml_obj, (xmlChar *)content);
 
   this->xml_obj = comm;
   this->xml_obj->_private = this;
@@ -47,14 +49,15 @@ XmlComment::XmlComment(const Napi::CallbackInfo &info) : XmlNode(info) {
     this->doc = xml_obj->doc;
 
     XmlDocument *doc = static_cast<XmlDocument *>(this->doc->_private);
+    printf("ref doc comm\n");
+    fflush(stdout);
     doc->Ref();
+    this->Value().Set("document", doc->Value());
   }
 
   this->Value().Set("_xmlNode",
                     Napi::External<xmlNode>::New(env, this->xml_obj));
   this->ref_wrapped_ancestor();
-
-  this->Value().Set("document", info[0]);
 }
 
 Napi::Value XmlComment::Text(const Napi::CallbackInfo &info) {

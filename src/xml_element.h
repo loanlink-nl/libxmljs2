@@ -10,7 +10,6 @@ namespace libxmljs {
 class XmlElement : public XmlNode<XmlElement> {
 public:
   XmlElement(const Napi::CallbackInfo &info);
-  virtual ~XmlElement();
 
   static Napi::Function Init(Napi::Env env, Napi::Object exports);
 

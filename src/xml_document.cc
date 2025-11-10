@@ -48,6 +48,9 @@ XmlDocument::XmlDocument(const Napi::CallbackInfo &info)
 }
 
 XmlDocument::~XmlDocument() {
+  printf("~XmlDocument\n");
+  fflush(stdout);
+
   xml_obj->_private = NULL;
   xmlFreeDoc(xml_obj);
 }

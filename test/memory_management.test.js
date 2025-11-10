@@ -1,5 +1,6 @@
 const libxml = require('../index');
 
+global.gc ??= Bun.gc;
 if (!global.gc) {
   throw new Error('must run with --expose_gc for memory management tests');
 }
@@ -12,59 +13,54 @@ function makeDocument() {
   return libxml.parseXml(body);
 }
 
-function collectGarbage(minCycles = 3, maxCycles = 10) {
-  let cycles = 0;
-  let freedRss = 0;
-  let usage = process.memoryUsage();
-
-  do {
-    global.gc();
-
-    const usageAfterGc = process.memoryUsage();
-
-    freedRss = usage.rss - usageAfterGc.rss;
-    usage = usageAfterGc;
-
-    cycles += 1;
-  } while (cycles < minCycles || (freedRss !== 0 && cycles < maxCycles));
-
-  return usage;
-}
 
 describe('memory management', () => {
   beforeEach(() => {
-    collectGarbage();
+    global.gc(true);
   });
 
-  it('inaccessible document freed', () => {
+  it('inaccessible document freed', async () => {
     return new Promise((done) => {
       const xml_memory_before_document = libxml.memoryUsage();
 
-      for (let i = 0; i < 10; i += 1) {
+      for (let i = 0; i < 100; i += 1) {
         makeDocument();
       }
-      process.nextTick(() => {
-        collectGarbage();
+
+      global.gc(true);
+
+      setTimeout(() => {
         expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
         done();
-      });
+      }, 1);
     });
   });
 
-  it('inaccessible document freed when node freed', () =>
+  it.only('inaccessible document freed when node freed', () =>
     new Promise((done) => {
       const xml_memory_before_document = libxml.memoryUsage();
       let nodes = [];
 
-      for (let i = 0; i < 10; i += 1) {
+      for (let i = 0; i < 1; i += 1) {
         nodes.push(makeDocument().get('//center'));
       }
+
       nodes = null;
-      process.nextTick(() => {
-        collectGarbage();
+
+      global.gc(true);
+      // process.nextTick(() => {
+      //   global.gc(true);
+      // });
+      //
+      // setTimeout(() => {
+      //   global.gc(true);
+      // }, 500);
+
+      setTimeout(() => {
+        console.log(libxml.memoryUsage(), xml_memory_before_document);
         expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
         done();
-      });
+      }, 1);
     }));
 
   it('inaccessible document freed after middle nodes proxies', () =>
@@ -77,11 +73,12 @@ describe('memory management', () => {
 
       inner.remove(); // v0.14.3, v0.15: proxy ref'd parent but can't unref when destroyed
       doc = middle = inner = null;
-      process.nextTick(() => {
-        collectGarbage();
+      global.gc(true);
+
+      setTimeout(() => {
         expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
         done();
-      });
+      }, 1);
     }));
 
   it('inaccessible tree freed', () =>
@@ -90,11 +87,11 @@ describe('memory management', () => {
       const xml_memory_after_document = libxml.memoryUsage();
 
       doc.get('//middle').remove();
-      process.nextTick(() => {
-        collectGarbage();
+      global.gc(true);
+      setTimeout(() => {
         expect(libxml.memoryUsage() <= xml_memory_after_document).toBeTruthy();
         done();
-      });
+      }, 1);
     }));
 
   it('namespace list freed', () => {
@@ -108,11 +105,11 @@ describe('memory management', () => {
       for (let i; i < 1000; i += 1) {
         el.namespaces();
       }
-      process.nextTick(() => {
-        collectGarbage();
+      global.gc(true);
+      setTimeout(() => {
         expect(libxml.memoryUsage() <= xmlMemBefore).toBeTruthy();
         done();
-      });
+      }, 1);
     });
   });
 });

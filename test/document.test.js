@@ -1,24 +1,6 @@
 const libxml = require('../index');
 
-function rssAfterGarbageCollection(maxCycles = 10) {
-  let rss = libxml.memoryUsage();
-  let freedMemory = 0;
-
-  do {
-    global.gc ??= Bun.gc
-    global.gc();
-
-    const rssAfterGc = libxml.memoryUsage();
-
-    freedMemory = rss - rssAfterGc;
-    rss = rssAfterGc;
-
-    // eslint-disable-next-line no-param-reassign
-    maxCycles -= 1;
-  } while (freedMemory !== 0 && maxCycles > 0);
-
-  return rss;
-}
+global.gc ??= Bun.gc
 
 describe('document', () => {
   const VALIDATE_RSS_TOLERANCE = 1;
@@ -388,14 +370,19 @@ describe('document', () => {
     const xsdDoc = libxml.parseXml(xsd);
     const xmlDoc = libxml.parseXml(xml);
 
-    const rssBefore = rssAfterGarbageCollection();
+    const rssBefore = libxml.memoryUsage();
 
     for (let i = 0; i < 10000; i += 1) {
       xmlDoc.validate(xsdDoc);
     }
-    expect(
-      rssAfterGarbageCollection() - rssBefore < VALIDATE_RSS_TOLERANCE
-    ).toBeTruthy();
+
+    global.gc(true);
+
+    setTimeout(() => {
+      const rssAfter = libxml.memoryUsage();
+      expect(rssAfter - rssBefore < VALIDATE_RSS_TOLERANCE).toBeTruthy();
+      done();
+    }, 1);
   });
 
   it('validate inputs', () => {
@@ -469,14 +456,19 @@ describe('document', () => {
     const rngDoc = libxml.parseXml(rng);
     const xmlDoc = libxml.parseXml(xml_valid);
 
-    const rssBefore = rssAfterGarbageCollection();
+    const rssBefore = libxml.memoryUsage();
 
     for (let i = 0; i < 10000; i += 1) {
       xmlDoc.rngValidate(rngDoc);
     }
-    expect(
-      rssAfterGarbageCollection() - rssBefore < VALIDATE_RSS_TOLERANCE
-    ).toBeTruthy();
+
+    global.gc(true);
+
+    setTimeout(() => {
+      const rssAfter = libxml.memoryUsage();
+      expect(rssAfter - rssBefore < VALIDATE_RSS_TOLERANCE).toBeTruthy();
+      done();
+    }, 1);
   });
 
   describe('errors', () => {

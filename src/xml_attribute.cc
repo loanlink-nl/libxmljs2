@@ -1,13 +1,40 @@
 // Copyright 2009, Squish Tech, LLC.
 #include "xml_attribute.h"
+#include "xml_document.h"
 
 namespace libxmljs {
 
 Napi::FunctionReference XmlAttribute::constructor;
 
-XmlAttribute::XmlAttribute(const Napi::CallbackInfo &info) : XmlNode(info) {}
+XmlAttribute::XmlAttribute(const Napi::CallbackInfo &info) : XmlNode(info) {
+  Napi::Env env = info.Env();
 
-XmlAttribute::~XmlAttribute() {}
+  // if we were created for an existing xml node, then we don't need
+  // to create a new node on the document
+  if (info.Length() != 1 || !info[0].IsExternal()) {
+    return;
+  }
+
+  xmlNode *attr = info[0].As<Napi::External<xmlNode>>().Data();
+
+  this->xml_obj = attr;
+  this->xml_obj->_private = this;
+  this->ancestor = NULL;
+
+  if ((xml_obj->doc != NULL) && (xml_obj->doc->_private != NULL)) {
+    this->doc = xml_obj->doc;
+
+    XmlDocument *doc = static_cast<XmlDocument *>(this->doc->_private);
+    printf("ref doc comm\n");
+    fflush(stdout);
+    doc->Ref();
+    this->Value().Set("document", doc->Value());
+  }
+
+  this->Value().Set("_xmlNode",
+                    Napi::External<xmlNode>::New(env, this->xml_obj));
+  this->ref_wrapped_ancestor();
+}
 
 Napi::Value XmlAttribute::NewInstance(Napi::Env env, xmlNode *xml_obj,
                                       const xmlChar *name,
@@ -44,7 +71,7 @@ Napi::Value XmlAttribute::Name(const Napi::CallbackInfo &info) {
   return this->get_name(env);
 }
 
-Napi::Value XmlAttribute::Value(const Napi::CallbackInfo &info) {
+Napi::Value XmlAttribute::AttrValue(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   // attr.value('new value');
   if (info.Length() > 0) {
@@ -134,7 +161,7 @@ Napi::Function XmlAttribute::Init(Napi::Env env, Napi::Object exports) {
       DefineClass(env, "Attribute",
                   {
                       InstanceMethod("name", &XmlAttribute::Name),
-                      InstanceMethod("value", &XmlAttribute::Value),
+                      InstanceMethod("value", &XmlAttribute::AttrValue),
                       InstanceMethod("node", &XmlAttribute::Node),
                       InstanceMethod("namespace", &XmlAttribute::Namespace),
 

@@ -18,37 +18,39 @@ template <class T> Napi::FunctionReference XmlNode<T>::constructor;
 template <class T>
 XmlNode<T>::XmlNode(const Napi::CallbackInfo &info)
     : Napi::ObjectWrap<T>(info) {
-  Napi::Env env = info.Env();
+  // Napi::Env env = info.Env();
 
   // If called with no arguments, the derived class constructor will set xml_obj
-  if (info.Length() == 0) {
-    this->xml_obj = NULL;
-    this->ancestor = NULL;
-    this->doc = NULL;
-    return;
-  }
-
-  if (!info[0].IsExternal()) {
-    return;
-  }
-
-  auto external = info[0].As<Napi::External<xmlNode>>();
-  xmlNode *data = external.Data();
-
-  this->xml_obj = data;
-  this->xml_obj->_private = this;
+  // if (info.Length() == 0) {
+  this->xml_obj = NULL;
   this->ancestor = NULL;
+  this->doc = NULL;
+  //   return;
+  // }
 
-  if ((xml_obj->doc != NULL) && (xml_obj->doc->_private != NULL)) {
-    this->doc = xml_obj->doc;
-
-    XmlDocument *doc = static_cast<XmlDocument *>(this->doc->_private);
-    doc->Ref();
-  }
-
-  this->Value().Set("_xmlNode",
-                    Napi::External<xmlNode>::New(env, this->xml_obj));
-  this->ref_wrapped_ancestor();
+  // if (!info[0].IsExternal()) {
+  //   return;
+  // }
+  //
+  // auto external = info[0].As<Napi::External<xmlNode>>();
+  // xmlNode *data = external.Data();
+  //
+  // this->xml_obj = data;
+  // this->xml_obj->_private = this;
+  // this->ancestor = NULL;
+  //
+  // if ((xml_obj->doc != NULL) && (xml_obj->doc->_private != NULL)) {
+  //   this->doc = xml_obj->doc;
+  //
+  //   XmlDocument *doc = static_cast<XmlDocument *>(this->doc->_private);
+  //   printf("ref doc node\n");
+  //   fflush(stdout);
+  //   doc->Ref();
+  // }
+  //
+  // this->Value().Set("_xmlNode",
+  //                   Napi::External<xmlNode>::New(env, this->xml_obj));
+  // this->ref_wrapped_ancestor();
 }
 
 template <class T> Napi::Value XmlNode<T>::Doc(const Napi::CallbackInfo &info) {
@@ -444,9 +446,11 @@ template <class T> XmlNode<T>::~XmlNode() {
   if ((this->doc != NULL) && (this->doc->_private != NULL)) {
     static_cast<XmlDocument *>(this->doc->_private)->Unref();
   }
+
   this->unref_wrapped_ancestor();
-  if (xml_obj == NULL)
+  if (xml_obj == NULL) {
     return;
+  }
 
   xml_obj->_private = NULL;
   if (xml_obj->parent == NULL) {
