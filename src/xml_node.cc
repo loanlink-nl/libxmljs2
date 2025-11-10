@@ -443,7 +443,12 @@ xmlNode *get_wrapped_descendant(xmlNode *xml_obj,
 }
 
 template <class T> XmlNode<T>::~XmlNode() {
+  printf("~XmlNode %s\n", xml_obj->name);
+  fflush(stdout);
+
   if ((this->doc != NULL) && (this->doc->_private != NULL)) {
+    printf("Unreffing doc\n");
+    fflush(stdout);
     static_cast<XmlDocument *>(this->doc->_private)->Unref();
   }
 

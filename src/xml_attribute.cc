@@ -25,7 +25,7 @@ XmlAttribute::XmlAttribute(const Napi::CallbackInfo &info) : XmlNode(info) {
     this->doc = xml_obj->doc;
 
     XmlDocument *doc = static_cast<XmlDocument *>(this->doc->_private);
-    printf("ref doc comm\n");
+    printf("ref doc attr\n");
     fflush(stdout);
     doc->Ref();
     this->Value().Set("document", doc->Value());
@@ -50,7 +50,7 @@ Napi::Value XmlAttribute::NewInstance(Napi::Env env, xmlNode *xml_obj,
 
   auto external = Napi::External<xmlAttr>::New(env, attr);
   Napi::Object obj = constructor.New({external});
-  return scope.Escape(obj).ToObject();
+  return scope.Escape(obj);
 }
 
 Napi::Value XmlAttribute::NewInstance(Napi::Env env, xmlAttr *attr) {
@@ -63,7 +63,7 @@ Napi::Value XmlAttribute::NewInstance(Napi::Env env, xmlAttr *attr) {
 
   auto external = Napi::External<xmlAttr>::New(env, attr);
   Napi::Object obj = constructor.New({external});
-  return scope.Escape(obj).ToObject();
+  return scope.Escape(obj);
 }
 
 Napi::Value XmlAttribute::Name(const Napi::CallbackInfo &info) {

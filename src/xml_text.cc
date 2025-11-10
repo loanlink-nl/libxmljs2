@@ -82,7 +82,7 @@ Napi::Value XmlText::NewInstance(Napi::Env env, xmlNode *node) {
 
   auto external = Napi::External<xmlNode>::New(env, node);
   Napi::Object instance = constructor.New({external});
-  return scope.Escape(instance).ToObject();
+  return scope.Escape(instance);
 }
 
 Napi::Value XmlText::NextElement(const Napi::CallbackInfo &info) {

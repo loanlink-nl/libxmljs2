@@ -98,7 +98,7 @@ Napi::Value XmlComment::NewInstance(Napi::Env env, xmlNode *node) {
   auto external = Napi::External<xmlNode>::New(env, node);
   Napi::Object instance = cons.New({external});
 
-  return scope.Escape(instance).ToObject();
+  return scope.Escape(instance);
 }
 
 Napi::Function XmlComment::Init(Napi::Env env, Napi::Object exports) {

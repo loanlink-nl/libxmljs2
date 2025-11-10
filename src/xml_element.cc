@@ -55,6 +55,10 @@ XmlElement::XmlElement(const Napi::CallbackInfo &info) : XmlNode(info) {
     return;
   }
 
+  // Log elem
+  printf("XmlElement %s\n", elem->name);
+  fflush(stdout);
+
   this->xml_obj = elem;
   this->xml_obj->_private = this;
   this->ancestor = NULL;
@@ -62,6 +66,8 @@ XmlElement::XmlElement(const Napi::CallbackInfo &info) : XmlNode(info) {
   if ((xml_obj->doc != NULL) && (xml_obj->doc->_private != NULL)) {
     this->doc = xml_obj->doc;
 
+    printf("ref doc element\n");
+    fflush(stdout);
     XmlDocument *doc = static_cast<XmlDocument *>(this->doc->_private);
     doc->Ref();
     this->Value().Set("document", doc->Value());
@@ -80,7 +86,6 @@ Napi::Value XmlElement::NewInstance(Napi::Env env, xmlNode *node) {
   }
 
   Napi::Value external = Napi::External<xmlNode>::New(env, &(*node));
-
   Napi::Object instance = XmlElement::constructor.New({external});
 
   return scope.Escape(instance);

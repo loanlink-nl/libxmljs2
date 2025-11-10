@@ -111,7 +111,7 @@ Napi::Value XmlNamespace::NewInstance(Napi::Env env, xmlNs *node) {
 
   auto external = Napi::External<xmlNs>::New(env, node);
   Napi::Object obj = constructor.New({external});
-  return scope.Escape(obj).ToObject();
+  return scope.Escape(obj);
 }
 
 Napi::Value XmlNamespace::Href(const Napi::CallbackInfo &info) {
