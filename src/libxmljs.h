@@ -11,26 +11,18 @@
     return env.Undefined();                                                    \
   }
 
-#define NAPI_CONSTRUCTOR_CHECK(name)                                           \
-  if (!info.IsConstructCall()) {                                               \
-    Napi::TypeError::New(env, "Class constructor " #name                       \
-                              " cannot be invoked without 'new'")              \
-        .ThrowAsJavaScriptException();                                         \
-    return;                                                                    \
-  }
-
 #define DOCUMENT_ARG_CHECK                                                     \
   if (info.Length() == 0 || info[0].IsUndefined() || info[0].IsNull()) {       \
     Napi::Error::New(env, "document argument required")                        \
         .ThrowAsJavaScriptException();                                         \
-    return env.Undefined();                                                    \
+    return;                                                                    \
   }                                                                            \
   Napi::Object doc = info[0].As<Napi::Object>();                               \
   if (!doc.InstanceOf(                                                         \
           XmlDocument::constructor.Value().As<Napi::Function>())) {            \
     Napi::Error::New(env, "document argument must be an instance of Document") \
         .ThrowAsJavaScriptException();                                         \
-    return env.Undefined();                                                    \
+    return;                                                                    \
   }
 
 namespace libxmljs {

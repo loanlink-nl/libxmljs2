@@ -22,27 +22,17 @@ Napi::Value XmlText::get_path(Napi::Env env) {
   return js_obj;
 }
 
-// doc, name, content
+// JS-signature: (doc: Document, content: string)
 XmlText::XmlText(const Napi::CallbackInfo &info) : XmlNode<XmlText>(info) {
   Napi::Env env = info.Env();
 
-  if (!info.IsConstructCall()) {
-    Napi::TypeError::New(env, "Text constructor must be called with new")
-        .ThrowAsJavaScriptException();
-    return;
-  }
-
   // if we were created for an existing xml node, then we don't need
   // to create a new node on the document
-  if (info.Length() == 0) {
+  if (info.Length() == 0 || info[0].IsExternal()) {
     return;
   }
 
-  if (!info[0].IsObject()) {
-    Napi::TypeError::New(env, "Document argument must be an object")
-        .ThrowAsJavaScriptException();
-    return;
-  }
+  DOCUMENT_ARG_CHECK;
 
   if (!info[1].IsString()) {
     Napi::TypeError::New(env, "content argument must be of type string")
@@ -58,16 +48,19 @@ XmlText::XmlText(const Napi::CallbackInfo &info) : XmlNode<XmlText>(info) {
     return;
   }
 
-  std::string content = info[1].As<Napi::String>().Utf8Value();
+  std::string content = info[1].ToString().Utf8Value();
 
   xmlNode *textNode =
       xmlNewDocText(document->xml_obj, (const xmlChar *)content.c_str());
 
   XmlText *element = this;
   textNode->_private = element;
+  xml_obj = textNode;
 
   // this prevents the document from going away
-  info.This().As<Napi::Object>().Set("document", info[0]);
+  this->Value().Set("document", info[0]);
+  this->Value().Set("_xmlNode",
+                    Napi::External<xmlNode>::New(env, this->xml_obj));
 }
 
 Napi::Value XmlText::NewInstance(Napi::Env env, xmlNode *node) {
@@ -84,48 +77,21 @@ Napi::Value XmlText::NewInstance(Napi::Env env, xmlNode *node) {
 
 Napi::Value XmlText::NextElement(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlText *element =
-      Napi::ObjectWrap<XmlText>::Unwrap(info.This().As<Napi::Object>());
-
-  if (element == nullptr) {
-    Napi::Error::New(env, "Invalid XmlText instance")
-        .ThrowAsJavaScriptException();
-    return env.Undefined();
-  }
-
-  return element->get_next_element(env);
+  return this->get_next_element(env);
 }
 
 Napi::Value XmlText::PrevElement(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlText *element =
-      Napi::ObjectWrap<XmlText>::Unwrap(info.This().As<Napi::Object>());
-
-  if (element == nullptr) {
-    Napi::Error::New(env, "Invalid XmlText instance")
-        .ThrowAsJavaScriptException();
-    return env.Undefined();
-  }
-
-  return element->get_prev_element(env);
+  return this->get_prev_element(env);
 }
 
 Napi::Value XmlText::Text(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlText *element =
-      Napi::ObjectWrap<XmlText>::Unwrap(info.This().As<Napi::Object>());
-
-  if (element == nullptr) {
-    Napi::Error::New(env, "Invalid XmlText instance")
-        .ThrowAsJavaScriptException();
-    return env.Undefined();
-  }
-
   if (info.Length() == 0) {
-    return element->get_content(env);
+    return this->get_content(env);
   } else {
-    std::string content = info[0].As<Napi::String>().Utf8Value();
-    element->set_content(content.c_str());
+    std::string content = info[0].ToString().Utf8Value();
+    this->set_content(content.c_str());
   }
 
   return info.This();
@@ -133,16 +99,8 @@ Napi::Value XmlText::Text(const Napi::CallbackInfo &info) {
 
 Napi::Value XmlText::AddPrevSibling(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlText *text =
-      Napi::ObjectWrap<XmlText>::Unwrap(info.This().As<Napi::Object>());
 
-  if (text == nullptr) {
-    Napi::Error::New(env, "Invalid XmlText instance")
-        .ThrowAsJavaScriptException();
-    return env.Undefined();
-  }
-
-  Napi::Object siblingObj = info[0].As<Napi::Object>();
+  Napi::Object siblingObj = info[0].ToObject();
   XmlNode *new_sibling = Napi::ObjectWrap<XmlNode>::Unwrap(siblingObj);
   if (new_sibling == nullptr) {
     Napi::Error::New(env, "Invalid sibling node argument")
@@ -150,33 +108,25 @@ Napi::Value XmlText::AddPrevSibling(const Napi::CallbackInfo &info) {
     return env.Undefined();
   }
 
-  xmlNode *imported_sibling = text->import_node(new_sibling->xml_obj);
+  xmlNode *imported_sibling = this->import_node(new_sibling->xml_obj);
   if (imported_sibling == NULL) {
     Napi::Error::New(
         env, "Could not add sibling. Failed to copy node to new Document.")
         .ThrowAsJavaScriptException();
     return env.Undefined();
   } else if ((new_sibling->xml_obj == imported_sibling) &&
-             text->prev_sibling_will_merge(imported_sibling)) {
+             this->prev_sibling_will_merge(imported_sibling)) {
     imported_sibling = xmlCopyNode(imported_sibling, 0);
   }
-  text->add_prev_sibling(imported_sibling);
+  this->add_prev_sibling(imported_sibling);
 
   return info[0];
 }
 
 Napi::Value XmlText::AddNextSibling(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlText *text =
-      Napi::ObjectWrap<XmlText>::Unwrap(info.This().As<Napi::Object>());
 
-  if (text == nullptr) {
-    Napi::Error::New(env, "Invalid XmlText instance")
-        .ThrowAsJavaScriptException();
-    return env.Undefined();
-  }
-
-  Napi::Object siblingObj = info[0].As<Napi::Object>();
+  Napi::Object siblingObj = info[0].ToObject();
   XmlNode *new_sibling = Napi::ObjectWrap<XmlNode>::Unwrap(siblingObj);
   if (new_sibling == nullptr) {
     Napi::Error::New(env, "Invalid sibling node argument")
@@ -184,37 +134,28 @@ Napi::Value XmlText::AddNextSibling(const Napi::CallbackInfo &info) {
     return env.Undefined();
   }
 
-  xmlNode *imported_sibling = text->import_node(new_sibling->xml_obj);
+  xmlNode *imported_sibling = this->import_node(new_sibling->xml_obj);
   if (imported_sibling == NULL) {
     Napi::Error::New(
         env, "Could not add sibling. Failed to copy node to new Document.")
         .ThrowAsJavaScriptException();
     return env.Undefined();
   } else if ((new_sibling->xml_obj == imported_sibling) &&
-             text->next_sibling_will_merge(imported_sibling)) {
+             this->next_sibling_will_merge(imported_sibling)) {
     imported_sibling = xmlCopyNode(imported_sibling, 0);
   }
-  text->add_next_sibling(imported_sibling);
+  this->add_next_sibling(imported_sibling);
 
   return info[0];
 }
 
 Napi::Value XmlText::Replace(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlText *element =
-      Napi::ObjectWrap<XmlText>::Unwrap(info.This().As<Napi::Object>());
-
-  if (element == nullptr) {
-    Napi::Error::New(env, "Invalid XmlText instance")
-        .ThrowAsJavaScriptException();
-    return env.Undefined();
-  }
-
   if (info[0].IsString()) {
-    std::string content = info[0].As<Napi::String>().Utf8Value();
-    element->replace_text(content.c_str());
+    std::string content = info[0].ToString().Utf8Value();
+    this->replace_text(content.c_str());
   } else {
-    Napi::Object siblingObj = info[0].As<Napi::Object>();
+    Napi::Object siblingObj = info[0].ToObject();
     XmlText *new_sibling = Napi::ObjectWrap<XmlText>::Unwrap(siblingObj);
     if (new_sibling == nullptr) {
       Napi::Error::New(env, "Invalid replacement node argument")
@@ -222,14 +163,14 @@ Napi::Value XmlText::Replace(const Napi::CallbackInfo &info) {
       return env.Undefined();
     }
 
-    xmlNode *imported_sibling = element->import_node(new_sibling->xml_obj);
+    xmlNode *imported_sibling = this->import_node(new_sibling->xml_obj);
     if (imported_sibling == NULL) {
       Napi::Error::New(
           env, "Could not replace. Failed to copy node to new Document.")
           .ThrowAsJavaScriptException();
       return env.Undefined();
     }
-    element->replace_element(imported_sibling);
+    this->replace_element(imported_sibling);
   }
 
   return info[0];
@@ -237,31 +178,14 @@ Napi::Value XmlText::Replace(const Napi::CallbackInfo &info) {
 
 Napi::Value XmlText::Path(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlText *text =
-      Napi::ObjectWrap<XmlText>::Unwrap(info.This().As<Napi::Object>());
-
-  if (text == nullptr) {
-    Napi::Error::New(env, "Invalid XmlText instance")
-        .ThrowAsJavaScriptException();
-    return env.Undefined();
-  }
-
-  return text->get_path(env);
+  return this->get_path(env);
 }
 
 Napi::Value XmlText::Name(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlText *text =
-      Napi::ObjectWrap<XmlText>::Unwrap(info.This().As<Napi::Object>());
-
-  if (text == nullptr) {
-    Napi::Error::New(env, "Invalid XmlText instance")
-        .ThrowAsJavaScriptException();
-    return env.Undefined();
-  }
 
   if (info.Length() == 0)
-    return text->get_name(env);
+    return this->get_name(env);
   return info.This();
 }
 

@@ -51,27 +51,19 @@ XmlNode<T>::XmlNode(const Napi::CallbackInfo &info)
 
 template <class T> Napi::Value XmlNode<T>::Doc(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlNode *node =
-      Napi::ObjectWrap<XmlNode>::Unwrap(info.This().As<Napi::Object>());
-  assert(node);
-
-  return node->get_doc(env);
+  return this->get_doc(env);
 }
 
 template <class T>
 Napi::Value XmlNode<T>::Namespace(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlNode *node =
-      Napi::ObjectWrap<XmlNode>::Unwrap(info.This().As<Napi::Object>());
-  assert(node);
-
   // #namespace() Get the node's namespace
   if (info.Length() == 0) {
-    return node->get_namespace(env);
+    return this->get_namespace(env);
   }
 
   if (info[0].IsNull())
-    return node->remove_namespace(env);
+    return this->remove_namespace(env);
 
   XmlNamespace *ns = NULL;
 
@@ -84,7 +76,7 @@ Napi::Value XmlNode<T>::Namespace(const Napi::CallbackInfo &info) {
   // if the namespace has already been defined on the node, just set it
   if (info[0].IsString()) {
     std::string ns_to_find = info[0].As<Napi::String>().Utf8Value();
-    xmlNs *found_ns = node->find_namespace(ns_to_find.c_str());
+    xmlNs *found_ns = this->find_namespace(ns_to_find.c_str());
     if (found_ns) {
       // maybe build
       Napi::Object existing =
@@ -116,83 +108,55 @@ Napi::Value XmlNode<T>::Namespace(const Napi::CallbackInfo &info) {
     ns = Napi::ObjectWrap<XmlNamespace>::Unwrap(new_ns);
   }
 
-  node->set_namespace(ns->xml_obj);
+  this->set_namespace(ns->xml_obj);
   return info.This();
 }
 
 template <class T>
 Napi::Value XmlNode<T>::Namespaces(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlNode *node =
-      Napi::ObjectWrap<XmlNode>::Unwrap(info.This().As<Napi::Object>());
-  assert(node);
-
   // ignore everything but a literal true; different from IsFalse
   if ((info.Length() == 0) || !info[0].IsBoolean() ||
       !info[0].As<Napi::Boolean>().Value()) {
-    return node->get_all_namespaces(env);
+    return this->get_all_namespaces(env);
   }
 
-  return node->get_local_namespaces(env);
+  return this->get_local_namespaces(env);
 }
 
 template <class T>
 Napi::Value XmlNode<T>::Parent(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlNode *node =
-      Napi::ObjectWrap<XmlNode>::Unwrap(info.This().As<Napi::Object>());
-  assert(node);
-
-  return node->get_parent(env);
+  return this->get_parent(env);
 }
 
 template <class T>
 Napi::Value XmlNode<T>::PrevSibling(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlNode *node =
-      Napi::ObjectWrap<XmlNode>::Unwrap(info.This().As<Napi::Object>());
-  assert(node);
-
-  return node->get_prev_sibling(env);
+  return this->get_prev_sibling(env);
 }
 
 template <class T>
 Napi::Value XmlNode<T>::NextSibling(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlNode *node =
-      Napi::ObjectWrap<XmlNode>::Unwrap(info.This().As<Napi::Object>());
-  assert(node);
-
-  return node->get_next_sibling(env);
+  return this->get_next_sibling(env);
 }
 
 template <class T>
 Napi::Value XmlNode<T>::LineNumber(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlNode *node =
-      Napi::ObjectWrap<XmlNode>::Unwrap(info.This().As<Napi::Object>());
-  assert(node);
-
-  return node->get_line_number(env);
+  return this->get_line_number(env);
 }
 
 template <class T>
 Napi::Value XmlNode<T>::Type(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlNode *node =
-      Napi::ObjectWrap<XmlNode>::Unwrap(info.This().As<Napi::Object>());
-  assert(node);
-
-  return node->get_type(env);
+  return this->get_type(env);
 }
 
 template <class T>
 Napi::Value XmlNode<T>::ToString(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlNode *node =
-      Napi::ObjectWrap<XmlNode>::Unwrap(info.This().As<Napi::Object>());
-  assert(node);
-
   int options = 0;
 
   if (info.Length() > 0) {
@@ -247,17 +211,14 @@ Napi::Value XmlNode<T>::ToString(const Napi::CallbackInfo &info) {
       }
     }
   }
-  return node->to_string(env, options);
+
+  return this->to_string(env, options);
 }
 
 template <class T>
 Napi::Value XmlNode<T>::Remove(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlNode *node =
-      Napi::ObjectWrap<XmlNode>::Unwrap(info.This().As<Napi::Object>());
-  assert(node);
-
-  node->remove();
+  this->remove();
 
   return info.This();
 }
@@ -265,16 +226,12 @@ Napi::Value XmlNode<T>::Remove(const Napi::CallbackInfo &info) {
 template <class T>
 Napi::Value XmlNode<T>::Clone(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlNode *node =
-      Napi::ObjectWrap<XmlNode>::Unwrap(info.This().As<Napi::Object>());
-  assert(node);
-
   bool recurse = true;
 
   if (info.Length() == 1 && info[0].IsBoolean())
-    recurse = info[0].As<Napi::Boolean>().Value();
+    recurse = info[0].ToBoolean().Value();
 
-  return node->clone(env, recurse);
+  return this->clone(env, recurse);
 }
 
 template <class T>

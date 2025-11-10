@@ -41,50 +41,30 @@ Napi::Value XmlAttribute::NewInstance(Napi::Env env, xmlAttr *attr) {
 
 Napi::Value XmlAttribute::Name(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlNode *node =
-      Napi::ObjectWrap<XmlNode>::Unwrap(info.This().As<Napi::Object>());
-  XmlAttribute *attr = static_cast<XmlAttribute *>(node);
-  assert(attr);
-
-  return attr->get_name(env);
+  return this->get_name(env);
 }
 
 Napi::Value XmlAttribute::Value(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlNode *node =
-      Napi::ObjectWrap<XmlNode>::Unwrap(info.This().As<Napi::Object>());
-  XmlAttribute *attr = static_cast<XmlAttribute *>(node);
-  assert(attr);
-
   // attr.value('new value');
   if (info.Length() > 0) {
     std::string value_str = info[0].As<Napi::String>().Utf8Value();
-    attr->set_value(value_str.c_str());
+    this->set_value(value_str.c_str());
     return info.This();
   }
 
   // attr.value();
-  return attr->get_value(env);
+  return this->get_value(env);
 }
 
 Napi::Value XmlAttribute::Node(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlNode *node =
-      Napi::ObjectWrap<XmlNode>::Unwrap(info.This().As<Napi::Object>());
-  XmlAttribute *attr = static_cast<XmlAttribute *>(node);
-  assert(attr);
-
-  return attr->get_element(env);
+  return this->get_element(env);
 }
 
 Napi::Value XmlAttribute::Namespace(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlNode *node =
-      Napi::ObjectWrap<XmlNode>::Unwrap(info.This().As<Napi::Object>());
-  XmlAttribute *attr = static_cast<XmlAttribute *>(node);
-  assert(attr);
-
-  return attr->get_namespace(env);
+  return this->get_namespace(env);
 }
 
 Napi::Value XmlAttribute::get_name(Napi::Env env) {
@@ -147,13 +127,6 @@ Napi::Value XmlAttribute::get_namespace(Napi::Env env) {
     return env.Null();
   }
   return XmlNamespace::NewInstance(env, xml_obj->ns);
-}
-
-static Napi::Value
-AttributeConstructorCallback(const Napi::CallbackInfo &info) {
-  // This is only called when constructing new instances from C++
-  // The actual wrapping happens in XmlAttribute::NewInstance
-  return info.This();
 }
 
 Napi::Function XmlAttribute::Init(Napi::Env env, Napi::Object exports) {

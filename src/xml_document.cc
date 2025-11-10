@@ -34,7 +34,7 @@ Napi::Value XmlDocument::Encoding(const Napi::CallbackInfo &info) {
   }
 
   // set the encoding otherwise
-  std::string encoding = info[0].As<Napi::String>().Utf8Value();
+  std::string encoding = info[0].ToString().Utf8Value();
   setEncoding(encoding.c_str());
   return info.This();
 }
@@ -79,7 +79,7 @@ Napi::Value XmlDocument::Root(const Napi::CallbackInfo &info) {
   // set the element as the root element for the document
   // allows for proper retrieval of root later
   XmlElement *element =
-      Napi::ObjectWrap<XmlElement>::Unwrap(info[0].As<Napi::Object>());
+      Napi::ObjectWrap<XmlElement>::Unwrap(info[0].ToObject());
   assert(element);
   xmlDocSetRootElement(xml_obj, element->xml_obj);
   element->ref_wrapped_ancestor();
@@ -126,7 +126,7 @@ Napi::Value XmlDocument::GetDtd(const Napi::CallbackInfo &info) {
 Napi::Value XmlDocument::SetDtd(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
-  std::string name = info[0].As<Napi::String>().Utf8Value();
+  std::string name = info[0].ToString().Utf8Value();
 
   const char *extId = NULL;
   const char *sysId = NULL;
@@ -135,28 +135,26 @@ Napi::Value XmlDocument::SetDtd(const Napi::CallbackInfo &info) {
   std::string sysIdStr;
 
   if (info.Length() > 1 && info[1].IsString()) {
-    extIdStr = info[1].As<Napi::String>().Utf8Value();
+    extIdStr = info[1].ToString().Utf8Value();
     if (!extIdStr.empty()) {
       extId = extIdStr.c_str();
     }
   }
   if (info.Length() > 2 && info[2].IsString()) {
-    sysIdStr = info[2].As<Napi::String>().Utf8Value();
+    sysIdStr = info[2].ToString().Utf8Value();
     if (!sysIdStr.empty()) {
       sysId = sysIdStr.c_str();
     }
   }
 
-  auto xml_obj = Unwrap(info.This().ToObject())->xml_obj;
-
   // No good way of unsetting the doctype if it is previously set...this allows
   // us to.
-  xmlDtdPtr dtd = xmlGetIntSubset(xml_obj);
+  xmlDtdPtr dtd = xmlGetIntSubset(this->xml_obj);
 
   xmlUnlinkNode((xmlNodePtr)dtd);
   xmlFreeNode((xmlNodePtr)dtd);
 
-  xmlCreateIntSubset(xml_obj, (const xmlChar *)name.c_str(),
+  xmlCreateIntSubset(this->xml_obj, (const xmlChar *)name.c_str(),
                      (const xmlChar *)extId, (const xmlChar *)sysId);
 
   return info.This();
@@ -169,7 +167,7 @@ Napi::Value XmlDocument::ToString(const Napi::CallbackInfo &info) {
   const char *encoding = "UTF-8";
 
   if (info[0].IsObject()) {
-    Napi::Object obj = info[0].As<Napi::Object>();
+    Napi::Object obj = info[0].ToObject();
 
     // drop the xml declaration
     if (obj.Has("declaration") &&
@@ -195,8 +193,7 @@ Napi::Value XmlDocument::ToString(const Napi::CallbackInfo &info) {
     }
 
     if (obj.Has("encoding") && obj.Get("encoding").IsString()) {
-      std::string encodingStr =
-          obj.Get("encoding").As<Napi::String>().Utf8Value();
+      std::string encodingStr = obj.Get("encoding").ToString().Utf8Value();
       encoding = encodingStr.c_str();
     }
 
@@ -204,7 +201,7 @@ Napi::Value XmlDocument::ToString(const Napi::CallbackInfo &info) {
       Napi::Value type = obj.Get("type");
       std::string typeStr;
       if (type.IsString()) {
-        typeStr = type.As<Napi::String>().Utf8Value();
+        typeStr = type.ToString().Utf8Value();
       }
 
       if (typeStr == "XML" || typeStr == "xml") {
@@ -399,13 +396,13 @@ xmlParserOption getParserOptions(Napi::Object props) {
 Napi::Value XmlDocument::FromHtml(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
-  Napi::Object options = info[1].As<Napi::Object>();
+  Napi::Object options = info[1].ToObject();
 
   // the base URL that will be used for this HTML parsed document
   const char *baseUrl = NULL;
   std::string baseUrlStr;
   if (options.Has("baseUrl") && options.Get("baseUrl").IsString()) {
-    baseUrlStr = options.Get("baseUrl").As<Napi::String>().Utf8Value();
+    baseUrlStr = options.Get("baseUrl").ToString().Utf8Value();
     baseUrl = baseUrlStr.c_str();
   }
 
@@ -414,7 +411,7 @@ Napi::Value XmlDocument::FromHtml(const Napi::CallbackInfo &info) {
   const char *encoding = NULL;
   std::string encodingStr;
   if (options.Has("encoding") && options.Get("encoding").IsString()) {
-    encodingStr = options.Get("encoding").As<Napi::String>().Utf8Value();
+    encodingStr = options.Get("encoding").ToString().Utf8Value();
     encoding = encodingStr.c_str();
   }
 
@@ -433,7 +430,7 @@ Napi::Value XmlDocument::FromHtml(const Napi::CallbackInfo &info) {
   htmlDocPtr doc;
   if (!info[0].IsBuffer()) {
     // Parse a string
-    std::string str = info[0].As<Napi::String>().Utf8Value();
+    std::string str = info[0].ToString().Utf8Value();
     doc = htmlReadMemory(str.c_str(), str.length(), baseUrl, encoding, opts);
   } else {
     // Parse a buffer
@@ -472,13 +469,13 @@ Napi::Value XmlDocument::FromXml(const Napi::CallbackInfo &info) {
   xmlSetStructuredErrorFunc(reinterpret_cast<void *>(&ctx),
                             XmlSyntaxError::PushToArray);
 
-  Napi::Object options = info[1].As<Napi::Object>();
+  Napi::Object options = info[1].ToObject();
 
   // the base URL that will be used for this document
   const char *baseUrl = NULL;
   std::string baseUrlStr;
   if (options.Has("baseUrl") && options.Get("baseUrl").IsString()) {
-    baseUrlStr = options.Get("baseUrl").As<Napi::String>().Utf8Value();
+    baseUrlStr = options.Get("baseUrl").ToString().Utf8Value();
     baseUrl = baseUrlStr.c_str();
   }
 
@@ -487,7 +484,7 @@ Napi::Value XmlDocument::FromXml(const Napi::CallbackInfo &info) {
   const char *encoding = NULL;
   std::string encodingStr;
   if (options.Has("encoding") && options.Get("encoding").IsString()) {
-    encodingStr = options.Get("encoding").As<Napi::String>().Utf8Value();
+    encodingStr = options.Get("encoding").ToString().Utf8Value();
     encoding = encodingStr.c_str();
   }
 
@@ -495,7 +492,7 @@ Napi::Value XmlDocument::FromXml(const Napi::CallbackInfo &info) {
   xmlDocPtr doc;
   if (!info[0].IsBuffer()) {
     // Parse a string
-    std::string str = info[0].As<Napi::String>().Utf8Value();
+    std::string str = info[0].ToString().Utf8Value();
     doc = xmlReadMemory(str.c_str(), str.length(), baseUrl, "UTF-8", opts);
   } else {
     // Parse a buffer
@@ -557,7 +554,7 @@ Napi::Value XmlDocument::Validate(const Napi::CallbackInfo &info) {
     return env.Undefined();
   }
   if (!info[0].IsObject() ||
-      !info[0].As<Napi::Object>().InstanceOf(constructor.Value())) {
+      !info[0].ToObject().InstanceOf(constructor.Value())) {
     Napi::Error::New(env, "Must pass XmlDocument").ThrowAsJavaScriptException();
     return env.Undefined();
   }
@@ -568,7 +565,7 @@ Napi::Value XmlDocument::Validate(const Napi::CallbackInfo &info) {
                             XmlSyntaxError::PushToArray);
 
   XmlDocument *documentSchema =
-      Napi::ObjectWrap<XmlDocument>::Unwrap(info[0].As<Napi::Object>());
+      Napi::ObjectWrap<XmlDocument>::Unwrap(info[0].ToObject());
 
   xmlSchemaParserCtxtPtr parser_ctxt =
       xmlSchemaNewDocParserCtxt(documentSchema->xml_obj);
@@ -592,7 +589,7 @@ Napi::Value XmlDocument::Validate(const Napi::CallbackInfo &info) {
   bool valid = xmlSchemaValidateDoc(valid_ctxt, xml_obj) == 0;
 
   xmlSetStructuredErrorFunc(NULL, NULL);
-  info.This().As<Napi::Object>().Set("validationErrors", errors);
+  this->Value().Set("validationErrors", errors);
 
   xmlSchemaFreeValidCtxt(valid_ctxt);
   xmlSchemaFree(schema);
@@ -610,7 +607,7 @@ Napi::Value XmlDocument::RngValidate(const Napi::CallbackInfo &info) {
   }
 
   if (!info[0].IsObject() ||
-      !info[0].As<Napi::Object>().InstanceOf(constructor.Value())) {
+      !info[0].ToObject().InstanceOf(constructor.Value())) {
     Napi::Error::New(env, "Must pass XmlDocument").ThrowAsJavaScriptException();
     return env.Undefined();
   }
@@ -621,7 +618,7 @@ Napi::Value XmlDocument::RngValidate(const Napi::CallbackInfo &info) {
                             XmlSyntaxError::PushToArray);
 
   XmlDocument *documentSchema =
-      Napi::ObjectWrap<XmlDocument>::Unwrap(info[0].As<Napi::Object>());
+      Napi::ObjectWrap<XmlDocument>::Unwrap(info[0].ToObject());
 
   xmlRelaxNGParserCtxtPtr parser_ctxt =
       xmlRelaxNGNewDocParserCtxt(documentSchema->xml_obj);
@@ -648,7 +645,7 @@ Napi::Value XmlDocument::RngValidate(const Napi::CallbackInfo &info) {
   bool valid = xmlRelaxNGValidateDoc(valid_ctxt, xml_obj) == 0;
 
   xmlSetStructuredErrorFunc(NULL, NULL);
-  info.This().As<Napi::Object>().Set("validationErrors", errors);
+  this->Value().Set("validationErrors", errors);
 
   xmlRelaxNGFreeValidCtxt(valid_ctxt);
   xmlRelaxNGFree(schema);
@@ -666,7 +663,7 @@ Napi::Value XmlDocument::SchematronValidate(const Napi::CallbackInfo &info) {
   }
 
   if (!info[0].IsObject() ||
-      !info[0].As<Napi::Object>().InstanceOf(constructor.Value())) {
+      !info[0].ToObject().InstanceOf(constructor.Value())) {
     Napi::Error::New(env, "Must pass XmlDocument").ThrowAsJavaScriptException();
     return env.Undefined();
   }
@@ -675,7 +672,7 @@ Napi::Value XmlDocument::SchematronValidate(const Napi::CallbackInfo &info) {
   xmlResetLastError();
 
   XmlDocument *documentSchema =
-      Napi::ObjectWrap<XmlDocument>::Unwrap(info[0].As<Napi::Object>());
+      Napi::ObjectWrap<XmlDocument>::Unwrap(info[0].ToObject());
 
   xmlSchematronParserCtxtPtr parser_ctxt =
       xmlSchematronNewDocParserCtxt(documentSchema->xml_obj);
@@ -707,7 +704,7 @@ Napi::Value XmlDocument::SchematronValidate(const Napi::CallbackInfo &info) {
   bool valid = xmlSchematronValidateDoc(valid_ctxt, xml_obj) == 0;
 
   xmlSchematronSetValidStructuredErrors(valid_ctxt, NULL, NULL);
-  info.This().As<Napi::Object>().Set("validationErrors", ctx.errors);
+  this->Value().Set("validationErrors", ctx.errors);
 
   xmlSchematronFreeValidCtxt(valid_ctxt);
   xmlSchematronFree(schema);
@@ -727,12 +724,12 @@ Napi::Value XmlDocument::NewInstance(const Napi::CallbackInfo &info) {
   }
 
   const char *version = info.Length() > 0 && info[0].IsString()
-                            ? info[0].As<Napi::String>().Utf8Value().c_str()
+                            ? info[0].ToString().Utf8Value().c_str()
                             : "1.0";
   xmlDoc *doc = xmlNewDoc((const xmlChar *)(version));
 
   const char *encoding = info.Length() > 1 && info[1].IsString()
-                             ? info[1].As<Napi::String>().Utf8Value().c_str()
+                             ? info[1].ToString().Utf8Value().c_str()
                              : "utf8";
 
   XmlDocument *document = new XmlDocument(info);

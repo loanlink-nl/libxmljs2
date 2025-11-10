@@ -16,24 +16,13 @@ XmlProcessingInstruction::XmlProcessingInstruction(
     : XmlNode(info) {
   Napi::Env env = info.Env();
 
-  if (!info.IsConstructCall()) {
-    Napi::TypeError::New(
-        env, "ProcessingInstruction constructor must be called with new")
-        .ThrowAsJavaScriptException();
-    return;
-  }
-
   // if we were created for an existing xml node, then we don't need
   // to create a new node on the document
-  if (info.Length() == 0) {
+  if (info.Length() == 0 || info[0].IsExternal()) {
     return;
   }
 
-  if (!info[0].IsObject()) {
-    Napi::TypeError::New(env, "Document argument must be an object")
-        .ThrowAsJavaScriptException();
-    return;
-  }
+  DOCUMENT_ARG_CHECK;
 
   if (!info[1].IsString()) {
     Napi::TypeError::New(env, "name argument must be of type string")
@@ -69,8 +58,7 @@ XmlProcessingInstruction::XmlProcessingInstruction(
 
   pi->_private = this;
 
-  // this prevents the document from going away
-  info.This().As<Napi::Object>().Set("document", info[0]);
+  this->Value().Set("document", info[0]);
 }
 
 Napi::Value XmlProcessingInstruction::NewInstance(Napi::Env env,
@@ -88,42 +76,22 @@ Napi::Value XmlProcessingInstruction::NewInstance(Napi::Env env,
 
 Napi::Value XmlProcessingInstruction::Name(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlProcessingInstruction *processing_instruction =
-      Napi::ObjectWrap<XmlProcessingInstruction>::Unwrap(
-          info.This().As<Napi::Object>());
-
-  if (processing_instruction == nullptr) {
-    Napi::Error::New(env, "Invalid XmlProcessingInstruction instance")
-        .ThrowAsJavaScriptException();
-    return env.Undefined();
-  }
-
   if (info.Length() == 0)
-    return processing_instruction->get_name(env);
+    return this->get_name(env);
 
   std::string name = info[0].As<Napi::String>().Utf8Value();
-  processing_instruction->set_name(name.c_str());
+  this->set_name(name.c_str());
 
   return info.This();
 }
 
 Napi::Value XmlProcessingInstruction::Text(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlProcessingInstruction *processing_instruction =
-      Napi::ObjectWrap<XmlProcessingInstruction>::Unwrap(
-          info.This().As<Napi::Object>());
-
-  if (processing_instruction == nullptr) {
-    Napi::Error::New(env, "Invalid XmlProcessingInstruction instance")
-        .ThrowAsJavaScriptException();
-    return env.Undefined();
-  }
-
   if (info.Length() == 0) {
-    return processing_instruction->get_content(env);
+    return this->get_content(env);
   } else {
     std::string content = info[0].As<Napi::String>().Utf8Value();
-    processing_instruction->set_content(content.c_str());
+    this->set_content(content.c_str());
   }
 
   return info.This();

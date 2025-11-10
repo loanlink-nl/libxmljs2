@@ -14,23 +14,13 @@ Napi::FunctionReference XmlComment::constructor;
 XmlComment::XmlComment(const Napi::CallbackInfo &info) : XmlNode(info) {
   Napi::Env env = info.Env();
 
-  if (!info.IsConstructCall()) {
-    Napi::TypeError::New(env, "Comment constructor must be called with new")
-        .ThrowAsJavaScriptException();
-    return;
-  }
-
   // if we were created for an existing xml node, then we don't need
   // to create a new node on the document
-  if (info.Length() == 0) {
+  if (info.Length() == 0 || info[0].IsExternal()) {
     return;
   }
 
-  if (!info[0].IsObject()) {
-    Napi::TypeError::New(env, "Document argument must be an object")
-        .ThrowAsJavaScriptException();
-    return;
-  }
+  DOCUMENT_ARG_CHECK;
 
   Napi::Object docObj = info[0].ToObject();
   XmlDocument *document = Napi::ObjectWrap<XmlDocument>::Unwrap(docObj);
@@ -49,30 +39,19 @@ XmlComment::XmlComment(const Napi::CallbackInfo &info) : XmlNode(info) {
 
   xmlNode *comm = xmlNewDocComment(document->xml_obj, (xmlChar *)content);
 
-  XmlComment *comment =
-      XmlNode::Unwrap(XmlNode::NewInstance(env, comm).ToObject());
-  comm->_private = comment;
+  comm->_private = this;
+  xml_obj = comm;
 
-  // this prevents the document from going away
-  info.This().As<Napi::Object>().Set("document", info[0]);
+  this->Value().Set("document", info[0]);
 }
 
 Napi::Value XmlComment::Text(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlComment *comment =
-      Napi::ObjectWrap<XmlComment>::Unwrap(info.This().As<Napi::Object>());
-
-  if (comment == nullptr) {
-    Napi::Error::New(env, "Invalid XmlComment instance")
-        .ThrowAsJavaScriptException();
-    return env.Undefined();
-  }
-
   if (info.Length() == 0) {
-    return comment->get_content(env);
+    return this->get_content(env);
   } else {
     std::string content = info[0].As<Napi::String>().Utf8Value();
-    comment->set_content(content.c_str());
+    this->set_content(content.c_str());
   }
 
   return info.This();

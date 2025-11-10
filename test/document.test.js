@@ -84,8 +84,8 @@ describe('document', () => {
   it('blank', () => {
     const doc = new libxml.Document();
 
-    expect('1.0').toBe(doc.version());
-    expect('utf8').toBe(doc.encoding());
+    expect(doc.version()).toBe('1.0');
+    expect(doc.encoding()).toBe('utf8');
   });
 
   it('version', () => {

@@ -23,6 +23,8 @@ XmlElement::XmlElement(const Napi::CallbackInfo &info) : XmlNode(info) {
     return;
   }
 
+  DOCUMENT_ARG_CHECK;
+
   if (info.Length() == 2 || info.Length() == 3) {
     XmlDocument *document =
         Napi::ObjectWrap<XmlDocument>::Unwrap(info[0].ToObject());
@@ -48,11 +50,13 @@ XmlElement::XmlElement(const Napi::CallbackInfo &info) : XmlNode(info) {
     if (encodedContent)
       xmlFree(encodedContent);
 
-    xml_obj = elem;
+    this->xml_obj = elem;
     elem->_private = this;
 
     // Set document on instance, so it won't be cleaned up
     this->Value().Set("document", info[0]);
+    this->Value().Set("_xmlNode",
+                      Napi::External<xmlNode>::New(env, this->xml_obj));
   }
 }
 
@@ -74,62 +78,44 @@ Napi::Value XmlElement::NewInstance(Napi::Env env, xmlNode *node) {
 
 Napi::Value XmlElement::Name(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlNode *node =
-      Napi::ObjectWrap<XmlNode>::Unwrap(info.This().As<Napi::Object>());
-  XmlElement *element = static_cast<XmlElement *>(node);
-  assert(element);
-
   if (info.Length() == 0)
-    return element->get_name(env);
+    return this->get_name(env);
 
   std::string name = info[0].As<Napi::String>().Utf8Value();
-  element->set_name(name.c_str());
+  this->set_name(name.c_str());
   return info.This();
 }
 
 Napi::Value XmlElement::Attr(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlNode *node =
-      Napi::ObjectWrap<XmlNode>::Unwrap(info.This().As<Napi::Object>());
-  XmlElement *element = static_cast<XmlElement *>(node);
-  assert(element);
 
   // getter
   if (info.Length() == 1) {
     std::string name = info[0].As<Napi::String>().Utf8Value();
-    return element->get_attr(env, name.c_str());
+    return this->get_attr(env, name.c_str());
   }
 
   // setter
   std::string name = info[0].As<Napi::String>().Utf8Value();
   std::string value = info[1].As<Napi::String>().Utf8Value();
-  element->set_attr(name.c_str(), value.c_str());
+  this->set_attr(name.c_str(), value.c_str());
 
   return info.This();
 }
 
 Napi::Value XmlElement::Attrs(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlNode *node =
-      Napi::ObjectWrap<XmlNode>::Unwrap(info.This().As<Napi::Object>());
-  XmlElement *element = static_cast<XmlElement *>(node);
-  assert(element);
-
-  return element->get_attrs(env);
+  return this->get_attrs(env);
 }
 
 Napi::Value XmlElement::AddChild(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlNode *node =
-      Napi::ObjectWrap<XmlNode>::Unwrap(info.This().As<Napi::Object>());
-  XmlElement *element = static_cast<XmlElement *>(node);
-  assert(element);
+  Napi::Object jsNode = info[0].As<Napi::Object>();
+  Napi::Value extVal = jsNode.Get("_xmlNode");
 
-  XmlNode *child =
-      Napi::ObjectWrap<XmlNode>::Unwrap(info[0].As<Napi::Object>());
-  assert(child);
+  xmlNode *child = extVal.As<Napi::External<xmlNode>>().Data();
 
-  xmlNode *imported_child = element->import_node(child->xml_obj);
+  xmlNode *imported_child = this->import_node(child);
   if (imported_child == NULL) {
     Napi::Error::New(
         env, "Could not add child. Failed to copy node to new Document.")
@@ -137,13 +123,13 @@ Napi::Value XmlElement::AddChild(const Napi::CallbackInfo &info) {
     return env.Undefined();
   }
 
-  bool will_merge = element->child_will_merge(imported_child);
-  if ((child->xml_obj == imported_child) && will_merge) {
+  bool will_merge = this->child_will_merge(imported_child);
+  if ((child == imported_child) && will_merge) {
     // merged child will be free, so ensure it is a copy
     imported_child = xmlCopyNode(imported_child, 0);
   }
 
-  element->add_child(imported_child);
+  this->add_child(imported_child);
 
   if (!will_merge && (imported_child->_private != NULL)) {
     static_cast<XmlNode *>(imported_child->_private)->ref_wrapped_ancestor();
@@ -154,11 +140,6 @@ Napi::Value XmlElement::AddChild(const Napi::CallbackInfo &info) {
 
 Napi::Value XmlElement::AddCData(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlNode *node =
-      Napi::ObjectWrap<XmlNode>::Unwrap(info.This().As<Napi::Object>());
-  XmlElement *element = static_cast<XmlElement *>(node);
-  assert(element);
-
   const char *content = NULL;
   std::string contentStr;
   if (info[0].IsString()) {
@@ -168,24 +149,18 @@ Napi::Value XmlElement::AddCData(const Napi::CallbackInfo &info) {
     }
   }
 
-  xmlNode *elem =
-      xmlNewCDataBlock(element->xml_obj->doc, (const xmlChar *)content,
-                       xmlStrlen((const xmlChar *)content));
+  xmlNode *elem = xmlNewCDataBlock(this->xml_obj->doc, (const xmlChar *)content,
+                                   xmlStrlen((const xmlChar *)content));
 
-  element->add_cdata(elem);
+  this->add_cdata(elem);
   return info.This();
 }
 
 Napi::Value XmlElement::Find(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlNode *node =
-      Napi::ObjectWrap<XmlNode>::Unwrap(info.This().As<Napi::Object>());
-  XmlElement *element = static_cast<XmlElement *>(node);
-  assert(element);
-
   std::string xpath = info[0].As<Napi::String>().Utf8Value();
 
-  XmlXpathContext ctxt(element->xml_obj);
+  XmlXpathContext ctxt(this->xml_obj);
 
   if (info.Length() == 2) {
     if (info[1].IsString()) {
@@ -210,36 +185,21 @@ Napi::Value XmlElement::Find(const Napi::CallbackInfo &info) {
 
 Napi::Value XmlElement::NextElement(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlNode *node =
-      Napi::ObjectWrap<XmlNode>::Unwrap(info.This().As<Napi::Object>());
-  XmlElement *element = static_cast<XmlElement *>(node);
-  assert(element);
-
-  return element->get_next_element(env);
+  return this->get_next_element(env);
 }
 
 Napi::Value XmlElement::PrevElement(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlNode *node =
-      Napi::ObjectWrap<XmlNode>::Unwrap(info.This().As<Napi::Object>());
-  XmlElement *element = static_cast<XmlElement *>(node);
-  assert(element);
-
-  return element->get_prev_element(env);
+  return this->get_prev_element(env);
 }
 
 Napi::Value XmlElement::Text(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlNode *node =
-      Napi::ObjectWrap<XmlNode>::Unwrap(info.This().As<Napi::Object>());
-  XmlElement *element = static_cast<XmlElement *>(node);
-  assert(element);
-
   if (info.Length() == 0) {
-    return element->get_content(env);
+    return this->get_content(env);
   } else {
     std::string content = info[0].As<Napi::String>().Utf8Value();
-    element->set_content(content.c_str());
+    this->set_content(content.c_str());
   }
 
   return info.This();
@@ -247,11 +207,6 @@ Napi::Value XmlElement::Text(const Napi::CallbackInfo &info) {
 
 Napi::Value XmlElement::Child(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlNode *node =
-      Napi::ObjectWrap<XmlNode>::Unwrap(info.This().As<Napi::Object>());
-  XmlElement *element = static_cast<XmlElement *>(node);
-  assert(element);
-
   if (info.Length() != 1 || !info[0].IsNumber()) {
     Napi::Error::New(env, "Bad argument: must provide #child() with a number")
         .ThrowAsJavaScriptException();
@@ -259,44 +214,30 @@ Napi::Value XmlElement::Child(const Napi::CallbackInfo &info) {
   }
 
   const int32_t idx = info[0].As<Napi::Number>().Int32Value();
-  return element->get_child(env, idx);
+  return this->get_child(env, idx);
 }
 
 Napi::Value XmlElement::ChildNodes(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlNode *node =
-      Napi::ObjectWrap<XmlNode>::Unwrap(info.This().As<Napi::Object>());
-  XmlElement *element = static_cast<XmlElement *>(node);
-  assert(element);
 
   if (info[0].IsNumber())
-    return element->get_child(env, info[0].As<Napi::Number>().Int32Value());
+    return this->get_child(env, info[0].As<Napi::Number>().Int32Value());
 
-  return element->get_child_nodes(env);
+  return this->get_child_nodes(env);
 }
 
 Napi::Value XmlElement::Path(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlNode *node =
-      Napi::ObjectWrap<XmlNode>::Unwrap(info.This().As<Napi::Object>());
-  XmlElement *element = static_cast<XmlElement *>(node);
-  assert(element);
-
-  return element->get_path(env);
+  return this->get_path(env);
 }
 
 Napi::Value XmlElement::AddPrevSibling(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlNode *node =
-      Napi::ObjectWrap<XmlNode>::Unwrap(info.This().As<Napi::Object>());
-  XmlElement *element = static_cast<XmlElement *>(node);
-  assert(element);
 
-  XmlNode *new_sibling =
-      Napi::ObjectWrap<XmlNode>::Unwrap(info[0].As<Napi::Object>());
+  XmlNode *new_sibling = Napi::ObjectWrap<XmlNode>::Unwrap(info[0].ToObject());
   assert(new_sibling);
 
-  xmlNode *imported_sibling = element->import_node(new_sibling->xml_obj);
+  xmlNode *imported_sibling = this->import_node(new_sibling->xml_obj);
   if (imported_sibling == NULL) {
     Napi::Error::New(
         env, "Could not add sibling. Failed to copy node to new Document.")
@@ -304,7 +245,7 @@ Napi::Value XmlElement::AddPrevSibling(const Napi::CallbackInfo &info) {
     return env.Undefined();
   }
 
-  element->add_prev_sibling(imported_sibling);
+  this->add_prev_sibling(imported_sibling);
 
   if (imported_sibling->_private != NULL) {
     static_cast<XmlNode *>(imported_sibling->_private)->ref_wrapped_ancestor();
@@ -315,16 +256,12 @@ Napi::Value XmlElement::AddPrevSibling(const Napi::CallbackInfo &info) {
 
 Napi::Value XmlElement::AddNextSibling(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlNode *node =
-      Napi::ObjectWrap<XmlNode>::Unwrap(info.This().As<Napi::Object>());
-  XmlElement *element = static_cast<XmlElement *>(node);
-  assert(element);
 
   XmlNode *new_sibling =
       Napi::ObjectWrap<XmlNode>::Unwrap(info[0].As<Napi::Object>());
   assert(new_sibling);
 
-  xmlNode *imported_sibling = element->import_node(new_sibling->xml_obj);
+  xmlNode *imported_sibling = this->import_node(new_sibling->xml_obj);
   if (imported_sibling == NULL) {
     Napi::Error::New(
         env, "Could not add sibling. Failed to copy node to new Document.")
@@ -332,7 +269,7 @@ Napi::Value XmlElement::AddNextSibling(const Napi::CallbackInfo &info) {
     return env.Undefined();
   }
 
-  element->add_next_sibling(imported_sibling);
+  this->add_next_sibling(imported_sibling);
 
   if (imported_sibling->_private != NULL) {
     static_cast<XmlNode *>(imported_sibling->_private)->ref_wrapped_ancestor();
@@ -343,28 +280,24 @@ Napi::Value XmlElement::AddNextSibling(const Napi::CallbackInfo &info) {
 
 Napi::Value XmlElement::Replace(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlNode *node =
-      Napi::ObjectWrap<XmlNode>::Unwrap(info.This().As<Napi::Object>());
-  XmlElement *element = static_cast<XmlElement *>(node);
-  assert(element);
 
   if (info[0].IsString()) {
     std::string content = info[0].As<Napi::String>().Utf8Value();
-    element->replace_text(content.c_str());
+    this->replace_text(content.c_str());
   } else {
     XmlNode *new_sibling_node =
         Napi::ObjectWrap<XmlNode>::Unwrap(info[0].As<Napi::Object>());
     XmlElement *new_sibling = static_cast<XmlElement *>(new_sibling_node);
     assert(new_sibling);
 
-    xmlNode *imported_sibling = element->import_node(new_sibling->xml_obj);
+    xmlNode *imported_sibling = this->import_node(new_sibling->xml_obj);
     if (imported_sibling == NULL) {
       Napi::Error::New(
           env, "Could not replace. Failed to copy node to new Document.")
           .ThrowAsJavaScriptException();
       return env.Undefined();
     }
-    element->replace_element(imported_sibling);
+    this->replace_element(imported_sibling);
   }
 
   return info[0];
@@ -416,7 +349,7 @@ Napi::Value XmlElement::get_attrs(Napi::Env env) {
 void XmlElement::add_cdata(xmlNode *cdata) { xmlAddChild(xml_obj, cdata); }
 
 Napi::Value XmlElement::get_child(Napi::Env env, int32_t idx) {
-  xmlNode *child = xml_obj->children;
+  xmlNode *child = this->xml_obj->children;
 
   int32_t i = 0;
   while (child && i < idx) {
@@ -431,7 +364,7 @@ Napi::Value XmlElement::get_child(Napi::Env env, int32_t idx) {
 }
 
 Napi::Value XmlElement::get_child_nodes(Napi::Env env) {
-  xmlNode *child = xml_obj->children;
+  xmlNode *child = this->xml_obj->children;
   if (!child)
     return Napi::Array::New(env, 0);
 

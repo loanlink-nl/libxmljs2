@@ -37,12 +37,12 @@ XmlNamespace::XmlNamespace(const Napi::CallbackInfo &info)
     std::string href_str;
 
     if (info.Length() > 1 && info[1].IsString()) {
-      prefix_str = info[1].As<Napi::String>().Utf8Value();
+      prefix_str = info[1].ToString().Utf8Value();
       prefix = prefix_str.c_str();
     }
 
     if (info.Length() > 2) {
-      href_str = info[2].As<Napi::String>().Utf8Value();
+      href_str = info[2].ToString().Utf8Value();
       href = href_str.c_str();
     }
 
@@ -115,18 +115,12 @@ XmlNamespace::~XmlNamespace() {
 
 Napi::Value XmlNamespace::Href(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlNamespace *ns =
-      Napi::ObjectWrap<XmlNamespace>::Unwrap(info.This().As<Napi::Object>());
-  assert(ns);
-  return ns->get_href(env);
+  return this->get_href(env);
 }
 
 Napi::Value XmlNamespace::Prefix(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  XmlNamespace *ns =
-      Napi::ObjectWrap<XmlNamespace>::Unwrap(info.This().As<Napi::Object>());
-  assert(ns);
-  return ns->get_prefix(env);
+  return this->get_prefix(env);
 }
 
 Napi::Value XmlNamespace::get_href(Napi::Env env) {
