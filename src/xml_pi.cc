@@ -81,7 +81,7 @@ Napi::Value XmlProcessingInstruction::NewInstance(Napi::Env env,
   Napi::EscapableHandleScope scope(env);
 
   if (node->_private) {
-    return static_cast<XmlNode *>(node->_private)->Value();
+    return scope.Escape(static_cast<XmlNode *>(node->_private)->Value());
   }
 
   auto external = Napi::External<xmlNode>::New(env, node);
@@ -91,25 +91,27 @@ Napi::Value XmlProcessingInstruction::NewInstance(Napi::Env env,
 
 Napi::Value XmlProcessingInstruction::Name(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
   if (info.Length() == 0)
-    return this->get_name(env);
+    return scope.Escape(this->get_name(env));
 
   std::string name = info[0].As<Napi::String>().Utf8Value();
   this->set_name(name.c_str());
 
-  return info.This();
+  return scope.Escape(info.This());
 }
 
 Napi::Value XmlProcessingInstruction::Text(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
   if (info.Length() == 0) {
-    return this->get_content(env);
+    return scope.Escape(this->get_content(env));
   } else {
     std::string content = info[0].As<Napi::String>().Utf8Value();
     this->set_content(content.c_str());
   }
 
-  return info.This();
+  return scope.Escape(info.This());
 }
 
 void XmlProcessingInstruction::set_name(const char *name) {
@@ -117,10 +119,11 @@ void XmlProcessingInstruction::set_name(const char *name) {
 }
 
 Napi::Value XmlProcessingInstruction::get_name(Napi::Env env) {
+  Napi::EscapableHandleScope scope(env);
   if (xml_obj->name) {
-    return Napi::String::New(env, (const char *)xml_obj->name);
+    return scope.Escape(Napi::String::New(env, (const char *)xml_obj->name));
   } else {
-    return env.Undefined();
+    return scope.Escape(env.Undefined());
   }
 }
 
@@ -130,13 +133,14 @@ void XmlProcessingInstruction::set_content(const char *content) {
 
 Napi::Value XmlProcessingInstruction::get_content(Napi::Env env) {
   xmlChar *content = xmlNodeGetContent(xml_obj);
+  Napi::EscapableHandleScope scope(env);
   if (content) {
     Napi::String ret_content = Napi::String::New(env, (const char *)content);
     xmlFree(content);
-    return ret_content;
+    return scope.Escape(ret_content);
   }
 
-  return Napi::String::New(env, "");
+  return scope.Escape(Napi::String::New(env, ""));
 }
 
 Napi::Function XmlProcessingInstruction::Init(Napi::Env env,

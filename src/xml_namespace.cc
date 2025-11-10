@@ -106,7 +106,7 @@ Napi::Value XmlNamespace::NewInstance(Napi::Env env, xmlNs *node) {
   Napi::EscapableHandleScope scope(env);
 
   if (node->_private) {
-    return static_cast<XmlNamespace *>(node->_private)->Value();
+    return scope.Escape(static_cast<XmlNamespace *>(node->_private)->Value());
   }
 
   auto external = Napi::External<xmlNs>::New(env, node);
@@ -116,30 +116,34 @@ Napi::Value XmlNamespace::NewInstance(Napi::Env env, xmlNs *node) {
 
 Napi::Value XmlNamespace::Href(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  return this->get_href(env);
+  Napi::EscapableHandleScope scope(env);
+  return scope.Escape(this->get_href(env));
 }
 
 Napi::Value XmlNamespace::Prefix(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  return this->get_prefix(env);
+  Napi::EscapableHandleScope scope(env);
+  return scope.Escape(this->get_prefix(env));
 }
 
 Napi::Value XmlNamespace::get_href(Napi::Env env) {
+  Napi::EscapableHandleScope scope(env);
   if (xml_obj->href) {
-    return Napi::String::New(env, (const char *)xml_obj->href,
-                             xmlStrlen(xml_obj->href));
+    return scope.Escape(Napi::String::New(env, (const char *)xml_obj->href,
+                                          xmlStrlen(xml_obj->href)));
   }
 
-  return env.Null();
+  return scope.Escape(env.Null());
 }
 
 Napi::Value XmlNamespace::get_prefix(Napi::Env env) {
+  Napi::EscapableHandleScope scope(env);
   if (xml_obj->prefix) {
-    return Napi::String::New(env, (const char *)xml_obj->prefix,
-                             xmlStrlen(xml_obj->prefix));
+    return scope.Escape(Napi::String::New(env, (const char *)xml_obj->prefix,
+                                          xmlStrlen(xml_obj->prefix)));
   }
 
-  return env.Null();
+  return scope.Escape(env.Null());
 }
 
 void XmlNamespace::Init(Napi::Env env, Napi::Object exports) {

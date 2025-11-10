@@ -16,7 +16,7 @@ public:
   XmlSaxParser(const Napi::CallbackInfo &info);
   virtual ~XmlSaxParser();
 
-  static Napi::Object Init(Napi::Env env, Napi::Object exports);
+  static Napi::Value Init(Napi::Env env, Napi::Object exports);
 
   Napi::Value ParseString(const Napi::CallbackInfo &info);
   Napi::Value Push(const Napi::CallbackInfo &info);

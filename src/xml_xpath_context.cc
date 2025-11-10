@@ -28,6 +28,7 @@ void XmlXpathContext::register_ns(const xmlChar *prefix, const xmlChar *uri) {
 }
 
 Napi::Value XmlXpathContext::evaluate(Napi::Env env, const xmlChar *xpath) {
+  Napi::EscapableHandleScope scope(env);
   xmlXPathObject *xpathobj = xmlXPathEval(xpath, ctxt);
   Napi::Value res;
 
@@ -72,7 +73,7 @@ Napi::Value XmlXpathContext::evaluate(Napi::Env env, const xmlChar *xpath) {
   }
 
   xmlXPathFreeObject(xpathobj);
-  return res;
+  return scope.Escape(res);
 }
 
 } // namespace libxmljs

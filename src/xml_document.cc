@@ -57,20 +57,22 @@ XmlDocument::~XmlDocument() {
 
 Napi::Value XmlDocument::Encoding(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
 
   // if no args, get the encoding
   if (info.Length() == 0 || info[0].IsUndefined()) {
     if (xml_obj->encoding) {
-      return Napi::String::New(env, (const char *)xml_obj->encoding,
-                               xmlStrlen((const xmlChar *)xml_obj->encoding));
+      return scope.Escape(
+          Napi::String::New(env, (const char *)xml_obj->encoding,
+                            xmlStrlen((const xmlChar *)xml_obj->encoding)));
     }
-    return env.Null();
+    return scope.Escape(env.Null());
   }
 
   // set the encoding otherwise
   std::string encoding = info[0].ToString().Utf8Value();
   setEncoding(encoding.c_str());
-  return info.This();
+  return scope.Escape(info.This());
 }
 
 void XmlDocument::setEncoding(const char *encoding) {
@@ -83,31 +85,34 @@ void XmlDocument::setEncoding(const char *encoding) {
 
 Napi::Value XmlDocument::Version(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
 
   if (xml_obj->version) {
-    return Napi::String::New(env, (const char *)xml_obj->version,
-                             xmlStrlen((const xmlChar *)xml_obj->version));
+    return scope.Escape(
+        Napi::String::New(env, (const char *)xml_obj->version,
+                          xmlStrlen((const xmlChar *)xml_obj->version)));
   }
 
-  return env.Null();
+  return scope.Escape(env.Null());
 }
 
 Napi::Value XmlDocument::Root(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
 
   xmlNode *root = xmlDocGetRootElement(this->xml_obj);
 
   if (info.Length() == 0 || info[0].IsUndefined()) {
     if (!root) {
-      return env.Null();
+      return scope.Escape(env.Null());
     }
-    return XmlElement::NewInstance(env, root);
+    return scope.Escape(XmlElement::NewInstance(env, root));
   }
 
   if (root != NULL) {
     Napi::Error::New(env, "Holder document already has a root node")
         .ThrowAsJavaScriptException();
-    return env.Undefined();
+    return scope.Escape(env.Undefined());
   }
 
   // set the element as the root element for the document
@@ -116,16 +121,17 @@ Napi::Value XmlDocument::Root(const Napi::CallbackInfo &info) {
 
   xmlDocSetRootElement(xml_obj, element->xml_obj);
   element->ref_wrapped_ancestor();
-  return info[0];
+  return scope.Escape(info[0]);
 }
 
 Napi::Value XmlDocument::GetDtd(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
 
   xmlDtdPtr dtd = xmlGetIntSubset(xml_obj);
 
   if (!dtd) {
-    return env.Null();
+    return scope.Escape(env.Null());
   }
 
   const char *name = (const char *)dtd->name;
@@ -153,11 +159,12 @@ Napi::Value XmlDocument::GetDtd(const Napi::CallbackInfo &info) {
   dtdObj.Set("externalId", extValue);
   dtdObj.Set("systemId", sysValue);
 
-  return dtdObj;
+  return scope.Escape(dtdObj);
 }
 
 Napi::Value XmlDocument::SetDtd(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
 
   std::string name = info[0].ToString().Utf8Value();
 
@@ -190,11 +197,12 @@ Napi::Value XmlDocument::SetDtd(const Napi::CallbackInfo &info) {
   xmlCreateIntSubset(this->xml_obj, (const xmlChar *)name.c_str(),
                      (const xmlChar *)extId, (const xmlChar *)sysId);
 
-  return info.This();
+  return scope.Escape(info.This());
 }
 
 Napi::Value XmlDocument::ToString(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
 
   int options = 0;
   std::string encoding = "UTF-8";
@@ -267,12 +275,13 @@ Napi::Value XmlDocument::ToString(const Napi::CallbackInfo &info) {
   }
   xmlBufferFree(buf);
 
-  return ret;
+  return scope.Escape(ret);
 }
 
 Napi::Value XmlDocument::Type(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  return Napi::String::New(env, "document");
+  Napi::EscapableHandleScope scope(env);
+  return scope.Escape(Napi::String::New(env, "document"));
 }
 
 // not called from node
@@ -281,7 +290,7 @@ Napi::Value XmlDocument::NewInstance(Napi::Env env, xmlDoc *doc) {
   Napi::EscapableHandleScope scope(env);
 
   if (doc->_private) {
-    return static_cast<XmlDocument *>(doc->_private)->Value();
+    return scope.Escape(static_cast<XmlDocument *>(doc->_private)->Value());
   }
 
   auto external = Napi::External<xmlDoc>::New(env, doc);
@@ -446,6 +455,7 @@ xmlParserOption getParserOptions(Napi::Object props) {
 
 Napi::Value XmlDocument::FromHtml(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
 
   Napi::Object options = info[1].ToObject();
 
@@ -495,18 +505,18 @@ Napi::Value XmlDocument::FromHtml(const Napi::CallbackInfo &info) {
     xmlError *error = xmlGetLastError();
     if (error) {
       XmlSyntaxError::BuildSyntaxError(env, error).ThrowAsJavaScriptException();
-      return env.Undefined();
+      return scope.Escape(env.Undefined());
     }
     Napi::Error::New(env, "Could not parse XML string")
         .ThrowAsJavaScriptException();
-    return env.Undefined();
+    return scope.Escape(env.Undefined());
   }
 
   Napi::Object doc_handle = XmlDocument::NewInstance(env, doc).ToObject();
   doc_handle.Set("errors", ctx.errors);
 
   // create the xml document handle to return
-  return doc_handle;
+  return scope.Escape(doc_handle);
 }
 
 // FIXME: this method is almost identical to FromHtml above.
@@ -514,6 +524,7 @@ Napi::Value XmlDocument::FromHtml(const Napi::CallbackInfo &info) {
 // of the work
 Napi::Value XmlDocument::FromXml(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
 
   ErrorArrayContext ctx{env, Napi::Array::New(env)};
 
@@ -557,11 +568,11 @@ Napi::Value XmlDocument::FromXml(const Napi::CallbackInfo &info) {
     xmlError *error = xmlGetLastError();
     if (error) {
       XmlSyntaxError::BuildSyntaxError(env, error).ThrowAsJavaScriptException();
-      return env.Undefined();
+      return scope.Escape(env.Undefined());
     }
     Napi::Error::New(env, "Could not parse XML string")
         .ThrowAsJavaScriptException();
-    return env.Undefined();
+    return scope.Escape(env.Undefined());
   }
 
   if (opts & XML_PARSE_XINCLUDE) {
@@ -575,11 +586,11 @@ Napi::Value XmlDocument::FromXml(const Napi::CallbackInfo &info) {
       if (error) {
         XmlSyntaxError::BuildSyntaxError(env, error)
             .ThrowAsJavaScriptException();
-        return env.Undefined();
+        return scope.Escape(env.Undefined());
       }
       Napi::Error::New(env, "Could not perform XInclude substitution")
           .ThrowAsJavaScriptException();
-      return env.Undefined();
+      return scope.Escape(env.Undefined());
     }
   }
 
@@ -591,24 +602,25 @@ Napi::Value XmlDocument::FromXml(const Napi::CallbackInfo &info) {
   if (root_node == NULL) {
     Napi::Error::New(env, "parsed document has no root element")
         .ThrowAsJavaScriptException();
-    return env.Undefined();
+    return scope.Escape(env.Undefined());
   }
 
   // create the xml document handle to return
-  return doc_handle;
+  return scope.Escape(doc_handle);
 }
 
 Napi::Value XmlDocument::Validate(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
 
   if (info.Length() == 0 || info[0].IsNull() || info[0].IsUndefined()) {
     Napi::Error::New(env, "Must pass xsd").ThrowAsJavaScriptException();
-    return env.Undefined();
+    return scope.Escape(env.Undefined());
   }
   if (!info[0].IsObject() ||
       !info[0].ToObject().InstanceOf(XmlDocument::constructor.Value())) {
     Napi::Error::New(env, "Must pass XmlDocument").ThrowAsJavaScriptException();
-    return env.Undefined();
+    return scope.Escape(env.Undefined());
   }
 
   Napi::Array errors = Napi::Array::New(env);
@@ -626,19 +638,19 @@ Napi::Value XmlDocument::Validate(const Napi::CallbackInfo &info) {
   if (parser_ctxt == NULL) {
     Napi::Error::New(env, "Could not create context for schema parser")
         .ThrowAsJavaScriptException();
-    return env.Undefined();
+    return scope.Escape(env.Undefined());
   }
   xmlSchemaPtr schema = xmlSchemaParse(parser_ctxt);
   if (schema == NULL) {
     Napi::Error::New(env, "Invalid XSD schema").ThrowAsJavaScriptException();
-    return env.Undefined();
+    return scope.Escape(env.Undefined());
   }
   xmlSchemaValidCtxtPtr valid_ctxt = xmlSchemaNewValidCtxt(schema);
   if (valid_ctxt == NULL) {
     Napi::Error::New(env,
                      "Unable to create a validation context for the schema")
         .ThrowAsJavaScriptException();
-    return env.Undefined();
+    return scope.Escape(env.Undefined());
   }
 
   bool valid = xmlSchemaValidateDoc(valid_ctxt, xml_obj) == 0;
@@ -650,21 +662,22 @@ Napi::Value XmlDocument::Validate(const Napi::CallbackInfo &info) {
   xmlSchemaFree(schema);
   xmlSchemaFreeParserCtxt(parser_ctxt);
 
-  return Napi::Boolean::New(env, valid);
+  return scope.Escape(Napi::Boolean::New(env, valid));
 }
 
 Napi::Value XmlDocument::RngValidate(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
 
   if (info.Length() == 0 || info[0].IsNull() || info[0].IsUndefined()) {
     Napi::Error::New(env, "Must pass xsd").ThrowAsJavaScriptException();
-    return env.Undefined();
+    return scope.Escape(env.Undefined());
   }
 
   if (!info[0].IsObject() ||
       !info[0].ToObject().InstanceOf(constructor.Value())) {
     Napi::Error::New(env, "Must pass XmlDocument").ThrowAsJavaScriptException();
-    return env.Undefined();
+    return scope.Escape(env.Undefined());
   }
 
   Napi::Array errors = Napi::Array::New(env);
@@ -682,14 +695,14 @@ Napi::Value XmlDocument::RngValidate(const Napi::CallbackInfo &info) {
   if (parser_ctxt == NULL) {
     Napi::Error::New(env, "Could not create context for RELAX NG schema parser")
         .ThrowAsJavaScriptException();
-    return env.Undefined();
+    return scope.Escape(env.Undefined());
   }
 
   xmlRelaxNGPtr schema = xmlRelaxNGParse(parser_ctxt);
   if (schema == NULL) {
     Napi::Error::New(env, "Invalid RELAX NG schema")
         .ThrowAsJavaScriptException();
-    return env.Undefined();
+    return scope.Escape(env.Undefined());
   }
 
   xmlRelaxNGValidCtxtPtr valid_ctxt = xmlRelaxNGNewValidCtxt(schema);
@@ -697,7 +710,7 @@ Napi::Value XmlDocument::RngValidate(const Napi::CallbackInfo &info) {
     Napi::Error::New(
         env, "Unable to create a validation context for the RELAX NG schema")
         .ThrowAsJavaScriptException();
-    return env.Undefined();
+    return scope.Escape(env.Undefined());
   }
   bool valid = xmlRelaxNGValidateDoc(valid_ctxt, xml_obj) == 0;
 
@@ -708,21 +721,22 @@ Napi::Value XmlDocument::RngValidate(const Napi::CallbackInfo &info) {
   xmlRelaxNGFree(schema);
   xmlRelaxNGFreeParserCtxt(parser_ctxt);
 
-  return Napi::Boolean::New(env, valid);
+  return scope.Escape(Napi::Boolean::New(env, valid));
 }
 
 Napi::Value XmlDocument::SchematronValidate(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
 
   if (info.Length() == 0 || info[0].IsNull() || info[0].IsUndefined()) {
     Napi::Error::New(env, "Must pass schema").ThrowAsJavaScriptException();
-    return env.Undefined();
+    return scope.Escape(env.Undefined());
   }
 
   if (!info[0].IsObject() ||
       !info[0].ToObject().InstanceOf(constructor.Value())) {
     Napi::Error::New(env, "Must pass XmlDocument").ThrowAsJavaScriptException();
-    return env.Undefined();
+    return scope.Escape(env.Undefined());
   }
 
   ErrorArrayContext ctx{env, Napi::Array::New(env)};
@@ -737,14 +751,14 @@ Napi::Value XmlDocument::SchematronValidate(const Napi::CallbackInfo &info) {
     Napi::Error::New(env,
                      "Could not create context for Schematron schema parser")
         .ThrowAsJavaScriptException();
-    return env.Undefined();
+    return scope.Escape(env.Undefined());
   }
 
   xmlSchematronPtr schema = xmlSchematronParse(parser_ctxt);
   if (schema == NULL) {
     Napi::Error::New(env, "Invalid Schematron schema")
         .ThrowAsJavaScriptException();
-    return env.Undefined();
+    return scope.Escape(env.Undefined());
   }
 
   xmlSchematronValidCtxtPtr valid_ctxt =
@@ -753,7 +767,7 @@ Napi::Value XmlDocument::SchematronValidate(const Napi::CallbackInfo &info) {
     Napi::Error::New(
         env, "Unable to create a validation context for the Schematron schema")
         .ThrowAsJavaScriptException();
-    return env.Undefined();
+    return scope.Escape(env.Undefined());
   }
   xmlSchematronSetValidStructuredErrors(valid_ctxt, XmlSyntaxError::PushToArray,
                                         reinterpret_cast<void *>(&ctx));
@@ -767,7 +781,7 @@ Napi::Value XmlDocument::SchematronValidate(const Napi::CallbackInfo &info) {
   xmlSchematronFree(schema);
   xmlSchematronFreeParserCtxt(parser_ctxt);
 
-  return Napi::Boolean::New(env, valid);
+  return scope.Escape(Napi::Boolean::New(env, valid));
 }
 
 void XmlDocument::Init(Napi::Env env, Napi::Object exports) {

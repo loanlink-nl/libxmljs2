@@ -55,19 +55,21 @@ XmlNode<T>::XmlNode(const Napi::CallbackInfo &info)
 
 template <class T> Napi::Value XmlNode<T>::Doc(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  return this->get_doc(env);
+  Napi::EscapableHandleScope scope(env);
+  return scope.Escape(this->get_doc(env));
 }
 
 template <class T>
 Napi::Value XmlNode<T>::Namespace(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
   // #namespace() Get the node's namespace
   if (info.Length() == 0) {
-    return this->get_namespace(env);
+    return scope.Escape(this->get_namespace(env));
   }
 
   if (info[0].IsNull())
-    return this->remove_namespace(env);
+    return scope.Escape(this->remove_namespace(env));
 
   XmlNamespace *ns = NULL;
 
@@ -113,54 +115,61 @@ Napi::Value XmlNode<T>::Namespace(const Napi::CallbackInfo &info) {
   }
 
   this->set_namespace(ns->xml_obj);
-  return info.This();
+  return scope.Escape(info.This());
 }
 
 template <class T>
 Napi::Value XmlNode<T>::Namespaces(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
   // ignore everything but a literal true; different from IsFalse
   if ((info.Length() == 0) || !info[0].IsBoolean() ||
       !info[0].As<Napi::Boolean>().Value()) {
-    return this->get_all_namespaces(env);
+    return scope.Escape(this->get_all_namespaces(env));
   }
 
-  return this->get_local_namespaces(env);
+  return scope.Escape(this->get_local_namespaces(env));
 }
 
 template <class T>
 Napi::Value XmlNode<T>::Parent(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  return this->get_parent(env);
+  Napi::EscapableHandleScope scope(env);
+  return scope.Escape(this->get_parent(env));
 }
 
 template <class T>
 Napi::Value XmlNode<T>::PrevSibling(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  return this->get_prev_sibling(env);
+  Napi::EscapableHandleScope scope(env);
+  return scope.Escape(this->get_prev_sibling(env));
 }
 
 template <class T>
 Napi::Value XmlNode<T>::NextSibling(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  return this->get_next_sibling(env);
+  Napi::EscapableHandleScope scope(env);
+  return scope.Escape(this->get_next_sibling(env));
 }
 
 template <class T>
 Napi::Value XmlNode<T>::LineNumber(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  return this->get_line_number(env);
+  Napi::EscapableHandleScope scope(env);
+  return scope.Escape(this->get_line_number(env));
 }
 
 template <class T>
 Napi::Value XmlNode<T>::Type(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  return this->get_type(env);
+  Napi::EscapableHandleScope scope(env);
+  return scope.Escape(this->get_type(env));
 }
 
 template <class T>
 Napi::Value XmlNode<T>::ToString(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
   int options = 0;
 
   if (info.Length() > 0) {
@@ -216,46 +225,50 @@ Napi::Value XmlNode<T>::ToString(const Napi::CallbackInfo &info) {
     }
   }
 
-  return this->to_string(env, options);
+  return scope.Escape(this->to_string(env, options));
 }
 
 template <class T>
 Napi::Value XmlNode<T>::Remove(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
   this->remove();
 
-  return info.This();
+  return scope.Escape(info.This());
 }
 
 template <class T>
 Napi::Value XmlNode<T>::Clone(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
   bool recurse = true;
 
   if (info.Length() == 1 && info[0].IsBoolean())
     recurse = info[0].ToBoolean().Value();
 
-  return this->clone(env, recurse);
+  return scope.Escape(this->clone(env, recurse));
 }
 
 template <class T>
 Napi::Value XmlNode<T>::NewInstance(Napi::Env env, xmlNode *node) {
+  Napi::EscapableHandleScope scope(env);
   switch (node->type) {
   case XML_ATTRIBUTE_NODE:
-    return XmlAttribute::NewInstance(env, reinterpret_cast<xmlAttr *>(node));
+    return scope.Escape(
+        XmlAttribute::NewInstance(env, reinterpret_cast<xmlAttr *>(node)));
   case XML_TEXT_NODE:
-    return XmlText::NewInstance(env, node);
+    return scope.Escape(XmlText::NewInstance(env, node));
   case XML_PI_NODE:
-    return XmlProcessingInstruction::NewInstance(env, node);
+    return scope.Escape(XmlProcessingInstruction::NewInstance(env, node));
   case XML_COMMENT_NODE:
-    return XmlComment::NewInstance(env, node);
+    return scope.Escape(XmlComment::NewInstance(env, node));
 
   default:
     // if we don't know how to convert to specific libxmljs wrapper,
     // wrap in an XmlElement.  There should probably be specific
     // wrapper types for text nodes etc., but this is what existing
     // code expects.
-    return XmlElement::NewInstance(env, node);
+    return scope.Escape(XmlElement::NewInstance(env, node));
   }
 }
 
@@ -443,9 +456,6 @@ xmlNode *get_wrapped_descendant(xmlNode *xml_obj,
 }
 
 template <class T> XmlNode<T>::~XmlNode() {
-  printf("~XmlNode %s\n", xml_obj->name);
-  fflush(stdout);
-
   if ((this->doc != NULL) && (this->doc->_private != NULL)) {
     printf("Unreffing doc\n");
     fflush(stdout);
@@ -456,6 +466,9 @@ template <class T> XmlNode<T>::~XmlNode() {
   if (xml_obj == NULL) {
     return;
   }
+
+  printf("~XmlNode %s\n", xml_obj->name);
+  fflush(stdout);
 
   xml_obj->_private = NULL;
   if (xml_obj->parent == NULL) {
@@ -500,20 +513,23 @@ template <class T> void XmlNode<T>::unref_wrapped_ancestor() {
 }
 
 template <class T> Napi::Value XmlNode<T>::get_doc(Napi::Env env) {
-  return XmlDocument::NewInstance(env, xml_obj->doc);
+  Napi::EscapableHandleScope scope(env);
+  return scope.Escape(XmlDocument::NewInstance(env, xml_obj->doc));
 }
 
 template <class T> Napi::Value XmlNode<T>::remove_namespace(Napi::Env env) {
   xml_obj->ns = NULL;
-  return env.Null();
+  Napi::EscapableHandleScope scope(env);
+  return scope.Escape(env.Null());
 }
 
 template <class T> Napi::Value XmlNode<T>::get_namespace(Napi::Env env) {
+  Napi::EscapableHandleScope scope(env);
   if (!xml_obj->ns) {
-    return env.Null();
+    return scope.Escape(env.Null());
   }
 
-  return XmlNamespace::NewInstance(env, xml_obj->ns);
+  return scope.Escape(XmlNamespace::NewInstance(env, xml_obj->ns));
 }
 
 template <class T> void XmlNode<T>::set_namespace(xmlNs *ns) {
@@ -535,6 +551,7 @@ template <class T> xmlNs *XmlNode<T>::find_namespace(const char *search_str) {
 }
 
 template <class T> Napi::Value XmlNode<T>::get_all_namespaces(Napi::Env env) {
+  Napi::EscapableHandleScope scope(env);
   // Iterate through namespaces
   Napi::Array namespaces = Napi::Array::New(env);
   xmlNs **nsList = xmlGetNsList(xml_obj->doc, xml_obj);
@@ -546,10 +563,11 @@ template <class T> Napi::Value XmlNode<T>::get_all_namespaces(Napi::Env env) {
     xmlFree(nsList);
   }
 
-  return namespaces;
+  return scope.Escape(namespaces);
 }
 
 template <class T> Napi::Value XmlNode<T>::get_local_namespaces(Napi::Env env) {
+  Napi::EscapableHandleScope scope(env);
   // Iterate through local namespaces
   Napi::Array namespaces = Napi::Array::New(env);
   xmlNs *nsDef = xml_obj->nsDef;
@@ -558,44 +576,51 @@ template <class T> Napi::Value XmlNode<T>::get_local_namespaces(Napi::Env env) {
     namespaces.Set(i, ns);
   }
 
-  return namespaces;
+  return scope.Escape(namespaces);
 }
 
 template <class T> Napi::Value XmlNode<T>::get_parent(Napi::Env env) {
+  Napi::EscapableHandleScope scope(env);
   if (xml_obj->parent) {
-    return XmlElement::NewInstance(env, xml_obj->parent);
+    return scope.Escape(XmlElement::NewInstance(env, xml_obj->parent));
   }
 
-  return XmlDocument::NewInstance(env, xml_obj->doc);
+  return scope.Escape(XmlDocument::NewInstance(env, xml_obj->doc));
 }
 
 template <class T> Napi::Value XmlNode<T>::get_prev_sibling(Napi::Env env) {
+  Napi::EscapableHandleScope scope(env);
   if (xml_obj->prev) {
-    return XmlNode::NewInstance(env, xml_obj->prev);
+    return scope.Escape(XmlNode::NewInstance(env, xml_obj->prev));
   }
 
-  return env.Null();
+  return scope.Escape(env.Null());
 }
 
 template <class T> Napi::Value XmlNode<T>::get_next_sibling(Napi::Env env) {
+  Napi::EscapableHandleScope scope(env);
   if (xml_obj->next) {
-    return XmlNode::NewInstance(env, xml_obj->next);
+    return scope.Escape(XmlNode::NewInstance(env, xml_obj->next));
   }
 
-  return env.Null();
+  return scope.Escape(env.Null());
 }
 
 template <class T> Napi::Value XmlNode<T>::get_line_number(Napi::Env env) {
-  return Napi::Number::New(env, static_cast<uint32_t>(xmlGetLineNo(xml_obj)));
+  Napi::EscapableHandleScope scope(env);
+  return scope.Escape(
+      Napi::Number::New(env, static_cast<uint32_t>(xmlGetLineNo(xml_obj))));
 }
 
 template <class T> Napi::Value XmlNode<T>::clone(Napi::Env env, bool recurse) {
+  Napi::EscapableHandleScope scope(env);
   xmlNode *new_xml_obj = xmlDocCopyNode(xml_obj, xml_obj->doc, recurse);
-  return XmlNode::NewInstance(env, new_xml_obj);
+  return scope.Escape(XmlNode::NewInstance(env, new_xml_obj));
 }
 
 template <class T>
 Napi::Value XmlNode<T>::to_string(Napi::Env env, int options) {
+  Napi::EscapableHandleScope scope(env);
   xmlBuffer *buf = xmlBufferCreate();
   const char *enc = "UTF-8";
 
@@ -612,13 +637,13 @@ Napi::Value XmlNode<T>::to_string(Napi::Env env, int options) {
 
     xmlBufferFree(buf);
 
-    return str;
+    return scope.Escape(str);
   } else {
     xmlSaveClose(savectx);
 
     xmlBufferFree(buf);
 
-    return env.Null();
+    return scope.Escape(env.Null());
   }
 }
 
@@ -651,49 +676,50 @@ template <class T> xmlNode *XmlNode<T>::import_node(xmlNode *node) {
 }
 
 template <class T> Napi::Value XmlNode<T>::get_type(Napi::Env env) {
+  Napi::EscapableHandleScope scope(env);
   switch (xml_obj->type) {
   case XML_ELEMENT_NODE:
-    return Napi::String::New(env, "element");
+    return scope.Escape(Napi::String::New(env, "element"));
   case XML_ATTRIBUTE_NODE:
-    return Napi::String::New(env, "attribute");
+    return scope.Escape(Napi::String::New(env, "attribute"));
   case XML_TEXT_NODE:
-    return Napi::String::New(env, "text");
+    return scope.Escape(Napi::String::New(env, "text"));
   case XML_CDATA_SECTION_NODE:
-    return Napi::String::New(env, "cdata");
+    return scope.Escape(Napi::String::New(env, "cdata"));
   case XML_ENTITY_REF_NODE:
-    return Napi::String::New(env, "entity_ref");
+    return scope.Escape(Napi::String::New(env, "entity_ref"));
   case XML_ENTITY_NODE:
-    return Napi::String::New(env, "entity");
+    return scope.Escape(Napi::String::New(env, "entity"));
   case XML_PI_NODE:
-    return Napi::String::New(env, "pi");
+    return scope.Escape(Napi::String::New(env, "pi"));
   case XML_COMMENT_NODE:
-    return Napi::String::New(env, "comment");
+    return scope.Escape(Napi::String::New(env, "comment"));
   case XML_DOCUMENT_NODE:
-    return Napi::String::New(env, "document");
+    return scope.Escape(Napi::String::New(env, "document"));
   case XML_DOCUMENT_TYPE_NODE:
-    return Napi::String::New(env, "document_type");
+    return scope.Escape(Napi::String::New(env, "document_type"));
   case XML_DOCUMENT_FRAG_NODE:
-    return Napi::String::New(env, "document_frag");
+    return scope.Escape(Napi::String::New(env, "document_frag"));
   case XML_NOTATION_NODE:
-    return Napi::String::New(env, "notation");
+    return scope.Escape(Napi::String::New(env, "notation"));
   case XML_HTML_DOCUMENT_NODE:
-    return Napi::String::New(env, "html_document");
+    return scope.Escape(Napi::String::New(env, "html_document"));
   case XML_DTD_NODE:
-    return Napi::String::New(env, "dtd");
+    return scope.Escape(Napi::String::New(env, "dtd"));
   case XML_ELEMENT_DECL:
-    return Napi::String::New(env, "element_decl");
+    return scope.Escape(Napi::String::New(env, "element_decl"));
   case XML_ATTRIBUTE_DECL:
-    return Napi::String::New(env, "attribute_decl");
+    return scope.Escape(Napi::String::New(env, "attribute_decl"));
   case XML_ENTITY_DECL:
-    return Napi::String::New(env, "entity_decl");
+    return scope.Escape(Napi::String::New(env, "entity_decl"));
   case XML_NAMESPACE_DECL:
-    return Napi::String::New(env, "namespace_decl");
+    return scope.Escape(Napi::String::New(env, "namespace_decl"));
   case XML_XINCLUDE_START:
-    return Napi::String::New(env, "xinclude_start");
+    return scope.Escape(Napi::String::New(env, "xinclude_start"));
   case XML_XINCLUDE_END:
-    return Napi::String::New(env, "xinclude_end");
+    return scope.Escape(Napi::String::New(env, "xinclude_end"));
   case XML_DOCB_DOCUMENT_NODE:
-    return Napi::String::New(env, "docb_document");
+    return scope.Escape(Napi::String::New(env, "docb_document"));
   }
 
   return env.Null();

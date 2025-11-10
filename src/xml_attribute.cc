@@ -45,7 +45,7 @@ Napi::Value XmlAttribute::NewInstance(Napi::Env env, xmlNode *xml_obj,
   assert(attr);
 
   if (attr->_private) {
-    return static_cast<XmlNode *>(xml_obj->_private)->Value();
+    return scope.Escape(static_cast<XmlNode *>(xml_obj->_private)->Value());
   }
 
   auto external = Napi::External<xmlAttr>::New(env, attr);
@@ -58,7 +58,7 @@ Napi::Value XmlAttribute::NewInstance(Napi::Env env, xmlAttr *attr) {
   assert(attr->type == XML_ATTRIBUTE_NODE);
 
   if (attr->_private) {
-    return static_cast<XmlNode *>(attr->_private)->Value();
+    return scope.Escape(static_cast<XmlNode *>(attr->_private)->Value());
   }
 
   auto external = Napi::External<xmlAttr>::New(env, attr);
@@ -73,46 +73,51 @@ Napi::Value XmlAttribute::Name(const Napi::CallbackInfo &info) {
 
 Napi::Value XmlAttribute::AttrValue(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
   // attr.value('new value');
   if (info.Length() > 0) {
     std::string value_str = info[0].As<Napi::String>().Utf8Value();
     this->set_value(value_str.c_str());
-    return info.This();
+    return scope.Escape(info.This());
   }
 
   // attr.value();
-  return this->get_value(env);
+  return scope.Escape(this->get_value(env));
 }
 
 Napi::Value XmlAttribute::Node(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  return this->get_element(env);
+  Napi::EscapableHandleScope scope(env);
+  return scope.Escape(this->get_element(env));
 }
 
 Napi::Value XmlAttribute::Namespace(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  return this->get_namespace(env);
+  Napi::EscapableHandleScope scope(env);
+  return scope.Escape(this->get_namespace(env));
 }
 
 Napi::Value XmlAttribute::get_name(Napi::Env env) {
+  Napi::EscapableHandleScope scope(env);
   if (xml_obj->name) {
-    return Napi::String::New(env, (const char *)xml_obj->name,
-                             xmlStrlen(xml_obj->name));
+    return scope.Escape(Napi::String::New(env, (const char *)xml_obj->name,
+                                          xmlStrlen(xml_obj->name)));
   }
 
-  return env.Null();
+  return scope.Escape(env.Null());
 }
 
 Napi::Value XmlAttribute::get_value(Napi::Env env) {
+  Napi::EscapableHandleScope scope(env);
   xmlChar *value = xmlNodeGetContent(xml_obj);
   if (value != NULL) {
     Napi::String ret_value =
         Napi::String::New(env, (const char *)value, xmlStrlen(value));
     xmlFree(value);
-    return ret_value;
+    return scope.Escape(ret_value);
   }
 
-  return env.Null();
+  return scope.Escape(env.Null());
 }
 
 void XmlAttribute::set_value(const char *value) {
@@ -146,14 +151,16 @@ void XmlAttribute::set_value(const char *value) {
 }
 
 Napi::Value XmlAttribute::get_element(Napi::Env env) {
-  return XmlElement::NewInstance(env, xml_obj->parent);
+  Napi::EscapableHandleScope scope(env);
+  return scope.Escape(XmlElement::NewInstance(env, xml_obj->parent));
 }
 
 Napi::Value XmlAttribute::get_namespace(Napi::Env env) {
+  Napi::EscapableHandleScope scope(env);
   if (!xml_obj->ns) {
-    return env.Null();
+    return scope.Escape(env.Null());
   }
-  return XmlNamespace::NewInstance(env, xml_obj->ns);
+  return scope.Escape(XmlNamespace::NewInstance(env, xml_obj->ns));
 }
 
 Napi::Function XmlAttribute::Init(Napi::Env env, Napi::Object exports) {

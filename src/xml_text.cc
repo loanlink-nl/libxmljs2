@@ -14,12 +14,15 @@ namespace libxmljs {
 Napi::FunctionReference XmlText::constructor;
 
 Napi::Value XmlText::get_path(Napi::Env env) {
+  Napi::EscapableHandleScope scope(env);
+
   xmlChar *path = xmlGetNodePath(xml_obj);
   const char *return_path = path ? reinterpret_cast<char *>(path) : "";
   int str_len = xmlStrlen((const xmlChar *)return_path);
   Napi::String js_obj = Napi::String::New(env, return_path, str_len);
   xmlFree(path);
-  return js_obj;
+
+  return scope.Escape(js_obj);
 }
 
 // JS-signature: (doc: Document, content: string)
@@ -77,7 +80,7 @@ Napi::Value XmlText::NewInstance(Napi::Env env, xmlNode *node) {
   Napi::EscapableHandleScope scope(env);
 
   if (node->_private) {
-    return static_cast<XmlNode *>(node->_private)->Value();
+    return scope.Escape(static_cast<XmlNode *>(node->_private)->Value());
   }
 
   auto external = Napi::External<xmlNode>::New(env, node);
@@ -87,35 +90,39 @@ Napi::Value XmlText::NewInstance(Napi::Env env, xmlNode *node) {
 
 Napi::Value XmlText::NextElement(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  return this->get_next_element(env);
+  Napi::EscapableHandleScope scope(env);
+  return scope.Escape(this->get_next_element(env));
 }
 
 Napi::Value XmlText::PrevElement(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  return this->get_prev_element(env);
+  Napi::EscapableHandleScope scope(env);
+  return scope.Escape(this->get_prev_element(env));
 }
 
 Napi::Value XmlText::Text(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
   if (info.Length() == 0) {
-    return this->get_content(env);
+    return scope.Escape(this->get_content(env));
   } else {
     std::string content = info[0].ToString().Utf8Value();
     this->set_content(content.c_str());
   }
 
-  return info.This();
+  return scope.Escape(info.This());
 }
 
 Napi::Value XmlText::AddPrevSibling(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
 
   Napi::Object siblingObj = info[0].ToObject();
   XmlNode *new_sibling = Napi::ObjectWrap<XmlNode>::Unwrap(siblingObj);
   if (new_sibling == nullptr) {
     Napi::Error::New(env, "Invalid sibling node argument")
         .ThrowAsJavaScriptException();
-    return env.Undefined();
+    return scope.Escape(env.Undefined());
   }
 
   xmlNode *imported_sibling = this->import_node(new_sibling->xml_obj);
@@ -123,25 +130,26 @@ Napi::Value XmlText::AddPrevSibling(const Napi::CallbackInfo &info) {
     Napi::Error::New(
         env, "Could not add sibling. Failed to copy node to new Document.")
         .ThrowAsJavaScriptException();
-    return env.Undefined();
+    return scope.Escape(env.Undefined());
   } else if ((new_sibling->xml_obj == imported_sibling) &&
              this->prev_sibling_will_merge(imported_sibling)) {
     imported_sibling = xmlCopyNode(imported_sibling, 0);
   }
   this->add_prev_sibling(imported_sibling);
 
-  return info[0];
+  return scope.Escape(info[0]);
 }
 
 Napi::Value XmlText::AddNextSibling(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
 
   Napi::Object siblingObj = info[0].ToObject();
   XmlNode *new_sibling = Napi::ObjectWrap<XmlNode>::Unwrap(siblingObj);
   if (new_sibling == nullptr) {
     Napi::Error::New(env, "Invalid sibling node argument")
         .ThrowAsJavaScriptException();
-    return env.Undefined();
+    return scope.Escape(env.Undefined());
   }
 
   xmlNode *imported_sibling = this->import_node(new_sibling->xml_obj);
@@ -149,18 +157,19 @@ Napi::Value XmlText::AddNextSibling(const Napi::CallbackInfo &info) {
     Napi::Error::New(
         env, "Could not add sibling. Failed to copy node to new Document.")
         .ThrowAsJavaScriptException();
-    return env.Undefined();
+    return scope.Escape(env.Undefined());
   } else if ((new_sibling->xml_obj == imported_sibling) &&
              this->next_sibling_will_merge(imported_sibling)) {
     imported_sibling = xmlCopyNode(imported_sibling, 0);
   }
   this->add_next_sibling(imported_sibling);
 
-  return info[0];
+  return scope.Escape(info[0]);
 }
 
 Napi::Value XmlText::Replace(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
   if (info[0].IsString()) {
     std::string content = info[0].ToString().Utf8Value();
     this->replace_text(content.c_str());
@@ -170,7 +179,7 @@ Napi::Value XmlText::Replace(const Napi::CallbackInfo &info) {
     if (new_sibling == nullptr) {
       Napi::Error::New(env, "Invalid replacement node argument")
           .ThrowAsJavaScriptException();
-      return env.Undefined();
+      return scope.Escape(env.Undefined());
     }
 
     xmlNode *imported_sibling = this->import_node(new_sibling->xml_obj);
@@ -178,25 +187,27 @@ Napi::Value XmlText::Replace(const Napi::CallbackInfo &info) {
       Napi::Error::New(
           env, "Could not replace. Failed to copy node to new Document.")
           .ThrowAsJavaScriptException();
-      return env.Undefined();
+      return scope.Escape(env.Undefined());
     }
     this->replace_element(imported_sibling);
   }
 
-  return info[0];
+  return scope.Escape(info[0]);
 }
 
 Napi::Value XmlText::Path(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  return this->get_path(env);
+  Napi::EscapableHandleScope scope(env);
+  return scope.Escape(this->get_path(env));
 }
 
 Napi::Value XmlText::Name(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
 
   if (info.Length() == 0)
-    return this->get_name(env);
-  return info.This();
+    return scope.Escape(this->get_name(env));
+  return scope.Escape(info.This());
 }
 
 void XmlText::set_content(const char *content) {
@@ -207,44 +218,48 @@ void XmlText::set_content(const char *content) {
 }
 
 Napi::Value XmlText::get_content(Napi::Env env) {
+  Napi::EscapableHandleScope scope(env);
   xmlChar *content = xmlNodeGetContent(xml_obj);
   if (content) {
     Napi::String ret_content = Napi::String::New(env, (const char *)content);
     xmlFree(content);
-    return ret_content;
+    return scope.Escape(ret_content);
   }
 
-  return Napi::String::New(env, "");
+  return scope.Escape(Napi::String::New(env, ""));
 }
 
 Napi::Value XmlText::get_name(Napi::Env env) {
+  Napi::EscapableHandleScope scope(env);
   if (xml_obj->name) {
-    return Napi::String::New(env, (const char *)xml_obj->name);
+    return scope.Escape(Napi::String::New(env, (const char *)xml_obj->name));
   } else {
-    return env.Undefined();
+    return scope.Escape(env.Undefined());
   }
 }
 
 Napi::Value XmlText::get_next_element(Napi::Env env) {
+  Napi::EscapableHandleScope scope(env);
   xmlNode *sibling = xml_obj->next;
   if (!sibling) {
-    return env.Null();
+    return scope.Escape(env.Null());
   }
 
   while (sibling && sibling->type != XML_ELEMENT_NODE)
     sibling = sibling->next;
 
   if (sibling) {
-    return XmlText::NewInstance(env, sibling);
+    return scope.Escape(XmlText::NewInstance(env, sibling));
   }
 
-  return env.Null();
+  return scope.Escape(env.Null());
 }
 
 Napi::Value XmlText::get_prev_element(Napi::Env env) {
+  Napi::EscapableHandleScope scope(env);
   xmlNode *sibling = xml_obj->prev;
   if (!sibling) {
-    return env.Null();
+    return scope.Escape(env.Null());
   }
 
   while (sibling && sibling->type != XML_ELEMENT_NODE) {
@@ -252,10 +267,10 @@ Napi::Value XmlText::get_prev_element(Napi::Env env) {
   }
 
   if (sibling) {
-    return XmlText::NewInstance(env, sibling);
+    return scope.Escape(XmlText::NewInstance(env, sibling));
   }
 
-  return env.Null();
+  return scope.Escape(env.Null());
 }
 
 void XmlText::add_prev_sibling(xmlNode *element) {

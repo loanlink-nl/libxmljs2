@@ -62,14 +62,15 @@ XmlComment::XmlComment(const Napi::CallbackInfo &info) : XmlNode(info) {
 
 Napi::Value XmlComment::Text(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
   if (info.Length() == 0) {
-    return this->get_content(env);
+    return scope.Escape(this->get_content(env));
   } else {
     std::string content = info[0].As<Napi::String>().Utf8Value();
     this->set_content(content.c_str());
   }
 
-  return info.This();
+  return scope.Escape(info.This());
 }
 
 void XmlComment::set_content(const char *content) {
@@ -77,21 +78,22 @@ void XmlComment::set_content(const char *content) {
 }
 
 Napi::Value XmlComment::get_content(Napi::Env env) {
+  Napi::EscapableHandleScope scope(env);
   xmlChar *content = xmlNodeGetContent(xml_obj);
   if (content) {
     Napi::String ret_content = Napi::String::New(env, (const char *)content);
     xmlFree(content);
-    return ret_content;
+    return scope.Escape(ret_content);
   }
 
-  return Napi::String::New(env, "");
+  return scope.Escape(Napi::String::New(env, ""));
 }
 
 Napi::Value XmlComment::NewInstance(Napi::Env env, xmlNode *node) {
   Napi::EscapableHandleScope scope(env);
 
   if (node->_private) {
-    return static_cast<XmlNode *>(node->_private)->Value();
+    return scope.Escape(static_cast<XmlNode *>(node->_private)->Value());
   }
 
   Napi::Function cons = constructor.Value();

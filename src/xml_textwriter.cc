@@ -46,11 +46,13 @@ XmlTextWriter::~XmlTextWriter() {
 
 Napi::Value XmlTextWriter::OpenMemory(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  return env.Undefined();
+  Napi::EscapableHandleScope scope(env);
+  return scope.Escape(env.Undefined());
 }
 
 Napi::Value XmlTextWriter::BufferContent(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
 
   // Flush the output buffer of the libxml writer instance in order to push all
   // the content to our writerBuffer.
@@ -60,7 +62,7 @@ Napi::Value XmlTextWriter::BufferContent(const Napi::CallbackInfo &info) {
   const xmlChar *buf = xmlBufferContent(writerBuffer);
   size_t length = xmlBufferLength(writerBuffer);
 
-  return Napi::String::New(env, (const char *)buf, length);
+  return scope.Escape(Napi::String::New(env, (const char *)buf, length));
 }
 
 void XmlTextWriter::clearBuffer() {
@@ -73,12 +75,14 @@ void XmlTextWriter::clearBuffer() {
 
 Napi::Value XmlTextWriter::BufferEmpty(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
   clearBuffer();
-  return env.Undefined();
+  return scope.Escape(env.Undefined());
 }
 
 Napi::Value XmlTextWriter::StartDocument(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
 
   const char *version = nullptr;
   const char *encoding = nullptr;
@@ -110,21 +114,23 @@ Napi::Value XmlTextWriter::StartDocument(const Napi::CallbackInfo &info) {
 
   THROW_ON_ERROR(env, "Failed to start document");
 
-  return Napi::Number::New(env, (double)result);
+  return scope.Escape(Napi::Number::New(env, (double)result));
 }
 
 Napi::Value XmlTextWriter::EndDocument(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
 
   int result = xmlTextWriterEndDocument(textWriter);
 
   THROW_ON_ERROR(env, "Failed to end document");
 
-  return Napi::Number::New(env, (double)result);
+  return scope.Escape(Napi::Number::New(env, (double)result));
 }
 
 Napi::Value XmlTextWriter::StartElementNS(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
 
   const xmlChar *prefix = nullptr;
   const xmlChar *name = nullptr;
@@ -151,21 +157,23 @@ Napi::Value XmlTextWriter::StartElementNS(const Napi::CallbackInfo &info) {
 
   THROW_ON_ERROR(env, "Failed to start element");
 
-  return Napi::Number::New(env, (double)result);
+  return scope.Escape(Napi::Number::New(env, (double)result));
 }
 
 Napi::Value XmlTextWriter::EndElement(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
 
   int result = xmlTextWriterEndElement(textWriter);
 
   THROW_ON_ERROR(env, "Failed to end element");
 
-  return Napi::Number::New(env, (double)result);
+  return scope.Escape(Napi::Number::New(env, (double)result));
 }
 
 Napi::Value XmlTextWriter::StartAttributeNS(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
 
   const xmlChar *prefix = nullptr;
   const xmlChar *name = nullptr;
@@ -192,61 +200,67 @@ Napi::Value XmlTextWriter::StartAttributeNS(const Napi::CallbackInfo &info) {
 
   THROW_ON_ERROR(env, "Failed to start attribute");
 
-  return Napi::Number::New(env, (double)result);
+  return scope.Escape(Napi::Number::New(env, (double)result));
 }
 
 Napi::Value XmlTextWriter::EndAttribute(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
 
   int result = xmlTextWriterEndAttribute(textWriter);
 
   THROW_ON_ERROR(env, "Failed to end attribute");
 
-  return Napi::Number::New(env, (double)result);
+  return scope.Escape(Napi::Number::New(env, (double)result));
 }
 
 Napi::Value XmlTextWriter::StartCdata(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
 
   int result = xmlTextWriterStartCDATA(textWriter);
 
   THROW_ON_ERROR(env, "Failed to start CDATA section");
 
-  return Napi::Number::New(env, (double)result);
+  return scope.Escape(Napi::Number::New(env, (double)result));
 }
 
 Napi::Value XmlTextWriter::EndCdata(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
 
   int result = xmlTextWriterEndCDATA(textWriter);
 
   THROW_ON_ERROR(env, "Failed to end CDATA section");
 
-  return Napi::Number::New(env, (double)result);
+  return scope.Escape(Napi::Number::New(env, (double)result));
 }
 
 Napi::Value XmlTextWriter::StartComment(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
 
   int result = xmlTextWriterStartComment(textWriter);
 
   THROW_ON_ERROR(env, "Failed to start Comment section");
 
-  return Napi::Number::New(env, (double)result);
+  return scope.Escape(Napi::Number::New(env, (double)result));
 }
 
 Napi::Value XmlTextWriter::EndComment(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
 
   int result = xmlTextWriterEndComment(textWriter);
 
   THROW_ON_ERROR(env, "Failed to end Comment section");
 
-  return Napi::Number::New(env, (double)result);
+  return scope.Escape(Napi::Number::New(env, (double)result));
 }
 
 Napi::Value XmlTextWriter::WriteString(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
 
   std::string stringStr;
   if (info.Length() > 0) {
@@ -258,11 +272,12 @@ Napi::Value XmlTextWriter::WriteString(const Napi::CallbackInfo &info) {
 
   THROW_ON_ERROR(env, "Failed to write string");
 
-  return Napi::Number::New(env, (double)result);
+  return scope.Escape(Napi::Number::New(env, (double)result));
 }
 
 Napi::Value XmlTextWriter::OutputMemory(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
 
   bool clear = true;
   if (info.Length() > 0) {
@@ -275,7 +290,7 @@ Napi::Value XmlTextWriter::OutputMemory(const Napi::CallbackInfo &info) {
     clearBuffer();
   }
 
-  return content;
+  return scope.Escape(content);
 }
 
 void XmlTextWriter::Init(Napi::Env env, Napi::Object exports) {

@@ -107,11 +107,12 @@ void XmlSaxParser::Callback(const char *what, int argc, Napi::Value *argv) {
 
 Napi::Value XmlSaxParser::Push(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
 
   if (info.Length() < 1 || !info[0].IsString()) {
     Napi::TypeError::New(env, "Bad Argument: parseString requires a string")
         .ThrowAsJavaScriptException();
-    return env.Undefined();
+    return scope.Escape(env.Undefined());
   }
 
   std::string parsable = info[0].ToString().Utf8Value();
@@ -120,7 +121,7 @@ Napi::Value XmlSaxParser::Push(const Napi::CallbackInfo &info) {
 
   this->push(parsable.c_str(), parsable.length(), terminate);
 
-  return Napi::Boolean::New(env, true);
+  return scope.Escape(Napi::Boolean::New(env, true));
 }
 
 void XmlSaxParser::initialize_push_parser() {
@@ -135,18 +136,19 @@ void XmlSaxParser::push(const char *str, unsigned int size, bool terminate) {
 
 Napi::Value XmlSaxParser::ParseString(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+  Napi::EscapableHandleScope scope(env);
 
   if (info.Length() < 1 || !info[0].IsString()) {
     Napi::TypeError::New(env, "Bad Argument: parseString requires a string")
         .ThrowAsJavaScriptException();
-    return env.Undefined();
+    return scope.Escape(env.Undefined());
   }
 
   std::string parsable = info[0].As<Napi::String>().Utf8Value();
   this->parse_string(parsable.c_str(), parsable.length());
 
   // TODO(sprsquish): return based on the parser
-  return Napi::Boolean::New(env, true);
+  return scope.Escape(Napi::Boolean::New(env, true));
 }
 
 void XmlSaxParser::parse_string(const char *str, unsigned int size) {
@@ -369,7 +371,8 @@ void XmlSaxParser::error(void *context, const char *msg, ...) {
   free(message);
 }
 
-Napi::Object XmlSaxParser::Init(Napi::Env env, Napi::Object exports) {
+Napi::Value XmlSaxParser::Init(Napi::Env env, Napi::Object exports) {
+  Napi::EscapableHandleScope scope(env);
   // SAX Parser
   XmlSaxParserCtxt *parser_ctx = new XmlSaxParserCtxt{false};
   Napi::Function parser_func = DefineClass(
@@ -386,7 +389,7 @@ Napi::Object XmlSaxParser::Init(Napi::Env env, Napi::Object exports) {
 
   exports.Set("SaxPushParser", push_parser_func);
 
-  return exports;
+  return scope.Escape(exports);
 }
 
 } // namespace libxmljs

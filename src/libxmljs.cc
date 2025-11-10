@@ -216,12 +216,14 @@ Napi::Object listFeatures(Napi::Env env) {
 
 Napi::Value XmlMemUsed(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  return Napi::Number::New(env, xmlMemUsed());
+  Napi::EscapableHandleScope scope(env);
+  return scope.Escape(Napi::Number::New(env, xmlMemUsed()));
 }
 
 Napi::Value XmlNodeCount(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  return Napi::Number::New(env, nodeCount);
+  Napi::EscapableHandleScope scope(env);
+  return scope.Escape(Napi::Number::New(env, nodeCount));
 }
 
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
