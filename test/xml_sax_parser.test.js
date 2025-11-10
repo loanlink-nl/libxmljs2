@@ -2,6 +2,8 @@ const fs = require('node:fs');
 
 const libxml = require('../index');
 
+global.gc ??= Bun.gc;
+
 function clone(obj) {
   if (obj == null || typeof obj != 'object') return obj;
 
@@ -144,7 +146,7 @@ describe('xml sax parser', () => {
 
   const filename = `${__dirname}/fixtures/sax_parser.xml`;
 
-  it('sax', () => {
+  it.only('sax', () => {
     const callbacks = clone(callbackTest);
     // eslint-disable-next-line no-sync
     const str = fs.readFileSync(filename, 'utf8');

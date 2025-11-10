@@ -7,6 +7,10 @@
 
 namespace libxmljs {
 
+struct XmlSaxParserCtxt {
+  bool is_push_parser;
+};
+
 class XmlSaxParser : public Napi::ObjectWrap<XmlSaxParser> {
 public:
   XmlSaxParser(const Napi::CallbackInfo &info);

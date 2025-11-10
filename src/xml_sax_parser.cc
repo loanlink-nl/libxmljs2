@@ -57,12 +57,9 @@ XmlSaxParser::XmlSaxParser(const Napi::CallbackInfo &info)
 
   sax_handler_ = tmp;
 
-  // Check if we need to initialize as push parser
-  // This is determined by checking which constructor was called
-  // For SaxPushParser, we initialize immediately
-  if (info.Length() > 0 && info[0].IsBoolean() &&
-      info[0].As<Napi::Boolean>().Value()) {
-    initialize_push_parser();
+  auto ctx = static_cast<XmlSaxParserCtxt>(info.Data());
+  if (ctx.is_push_parser) {
+    this->initialize_push_parser();
   }
 }
 
@@ -120,10 +117,9 @@ Napi::Value XmlSaxParser::Push(const Napi::CallbackInfo &info) {
     return env.Undefined();
   }
 
-  std::string parsable = info[0].As<Napi::String>().Utf8Value();
+  std::string parsable = info[0].ToString().Utf8Value();
 
-  bool terminate =
-      info.Length() > 1 ? info[1].As<Napi::Boolean>().Value() : false;
+  bool terminate = info.Length() > 1 ? info[1].ToBoolean().Value() : false;
 
   this->push(parsable.c_str(), parsable.length(), terminate);
 
@@ -383,15 +379,18 @@ Napi::Object XmlSaxParser::Init(Napi::Env env, Napi::Object exports) {
   emit_symbol = Napi::Symbol::New(env, EMIT_SYMBOL_STRING);
 
   // SAX Parser
-  Napi::Function parser_func =
-      DefineClass(env, "SaxParser",
-                  {InstanceMethod("parseString", &XmlSaxParser::ParseString)});
+  XmlSaxParserCtxt *parser_ctx = new XmlSaxParserCtxt{false};
+  Napi::Function parser_func = DefineClass(
+      env, "SaxParser",
+      {InstanceMethod("parseString", &XmlSaxParser::ParseString)}, parser_ctx);
 
   exports.Set("SaxParser", parser_func);
 
   // Push Parser - create a separate wrapper that passes true to constructor
+  XmlSaxParserCtxt *push_parser_ctx = new XmlSaxParserCtxt{true};
   Napi::Function push_parser_func = DefineClass(
-      env, "SaxPushParser", {InstanceMethod("push", &XmlSaxParser::Push)});
+      env, "SaxPushParser", {InstanceMethod("push", &XmlSaxParser::Push)},
+      push_parser_ctx);
 
   exports.Set("SaxPushParser", push_parser_func);
 
