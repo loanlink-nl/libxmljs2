@@ -194,7 +194,7 @@ Napi::Value XmlDocument::ToString(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   int options = 0;
-  const char *encoding = "UTF-8";
+  std::string encoding = "UTF-8";
 
   if (info[0].IsObject()) {
     Napi::Object obj = info[0].ToObject();
@@ -223,8 +223,7 @@ Napi::Value XmlDocument::ToString(const Napi::CallbackInfo &info) {
     }
 
     if (obj.Has("encoding") && obj.Get("encoding").IsString()) {
-      std::string encodingStr = obj.Get("encoding").ToString().Utf8Value();
-      encoding = encodingStr.c_str();
+      encoding = obj.Get("encoding").ToString().Utf8Value();
     }
 
     if (obj.Has("type")) {
@@ -254,7 +253,7 @@ Napi::Value XmlDocument::ToString(const Napi::CallbackInfo &info) {
   }
 
   xmlBuffer *buf = xmlBufferCreate();
-  xmlSaveCtxt *savectx = xmlSaveToBuffer(buf, encoding, options);
+  xmlSaveCtxt *savectx = xmlSaveToBuffer(buf, encoding.c_str(), options);
   xmlSaveTree(savectx, (xmlNode *)xml_obj);
   xmlSaveFlush(savectx);
   xmlSaveClose(savectx);
