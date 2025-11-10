@@ -13,26 +13,27 @@ namespace libxmljs {
 
 Napi::FunctionReference XmlElement::constructor;
 
+// JS-signature: (doc: Document, name: string, content?: string)
 XmlElement::XmlElement(const Napi::CallbackInfo &info) : XmlNode(info) {
   Napi::Env env = info.Env();
 
   // if we were created for an existing xml node, then we don't need
   // to create a new node on the document
-  if (info.Length() == 0) {
+  if (info.Length() == 0 || info[0].IsExternal()) {
     return;
   }
 
-  if (info.Length() == 3) {
+  if (info.Length() == 2 || info.Length() == 3) {
     XmlDocument *document =
-        Napi::ObjectWrap<XmlDocument>::Unwrap(info[0].As<Napi::Object>());
+        Napi::ObjectWrap<XmlDocument>::Unwrap(info[0].ToObject());
     assert(document);
 
-    std::string name = info[1].As<Napi::String>().Utf8Value();
+    std::string name = info[1].ToString().Utf8Value();
 
     const char *content = NULL;
     std::string contentStr;
     if (info[2].IsString()) {
-      contentStr = info[2].As<Napi::String>().Utf8Value();
+      contentStr = info[2].ToString().Utf8Value();
       if (!contentStr.empty()) {
         content = contentStr.c_str();
       }
@@ -47,15 +48,12 @@ XmlElement::XmlElement(const Napi::CallbackInfo &info) : XmlNode(info) {
     if (encodedContent)
       xmlFree(encodedContent);
 
-    XmlElement *element =
-        XmlNode::Unwrap(XmlNode::NewInstance(env, elem).ToObject());
-    elem->_private = element;
+    xml_obj = elem;
+    elem->_private = this;
 
-    // this prevents the document from going away
-    info.This().As<Napi::Object>().Set("document", info[0]);
+    // Set document on instance, so it won't be cleaned up
+    this->Value().Set("document", info[0]);
   }
-
-  return;
 }
 
 XmlElement::~XmlElement() {}

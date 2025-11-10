@@ -32,7 +32,7 @@ XmlComment::XmlComment(const Napi::CallbackInfo &info) : XmlNode(info) {
     return;
   }
 
-  Napi::Object docObj = info[0].As<Napi::Object>();
+  Napi::Object docObj = info[0].ToObject();
   XmlDocument *document = Napi::ObjectWrap<XmlDocument>::Unwrap(docObj);
   if (document == nullptr) {
     Napi::Error::New(env, "Invalid document argument")

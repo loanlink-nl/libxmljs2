@@ -28,14 +28,13 @@ XmlNode<T>::XmlNode(const Napi::CallbackInfo &info)
     return;
   }
 
-  if (info[0].IsExternal()) {
-    auto external = info[0].As<Napi::External<xmlNode>>();
-    xmlNode *data = external.Data();
-    this->xml_obj = data;
-  } else {
-    Napi::TypeError::New(env, "Invalid arguments").ThrowAsJavaScriptException();
+  if (!info[0].IsExternal()) {
     return;
   }
+
+  auto external = info[0].As<Napi::External<xmlNode>>();
+  xmlNode *data = external.Data();
+  this->xml_obj = data;
 
   this->xml_obj->_private = this;
   this->ancestor = NULL;
@@ -44,7 +43,6 @@ XmlNode<T>::XmlNode(const Napi::CallbackInfo &info)
     this->doc = xml_obj->doc;
 
     XmlDocument *doc = static_cast<XmlDocument *>(this->doc->_private);
-
     // doc->Ref();
   }
 

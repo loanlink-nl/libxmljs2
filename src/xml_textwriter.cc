@@ -266,7 +266,7 @@ Napi::Value XmlTextWriter::OutputMemory(const Napi::CallbackInfo &info) {
 
   bool clear = true;
   if (info.Length() > 0) {
-    clear = info[0].As<Napi::Boolean>().Value();
+    clear = info[0].ToBoolean().Value();
   }
 
   Napi::Value content = BufferContent(info);
