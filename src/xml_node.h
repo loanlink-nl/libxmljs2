@@ -21,7 +21,6 @@ public:
   void ref_wrapped_ancestor();
   void unref_wrapped_ancestor();
   xmlNode *get_wrapped_ancestor();
-  int refs() { return refs_; };
 
   // the doc ref'd by this proxy
   xmlDoc *doc;
@@ -67,9 +66,6 @@ protected:
   void replace_element(xmlNode *element);
   void replace_text(const char *content);
   xmlNode *import_node(xmlNode *node);
-
-private:
-  int refs_ = 0;
 };
 
 class XmlNodeInstance : public XmlNode<XmlNodeInstance> {

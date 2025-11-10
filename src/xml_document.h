@@ -27,13 +27,6 @@ public:
   // given xmlDoc object, intended for use in c++ space
   static Napi::Value NewInstance(Napi::Env env, xmlDoc *doc);
 
-  // publicly expose ref functions
-  // using Napi::ObjectWrap<XmlDocument>::Ref;
-  // using Napi::ObjectWrap<XmlDocument>::Unref;
-
-  // expose ObjectWrap::refs_ (for testing)
-  int refs() { return Ref(); }
-
 protected:
   static Napi::Value FromHtml(const Napi::CallbackInfo &info);
   static Napi::Value FromXml(const Napi::CallbackInfo &info);
