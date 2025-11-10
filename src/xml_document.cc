@@ -1,5 +1,6 @@
 // Copyright 2009, Squish Tech, LLC.
 
+#include <cstdio>
 #include <cstring>
 
 // #include <libxml/tree.h>
@@ -11,6 +12,7 @@
 #include <libxml/xmlsave.h>
 #include <libxml/xmlschemas.h>
 
+#include "napi.h"
 #include "xml_document.h"
 #include "xml_element.h"
 #include "xml_namespace.h"
@@ -20,6 +22,35 @@
 namespace libxmljs {
 
 Napi::FunctionReference XmlDocument::constructor;
+
+// JS-signature: (version?: string, encoding?: string)
+XmlDocument::XmlDocument(const Napi::CallbackInfo &info)
+    : Napi::ObjectWrap<XmlDocument>(info) {
+
+  if (info.Length() > 0 && info[0].IsExternal()) {
+    xml_obj = info[0].As<Napi::External<xmlDoc>>().Data();
+    xml_obj->_private = this;
+
+    return;
+  }
+
+  const char *version = info.Length() > 0 && info[0].IsString()
+                            ? info[0].ToString().Utf8Value().c_str()
+                            : "1.0";
+  xml_obj = xmlNewDoc((const xmlChar *)(version));
+  xml_obj->_private = this;
+
+  const char *encoding = info.Length() > 1 && info[1].IsString()
+                             ? info[1].ToString().Utf8Value().c_str()
+                             : "utf8";
+
+  this->setEncoding(encoding);
+}
+
+XmlDocument::~XmlDocument() {
+  xml_obj->_private = NULL;
+  xmlFreeDoc(xml_obj);
+}
 
 Napi::Value XmlDocument::Encoding(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
@@ -61,7 +92,7 @@ Napi::Value XmlDocument::Version(const Napi::CallbackInfo &info) {
 Napi::Value XmlDocument::Root(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
-  xmlNode *root = xmlDocGetRootElement(xml_obj);
+  xmlNode *root = xmlDocGetRootElement(this->xml_obj);
 
   if (info.Length() == 0 || info[0].IsUndefined()) {
     if (!root) {
@@ -78,9 +109,8 @@ Napi::Value XmlDocument::Root(const Napi::CallbackInfo &info) {
 
   // set the element as the root element for the document
   // allows for proper retrieval of root later
-  XmlElement *element =
-      Napi::ObjectWrap<XmlElement>::Unwrap(info[0].ToObject());
-  assert(element);
+  XmlElement *element = XmlElement::Unwrap(info[0].ToObject());
+
   xmlDocSetRootElement(xml_obj, element->xml_obj);
   element->ref_wrapped_ancestor();
   return info[0];
@@ -245,26 +275,45 @@ Napi::Value XmlDocument::Type(const Napi::CallbackInfo &info) {
 
 // not called from node
 // private api
-Napi::Object XmlDocument::NewInstance(Napi::Env env, xmlDoc *doc) {
+Napi::Value XmlDocument::NewInstance(Napi::Env env, xmlDoc *doc) {
+  Napi::EscapableHandleScope scope(env);
+
   if (doc->_private) {
     return static_cast<XmlDocument *>(doc->_private)->Value();
   }
 
-  Napi::Object obj = constructor.New({});
+  auto external = Napi::External<xmlDoc>::New(env, doc);
+  Napi::Object obj = constructor.New({external});
 
-  XmlDocument *document = Napi::ObjectWrap<XmlDocument>::Unwrap(obj);
-
-  // replace the document we created
-  document->xml_obj->_private = NULL;
-  xmlFreeDoc(document->xml_obj);
-  document->xml_obj = doc;
-
-  // store ourselves in the document
-  // this is how we can get instances or already existing v8 objects
-  doc->_private = document;
-
-  return obj;
+  return scope.Escape(obj);
 }
+
+// /// this is a blank object with prototype methods
+// /// not exposed to the user and not called from js
+// Napi::Value XmlDocument::NewInstance(const Napi::CallbackInfo &info) {
+//   Napi::Env env = info.Env();
+//
+//   const char *version = info.Length() > 0 && info[0].IsString()
+//                             ? info[0].ToString().Utf8Value().c_str()
+//                             : "1.0";
+//   xmlDoc *doc = xmlNewDoc((const xmlChar *)(version));
+//
+//   const char *encoding = info.Length() > 1 && info[1].IsString()
+//                              ? info[1].ToString().Utf8Value().c_str()
+//                              : "utf8";
+//
+//   XmlDocument *document = new XmlDocument(info);
+//
+//   // Replace the doc created in constructor
+//   document->xml_obj->_private = NULL;
+//   xmlFreeDoc(document->xml_obj);
+//   document->xml_obj = doc;
+//   doc->_private = document;
+//
+//   document->setEncoding(encoding);
+//
+//   return info.This();
+// }
 
 int getParserOption(Napi::Object props, const char *key, int value,
                     bool defaultValue = true) {
@@ -451,7 +500,7 @@ Napi::Value XmlDocument::FromHtml(const Napi::CallbackInfo &info) {
     return env.Undefined();
   }
 
-  Napi::Object doc_handle = XmlDocument::NewInstance(env, doc);
+  Napi::Object doc_handle = XmlDocument::NewInstance(env, doc).ToObject();
   doc_handle.Set("errors", ctx.errors);
 
   // create the xml document handle to return
@@ -465,10 +514,10 @@ Napi::Value XmlDocument::FromXml(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   ErrorArrayContext ctx{env, Napi::Array::New(env)};
+
   xmlResetLastError();
   xmlSetStructuredErrorFunc(reinterpret_cast<void *>(&ctx),
                             XmlSyntaxError::PushToArray);
-
   Napi::Object options = info[1].ToObject();
 
   // the base URL that will be used for this document
@@ -532,7 +581,8 @@ Napi::Value XmlDocument::FromXml(const Napi::CallbackInfo &info) {
     }
   }
 
-  Napi::Object doc_handle = XmlDocument::NewInstance(env, doc);
+  auto x = XmlDocument::NewInstance(env, doc);
+  Napi::Object doc_handle = x.ToObject();
   doc_handle.Set("errors", ctx.errors);
 
   xmlNode *root_node = xmlDocGetRootElement(doc);
@@ -554,14 +604,16 @@ Napi::Value XmlDocument::Validate(const Napi::CallbackInfo &info) {
     return env.Undefined();
   }
   if (!info[0].IsObject() ||
-      !info[0].ToObject().InstanceOf(constructor.Value())) {
+      !info[0].ToObject().InstanceOf(XmlDocument::constructor.Value())) {
     Napi::Error::New(env, "Must pass XmlDocument").ThrowAsJavaScriptException();
     return env.Undefined();
   }
 
   Napi::Array errors = Napi::Array::New(env);
+  ErrorArrayContext ctx{env, errors};
+
   xmlResetLastError();
-  xmlSetStructuredErrorFunc(reinterpret_cast<void *>(&errors),
+  xmlSetStructuredErrorFunc(reinterpret_cast<void *>(&ctx),
                             XmlSyntaxError::PushToArray);
 
   XmlDocument *documentSchema =
@@ -586,6 +638,7 @@ Napi::Value XmlDocument::Validate(const Napi::CallbackInfo &info) {
         .ThrowAsJavaScriptException();
     return env.Undefined();
   }
+
   bool valid = xmlSchemaValidateDoc(valid_ctxt, xml_obj) == 0;
 
   xmlSetStructuredErrorFunc(NULL, NULL);
@@ -613,8 +666,10 @@ Napi::Value XmlDocument::RngValidate(const Napi::CallbackInfo &info) {
   }
 
   Napi::Array errors = Napi::Array::New(env);
+  ErrorArrayContext ctx{env, errors};
+
   xmlResetLastError();
-  xmlSetStructuredErrorFunc(reinterpret_cast<void *>(&errors),
+  xmlSetStructuredErrorFunc(reinterpret_cast<void *>(&ctx),
                             XmlSyntaxError::PushToArray);
 
   XmlDocument *documentSchema =
@@ -711,50 +766,6 @@ Napi::Value XmlDocument::SchematronValidate(const Napi::CallbackInfo &info) {
   xmlSchematronFreeParserCtxt(parser_ctxt);
 
   return Napi::Boolean::New(env, valid);
-}
-
-/// this is a blank object with prototype methods
-/// not exposed to the user and not called from js
-Napi::Value XmlDocument::NewInstance(const Napi::CallbackInfo &info) {
-  Napi::Env env = info.Env();
-
-  if (!info.IsConstructCall()) {
-    Napi::Error::New(env, "Must use new keyword").ThrowAsJavaScriptException();
-    return env.Undefined();
-  }
-
-  const char *version = info.Length() > 0 && info[0].IsString()
-                            ? info[0].ToString().Utf8Value().c_str()
-                            : "1.0";
-  xmlDoc *doc = xmlNewDoc((const xmlChar *)(version));
-
-  const char *encoding = info.Length() > 1 && info[1].IsString()
-                             ? info[1].ToString().Utf8Value().c_str()
-                             : "utf8";
-
-  XmlDocument *document = new XmlDocument(info);
-
-  // Replace the doc created in constructor
-  document->xml_obj->_private = NULL;
-  xmlFreeDoc(document->xml_obj);
-  document->xml_obj = doc;
-  doc->_private = document;
-
-  document->setEncoding(encoding);
-
-  return info.This();
-}
-
-XmlDocument::XmlDocument(const Napi::CallbackInfo &info)
-    : Napi::ObjectWrap<XmlDocument>(info) {
-  xmlDoc *doc = xmlNewDoc((const xmlChar *)"1.0");
-  xml_obj = doc;
-  xml_obj->_private = this;
-}
-
-XmlDocument::~XmlDocument() {
-  xml_obj->_private = NULL;
-  xmlFreeDoc(xml_obj);
 }
 
 void XmlDocument::Init(Napi::Env env, Napi::Object exports) {

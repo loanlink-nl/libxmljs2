@@ -56,7 +56,20 @@ XmlProcessingInstruction::XmlProcessingInstruction(
   xmlNode *pi = xmlNewDocPI(document->xml_obj, (const xmlChar *)name.c_str(),
                             (xmlChar *)content);
 
-  pi->_private = this;
+  this->xml_obj = pi;
+  this->xml_obj->_private = this;
+  this->ancestor = NULL;
+
+  if ((xml_obj->doc != NULL) && (xml_obj->doc->_private != NULL)) {
+    this->doc = xml_obj->doc;
+
+    XmlDocument *doc = static_cast<XmlDocument *>(this->doc->_private);
+    doc->Ref();
+  }
+
+  this->Value().Set("_xmlNode",
+                    Napi::External<xmlNode>::New(env, this->xml_obj));
+  this->ref_wrapped_ancestor();
 
   this->Value().Set("document", info[0]);
 }

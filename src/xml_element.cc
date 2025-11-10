@@ -1,5 +1,6 @@
 // Copyright 2009, Squish Tech, LLC.
 
+#include <cstdio>
 #include <cstring>
 
 #include "libxmljs.h"
@@ -51,12 +52,21 @@ XmlElement::XmlElement(const Napi::CallbackInfo &info) : XmlNode(info) {
       xmlFree(encodedContent);
 
     this->xml_obj = elem;
-    elem->_private = this;
+    this->xml_obj->_private = this;
+    this->ancestor = NULL;
 
-    // Set document on instance, so it won't be cleaned up
-    this->Value().Set("document", info[0]);
+    if ((xml_obj->doc != NULL) && (xml_obj->doc->_private != NULL)) {
+      this->doc = xml_obj->doc;
+
+      XmlDocument *doc = static_cast<XmlDocument *>(this->doc->_private);
+      doc->Ref();
+    }
+
     this->Value().Set("_xmlNode",
                       Napi::External<xmlNode>::New(env, this->xml_obj));
+    this->ref_wrapped_ancestor();
+
+    this->Value().Set("document", info[0]);
   }
 }
 
@@ -110,7 +120,7 @@ Napi::Value XmlElement::Attrs(const Napi::CallbackInfo &info) {
 
 Napi::Value XmlElement::AddChild(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  Napi::Object jsNode = info[0].As<Napi::Object>();
+  Napi::Object jsNode = info[0].ToObject();
   Napi::Value extVal = jsNode.Get("_xmlNode");
 
   xmlNode *child = extVal.As<Napi::External<xmlNode>>().Data();

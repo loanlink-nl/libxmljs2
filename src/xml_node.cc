@@ -34,8 +34,8 @@ XmlNode<T>::XmlNode(const Napi::CallbackInfo &info)
 
   auto external = info[0].As<Napi::External<xmlNode>>();
   xmlNode *data = external.Data();
-  this->xml_obj = data;
 
+  this->xml_obj = data;
   this->xml_obj->_private = this;
   this->ancestor = NULL;
 
@@ -43,9 +43,11 @@ XmlNode<T>::XmlNode(const Napi::CallbackInfo &info)
     this->doc = xml_obj->doc;
 
     XmlDocument *doc = static_cast<XmlDocument *>(this->doc->_private);
-    // doc->Ref();
+    doc->Ref();
   }
 
+  this->Value().Set("_xmlNode",
+                    Napi::External<xmlNode>::New(env, this->xml_obj));
   this->ref_wrapped_ancestor();
 }
 
@@ -477,8 +479,7 @@ template <class T> void XmlNode<T>::ref_wrapped_ancestor() {
   }
 
   if (this->ancestor != NULL) {
-    XmlNode *node = static_cast<XmlNode *>(this->ancestor->_private);
-    node->Ref();
+    static_cast<XmlNode *>(this->ancestor->_private)->Ref();
   }
 }
 

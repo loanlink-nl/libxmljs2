@@ -5,6 +5,7 @@ function rssAfterGarbageCollection(maxCycles = 10) {
   let freedMemory = 0;
 
   do {
+    global.gc ??= Bun.gc
     global.gc();
 
     const rssAfterGc = libxml.memoryUsage();

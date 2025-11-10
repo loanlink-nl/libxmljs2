@@ -1,5 +1,4 @@
-const libxml = require('../index');
-
+global.gc ??= Bun.gc;
 if (!global.gc) {
   throw new Error('must run with --expose_gc for memory management tests');
 }

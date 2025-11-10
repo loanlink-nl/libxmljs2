@@ -11,10 +11,6 @@ namespace libxmljs {
 
 Napi::FunctionReference XmlNamespace::constructor;
 
-// static Napi::Value NewInstance(Napi::Env env, xmlNs *node, const char
-// *prefix,
-//                                const char *href);
-
 XmlNamespace::XmlNamespace(const Napi::CallbackInfo &info)
     : Napi::ObjectWrap<XmlNamespace>(info) {
   Napi::Env env = info.Env();
@@ -59,6 +55,7 @@ XmlNamespace::XmlNamespace(const Napi::CallbackInfo &info)
   }
 
   xml_obj->_private = this;
+  this->Value().Set("_xmlNode", Napi::External<xmlNs>::New(env, this->xml_obj));
 
   /*
    * If a context is present and wrapped, increment its refcount to ensure
@@ -73,18 +70,6 @@ XmlNamespace::XmlNamespace(const Napi::CallbackInfo &info)
   } else {
     this->context = NULL;
   }
-}
-
-Napi::Value XmlNamespace::NewInstance(Napi::Env env, xmlNs *node) {
-  Napi::EscapableHandleScope scope(env);
-
-  if (node->_private) {
-    return static_cast<XmlNamespace *>(node->_private)->Value();
-  }
-
-  auto external = Napi::External<xmlNs>::New(env, node);
-  Napi::Object obj = constructor.New({external});
-  return scope.Escape(obj).ToObject();
 }
 
 XmlNamespace::~XmlNamespace() {
@@ -111,6 +96,18 @@ XmlNamespace::~XmlNamespace() {
 
   // We do not free the xmlNode here. It could still be part of a document
   // It will be freed when the doc is freed
+}
+
+Napi::Value XmlNamespace::NewInstance(Napi::Env env, xmlNs *node) {
+  Napi::EscapableHandleScope scope(env);
+
+  if (node->_private) {
+    return static_cast<XmlNamespace *>(node->_private)->Value();
+  }
+
+  auto external = Napi::External<xmlNs>::New(env, node);
+  Napi::Object obj = constructor.New({external});
+  return scope.Escape(obj).ToObject();
 }
 
 Napi::Value XmlNamespace::Href(const Napi::CallbackInfo &info) {

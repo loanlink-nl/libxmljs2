@@ -53,14 +53,22 @@ XmlText::XmlText(const Napi::CallbackInfo &info) : XmlNode<XmlText>(info) {
   xmlNode *textNode =
       xmlNewDocText(document->xml_obj, (const xmlChar *)content.c_str());
 
-  XmlText *element = this;
-  textNode->_private = element;
-  xml_obj = textNode;
+  this->xml_obj = textNode;
+  this->xml_obj->_private = this;
+  this->ancestor = NULL;
 
-  // this prevents the document from going away
-  this->Value().Set("document", info[0]);
+  if ((xml_obj->doc != NULL) && (xml_obj->doc->_private != NULL)) {
+    this->doc = xml_obj->doc;
+
+    XmlDocument *doc = static_cast<XmlDocument *>(this->doc->_private);
+    doc->Ref();
+  }
+
   this->Value().Set("_xmlNode",
                     Napi::External<xmlNode>::New(env, this->xml_obj));
+  this->ref_wrapped_ancestor();
+
+  this->Value().Set("document", info[0]);
 }
 
 Napi::Value XmlText::NewInstance(Napi::Env env, xmlNode *node) {
