@@ -501,12 +501,16 @@ template <class T> void XmlNode<T>::ref_wrapped_ancestor() {
   }
 
   if (this->ancestor != NULL) {
+    printf("ref ancestor\n");
+    fflush(stdout);
     static_cast<XmlNode *>(this->ancestor->_private)->Ref();
   }
 }
 
 template <class T> void XmlNode<T>::unref_wrapped_ancestor() {
   if ((this->ancestor != NULL) && (this->ancestor->_private != NULL)) {
+    printf("unref ancestor\n");
+    fflush(stdout);
     (static_cast<XmlNode *>(this->ancestor->_private))->Unref();
   }
   this->ancestor = NULL;

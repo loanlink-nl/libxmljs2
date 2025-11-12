@@ -19,7 +19,7 @@ function collectGarbage(minCycles = 3, maxCycles = 10) {
   let usage = process.memoryUsage();
 
   do {
-    global.gc();
+    global.gc(true);
 
     const usageAfterGc = process.memoryUsage();
 
@@ -37,11 +37,11 @@ describe('ref integrity', () => {
     const doc = new libxml.Document();
 
     doc.node('root').node('child').node('grandchild').parent().node('child2');
-    global.gc();
+    global.gc(true);
     expect(doc).toBeTruthy();
-    global.gc();
+    global.gc(true);
     expect(doc.root()).toBeTruthy();
-    global.gc();
+    global.gc(true);
     expect('child').toBe(doc.root().childNodes()[0].name());
   });
 
@@ -50,7 +50,7 @@ describe('ref integrity', () => {
       .parseXml('<root> <child> <grandchildren/> </child> <child2/> </root>')
       .childNodes();
 
-    global.gc();
+    global.gc(true);
 
     expect(nodes[0].doc()).toBeTruthy();
     expect(nodes[1].name()).toBe('child');
@@ -74,7 +74,7 @@ describe('ref integrity', () => {
       }
     })();
 
-    global.gc();
+    global.gc(true);
     expect(children[0].attrs()).toBeTruthy();
   });
 
@@ -88,9 +88,9 @@ describe('ref integrity', () => {
     let ns = el.namespace('bar', null);
 
     el = null;
-    global.gc();
+    global.gc(true);
     ns = null;
-    global.gc();
+    global.gc(true);
   });
 
   it('unlinked_tree_persistence_parent_proxied_first', () => {
