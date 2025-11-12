@@ -19,6 +19,10 @@ describe('memory management', () => {
     global.gc(true);
   });
 
+  afterEach(() => {
+    global.gc(true);
+  });
+
   it('inaccessible document freed', async () => {
     return new Promise((done) => {
       const xml_memory_before_document = libxml.memoryUsage();
@@ -36,8 +40,8 @@ describe('memory management', () => {
     });
   });
 
-  it.only('inaccessible document freed when node freed', () =>
-    new Promise((done) => {
+  it('inaccessible document freed when node freed', async () => {
+    await new Promise((done) => {
       const xml_memory_before_document = libxml.memoryUsage();
       let nodes = [];
 
@@ -57,11 +61,13 @@ describe('memory management', () => {
       // }, 500);
 
       setTimeout(() => {
+        global.gc(true);
         console.log(libxml.memoryUsage(), xml_memory_before_document);
         expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
         done();
       }, 1);
-    }));
+    })
+  });
 
   it('inaccessible document freed after middle nodes proxies', () =>
     new Promise((done) => {
