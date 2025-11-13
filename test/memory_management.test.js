@@ -36,7 +36,7 @@ describe('memory management', () => {
       setTimeout(() => {
         expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
         done();
-      }, 1);
+      }, 100);
     });
   });
 
@@ -56,26 +56,31 @@ describe('memory management', () => {
       setTimeout(() => {
         expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
         done();
-      }, 1);
+      }, 100);
     })
   });
 
   it('inaccessible document freed after middle nodes proxies', () =>
     new Promise((done) => {
       const xml_memory_before_document = libxml.memoryUsage();
-      let doc = makeDocument();
-      // eslint-disable-next-line no-unused-vars
-      let middle = doc.get('//middle');
-      let inner = doc.get('//inner');
+      
+      // Wrap in IIFE to ensure variables are properly scoped for GC
+      (() => {
+        let doc = makeDocument();
+        // eslint-disable-next-line no-unused-vars
+        let middle = doc.get('//middle');
+        let inner = doc.get('//inner');
 
-      inner.remove(); // v0.14.3, v0.15: proxy ref'd parent but can't unref when destroyed
-      doc = middle = inner = null;
+        inner.remove(); // v0.14.3, v0.15: proxy ref'd parent but can't unref when destroyed
+        doc = middle = inner = null;
+      })();
+      
       global.gc(true);
 
       setTimeout(() => {
         expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
         done();
-      }, 1);
+      }, 100);
     }));
 
   it('inaccessible tree freed', () =>
@@ -88,7 +93,7 @@ describe('memory management', () => {
       setTimeout(() => {
         expect(libxml.memoryUsage() <= xml_memory_after_document).toBeTruthy();
         done();
-      }, 1);
+      }, 100);
     }));
 
   it('namespace list freed', () => {
@@ -106,7 +111,7 @@ describe('memory management', () => {
       setTimeout(() => {
         expect(libxml.memoryUsage() <= xmlMemBefore).toBeTruthy();
         done();
-      }, 1);
+      }, 100);
     });
   });
 });

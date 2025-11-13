@@ -456,19 +456,10 @@ xmlNode *get_wrapped_descendant(xmlNode *xml_obj,
 }
 
 template <class T> XmlNode<T>::~XmlNode() {
-  if ((this->doc != NULL) && (this->doc->_private != NULL)) {
-    printf("Unreffing doc\n");
-    fflush(stdout);
-    static_cast<XmlDocument *>(this->doc->_private)->Unref();
-  }
-
   this->unref_wrapped_ancestor();
   if (this->xml_obj == NULL) {
     return;
   }
-
-  printf("~XmlNode %s\n", xml_obj->name);
-  fflush(stdout);
 
   this->xml_obj->_private = NULL;
   if (this->xml_obj->parent == NULL) {
@@ -502,17 +493,16 @@ template <class T> void XmlNode<T>::ref_wrapped_ancestor() {
   }
 
   if (this->ancestor != NULL) {
-    printf("ref ancestor\n");
-    fflush(stdout);
-    static_cast<XmlNode *>(this->ancestor->_private)->Ref();
+    this->Value().Set("_ancestor", static_cast<XmlNode *>(this->ancestor->_private)->Value());
   }
 }
 
 template <class T> void XmlNode<T>::unref_wrapped_ancestor() {
   if ((this->ancestor != NULL) && (this->ancestor->_private != NULL)) {
-    printf("unref ancestor\n");
-    fflush(stdout);
-    (static_cast<XmlNode *>(this->ancestor->_private))->Unref();
+    Napi::Value val = this->Value();
+    if (val.IsObject()) {
+      val.As<Napi::Object>().Delete("_ancestor");
+    }
   }
   this->ancestor = NULL;
 }
@@ -655,6 +645,11 @@ Napi::Value XmlNode<T>::to_string(Napi::Env env, int options) {
 
 template <class T> void XmlNode<T>::remove() {
   this->unref_wrapped_ancestor();
+  // Clear the document reference when node is removed from tree
+  Napi::Value val = this->Value();
+  if (val.IsObject()) {
+    val.As<Napi::Object>().Delete("document");
+  }
   xmlUnlinkNode(xml_obj);
 }
 
