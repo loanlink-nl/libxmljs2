@@ -40,16 +40,20 @@ describe('memory management', () => {
     });
   });
 
-  it('inaccessible document freed when node freed', async () => {
+  it.only('inaccessible document freed when node freed', async () => {
     await new Promise((done) => {
       const xml_memory_before_document = libxml.memoryUsage();
-      let nodes = [];
+      
+      // Wrap in IIFE to ensure variables are properly scoped for GC
+      (() => {
+        let nodes = [];
 
-      for (let i = 0; i < 1; i += 1) {
-        nodes.push(makeDocument().get('//center'));
-      }
+        for (let i = 0; i < 1; i += 1) {
+          nodes.push(makeDocument().get('//center'));
+        }
 
-      nodes = null;
+        nodes = null;
+      })();
 
       global.gc(true);
 

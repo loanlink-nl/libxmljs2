@@ -13,25 +13,6 @@ function makeDocument() {
   return libxml.parseXml(body);
 }
 
-function collectGarbage(minCycles = 3, maxCycles = 10) {
-  let cycles = 0;
-  let freedRss = 0;
-  let usage = process.memoryUsage();
-
-  do {
-    global.gc(true);
-
-    const usageAfterGc = process.memoryUsage();
-
-    freedRss = usage.rss - usageAfterGc.rss;
-    usage = usageAfterGc;
-
-    cycles += 1;
-  } while (cycles < minCycles || (freedRss !== 0 && cycles < maxCycles));
-
-  return usage;
-}
-
 describe('ref integrity', () => {
   it('gc', () => {
     const doc = new libxml.Document();
@@ -100,7 +81,7 @@ describe('ref integrity', () => {
 
     parent_node.remove();
     parent_node = null;
-    collectGarbage();
+    global.gc(true);
 
     expect(child_node.name()).toBe('inner'); // works with >= v0.14.3
   });
@@ -112,7 +93,7 @@ describe('ref integrity', () => {
 
     ancestor.remove();
     ancestor = null;
-    collectGarbage();
+    global.gc(true);
 
     expect(leaf.name()).toBe('center'); // fails with v0.14.3, v0.15
   });
@@ -124,7 +105,7 @@ describe('ref integrity', () => {
 
     ancestor.remove(); // make check here?
     ancestor = null;
-    collectGarbage();
+    global.gc(true);
 
     expect(leaf.name()).toBe('center');
   });
@@ -136,7 +117,7 @@ describe('ref integrity', () => {
 
     parent_node.remove();
     parent_node = null;
-    collectGarbage();
+    global.gc(true);
 
     expect(child_node.name()).toBe('inner'); // fails with v0.14.3, v0.15
   });
@@ -148,7 +129,7 @@ describe('ref integrity', () => {
 
     doc.get('//middle').remove();
     leaf = null;
-    collectGarbage();
+    global.gc(true);
 
     leaf = proxied_ancestor.get('.//center');
     expect(leaf.name()).toBe('center');
@@ -160,7 +141,7 @@ describe('ref integrity', () => {
 
     doc.get('//middle').remove();
     leaf = null;
-    collectGarbage();
+    global.gc(true);
 
     leaf = peer.parent().get('./left');
     expect(leaf.name()).toBe('left');

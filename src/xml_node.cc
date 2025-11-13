@@ -456,6 +456,10 @@ xmlNode *get_wrapped_descendant(xmlNode *xml_obj,
 }
 
 template <class T> XmlNode<T>::~XmlNode() {
+  if ((this->doc != NULL) && (this->doc->_private != NULL)) {
+    static_cast<XmlDocument *>(this->doc->_private)->Unref();
+  }
+
   this->unref_wrapped_ancestor();
   if (this->xml_obj == NULL) {
     return;
