@@ -470,15 +470,15 @@ template <class T> XmlNode<T>::~XmlNode() {
   printf("~XmlNode %s\n", xml_obj->name);
   fflush(stdout);
 
-  xml_obj->_private = NULL;
-  if (xml_obj->parent == NULL) {
-    if (get_wrapped_descendant(xml_obj) == NULL) {
-      xmlFreeNode(xml_obj);
+  this->xml_obj->_private = NULL;
+  if (this->xml_obj->parent == NULL) {
+    if (get_wrapped_descendant(this->xml_obj) == NULL) {
+      xmlFreeNode(this->xml_obj);
     }
   } else {
-    xmlNode *ancestor = get_wrapped_ancestor_or_root(xml_obj);
+    xmlNode *ancestor = get_wrapped_ancestor_or_root(this->xml_obj);
     if ((ancestor->_private == NULL) && (ancestor->parent == NULL) &&
-        (get_wrapped_descendant(ancestor, xml_obj) == NULL)) {
+        (get_wrapped_descendant(ancestor, this->xml_obj) == NULL)) {
       xmlFreeNode(ancestor);
     }
   }
