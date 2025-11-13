@@ -63,8 +63,8 @@ XmlElement::XmlElement(const Napi::CallbackInfo &info) : XmlNode(info) {
   this->xml_obj->_private = this;
   this->ancestor = NULL;
 
-  if ((xml_obj->doc != NULL) && (xml_obj->doc->_private != NULL)) {
-    this->doc = xml_obj->doc;
+  if ((this->xml_obj->doc != NULL) && (this->xml_obj->doc->_private != NULL)) {
+    this->doc = this->xml_obj->doc;
 
     printf("ref doc element\n");
     fflush(stdout);
