@@ -463,7 +463,7 @@ template <class T> XmlNode<T>::~XmlNode() {
   }
 
   this->unref_wrapped_ancestor();
-  if (xml_obj == NULL) {
+  if (this->xml_obj == NULL) {
     return;
   }
 
@@ -485,9 +485,10 @@ template <class T> XmlNode<T>::~XmlNode() {
 }
 
 template <class T> xmlNode *XmlNode<T>::get_wrapped_ancestor() {
-  xmlNode *ancestor = get_wrapped_ancestor_or_root(xml_obj);
-  return ((xml_obj == ancestor) || (ancestor->_private == NULL)) ? NULL
-                                                                 : ancestor;
+  xmlNode *ancestor = get_wrapped_ancestor_or_root(this->xml_obj);
+  return ((this->xml_obj == ancestor) || (ancestor->_private == NULL))
+             ? NULL
+             : ancestor;
 }
 
 template <class T> void XmlNode<T>::ref_wrapped_ancestor() {
@@ -518,38 +519,39 @@ template <class T> void XmlNode<T>::unref_wrapped_ancestor() {
 
 template <class T> Napi::Value XmlNode<T>::get_doc(Napi::Env env) {
   Napi::EscapableHandleScope scope(env);
-  return scope.Escape(XmlDocument::NewInstance(env, xml_obj->doc));
+  return scope.Escape(XmlDocument::NewInstance(env, this->xml_obj->doc));
 }
 
 template <class T> Napi::Value XmlNode<T>::remove_namespace(Napi::Env env) {
-  xml_obj->ns = NULL;
+  this->xml_obj->ns = NULL;
   Napi::EscapableHandleScope scope(env);
   return scope.Escape(env.Null());
 }
 
 template <class T> Napi::Value XmlNode<T>::get_namespace(Napi::Env env) {
   Napi::EscapableHandleScope scope(env);
-  if (!xml_obj->ns) {
+  if (!this->xml_obj->ns) {
     return scope.Escape(env.Null());
   }
 
-  return scope.Escape(XmlNamespace::NewInstance(env, xml_obj->ns));
+  return scope.Escape(XmlNamespace::NewInstance(env, this->xml_obj->ns));
 }
 
 template <class T> void XmlNode<T>::set_namespace(xmlNs *ns) {
-  xmlSetNs(xml_obj, ns);
-  assert(xml_obj->ns);
+  xmlSetNs(this->xml_obj, ns);
+  assert(this->xml_obj->ns);
 }
 
 template <class T> xmlNs *XmlNode<T>::find_namespace(const char *search_str) {
   xmlNs *ns = NULL;
 
   // Find by prefix first
-  ns = xmlSearchNs(xml_obj->doc, xml_obj, (const xmlChar *)search_str);
+  ns = xmlSearchNs(this->xml_obj->doc, xml_obj, (const xmlChar *)search_str);
 
   // Or find by href
   if (!ns)
-    ns = xmlSearchNsByHref(xml_obj->doc, xml_obj, (const xmlChar *)search_str);
+    ns = xmlSearchNsByHref(this->xml_obj->doc, xml_obj,
+                           (const xmlChar *)search_str);
 
   return ns;
 }
@@ -558,7 +560,7 @@ template <class T> Napi::Value XmlNode<T>::get_all_namespaces(Napi::Env env) {
   Napi::EscapableHandleScope scope(env);
   // Iterate through namespaces
   Napi::Array namespaces = Napi::Array::New(env);
-  xmlNs **nsList = xmlGetNsList(xml_obj->doc, xml_obj);
+  xmlNs **nsList = xmlGetNsList(this->xml_obj->doc, this->xml_obj);
   if (nsList != NULL) {
     for (int i = 0; nsList[i] != NULL; i++) {
       Napi::Object ns = XmlNamespace::NewInstance(env, nsList[i]).ToObject();
