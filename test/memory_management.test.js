@@ -52,17 +52,8 @@ describe('memory management', () => {
       nodes = null;
 
       global.gc(true);
-      // process.nextTick(() => {
-      //   global.gc(true);
-      // });
-      //
-      // setTimeout(() => {
-      //   global.gc(true);
-      // }, 500);
 
       setTimeout(() => {
-        global.gc(true);
-        console.log(libxml.memoryUsage(), xml_memory_before_document);
         expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
         done();
       }, 1);
