@@ -50,7 +50,7 @@ protected:
   static const int DEFAULT_PARSING_OPTS;
   static const int EXCLUDE_IMPLIED_ELEMENTS;
 
-  void setEncoding(const char *encoding);
+  void setEncoding(const std::string encoding);
 };
 
 } // namespace libxmljs

@@ -34,15 +34,15 @@ XmlDocument::XmlDocument(const Napi::CallbackInfo &info)
     return;
   }
 
-  const char *version = info.Length() > 0 && info[0].IsString()
-                            ? info[0].ToString().Utf8Value().c_str()
-                            : "1.0";
-  xml_obj = xmlNewDoc((const xmlChar *)(version));
+  const std::string version = info.Length() > 0 && info[0].IsString()
+                                  ? info[0].ToString().Utf8Value()
+                                  : "1.0";
+  xml_obj = xmlNewDoc((const xmlChar *)(version.c_str()));
   xml_obj->_private = this;
 
-  const char *encoding = info.Length() > 1 && info[1].IsString()
-                             ? info[1].ToString().Utf8Value().c_str()
-                             : "utf8";
+  const std::string encoding = info.Length() > 1 && info[1].IsString()
+                                   ? info[1].ToString().Utf8Value()
+                                   : "utf8";
 
   this->setEncoding(encoding);
 }
@@ -71,16 +71,16 @@ Napi::Value XmlDocument::Encoding(const Napi::CallbackInfo &info) {
 
   // set the encoding otherwise
   std::string encoding = info[0].ToString().Utf8Value();
-  setEncoding(encoding.c_str());
+  this->setEncoding(encoding);
   return scope.Escape(info.This());
 }
 
-void XmlDocument::setEncoding(const char *encoding) {
+void XmlDocument::setEncoding(const std::string encoding) {
   if (xml_obj->encoding != NULL) {
     xmlFree((xmlChar *)xml_obj->encoding);
   }
 
-  xml_obj->encoding = xmlStrdup((const xmlChar *)encoding);
+  xml_obj->encoding = xmlStrdup((const xmlChar *)encoding.c_str());
 }
 
 Napi::Value XmlDocument::Version(const Napi::CallbackInfo &info) {
