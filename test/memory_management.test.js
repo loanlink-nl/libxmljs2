@@ -63,7 +63,6 @@ describe('memory management', () => {
     new Promise((done) => {
       const xml_memory_before_document = libxml.memoryUsage();
       
-      // Wrap in IIFE to ensure variables are properly scoped for GC
       (() => {
         let doc = makeDocument();
         // eslint-disable-next-line no-unused-vars
@@ -79,7 +78,7 @@ describe('memory management', () => {
       setTimeout(() => {
         expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
         done();
-      }, 100);
+      }, 1);
     }));
 
   it('inaccessible tree freed', () =>
@@ -92,7 +91,7 @@ describe('memory management', () => {
       setTimeout(() => {
         expect(libxml.memoryUsage() <= xml_memory_after_document).toBeTruthy();
         done();
-      }, 100);
+      }, 1);
     }));
 
   it('namespace list freed', () => {
@@ -106,11 +105,12 @@ describe('memory management', () => {
       for (let i; i < 1000; i += 1) {
         el.namespaces();
       }
+
       global.gc(true);
       setTimeout(() => {
         expect(libxml.memoryUsage() <= xmlMemBefore).toBeTruthy();
         done();
-      }, 100);
+      }, 1);
     });
   });
 });
