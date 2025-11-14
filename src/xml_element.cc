@@ -76,17 +76,11 @@ Napi::Value XmlElement::NewInstance(Napi::Env env, xmlNode *node) {
   Napi::EscapableHandleScope scope(env);
 
   if (node->_private) {
-    printf("New el already existing %s\n", node->name);
-    fflush(stdout);
-
     return scope.Escape(static_cast<XmlNode *>(node->_private)->Value());
   }
 
   Napi::Value external = Napi::External<xmlNode>::New(env, node);
   Napi::Object instance = XmlElement::constructor.New({external});
-
-  printf("New el created %s\n", node->name);
-  fflush(stdout);
 
   return scope.Escape(instance);
 }

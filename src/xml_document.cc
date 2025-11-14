@@ -50,9 +50,6 @@ XmlDocument::XmlDocument(const Napi::CallbackInfo &info)
 XmlDocument::~XmlDocument() {
   xmlNode *root = xmlDocGetRootElement(this->xml_obj);
   if (root->_private) {
-    printf("Document down unref root %s\n", root->name);
-    fflush(stdout);
-
     static_cast<XmlElement *>(root->_private)->Unref();
   }
 

@@ -460,9 +460,6 @@ template <class T> void XmlNode<T>::ref_wrapped_ancestor() {
   if (ancestor != this->ancestor) {
     this->unref_wrapped_ancestor();
     this->ancestor = ancestor;
-
-    printf("ref ancestor %p in %s\n", this->ancestor, this->xml_obj->name);
-    fflush(stdout);
   }
 
   if (this->ancestor != NULL) {
@@ -473,9 +470,6 @@ template <class T> void XmlNode<T>::ref_wrapped_ancestor() {
 
 template <class T> void XmlNode<T>::unref_wrapped_ancestor() {
   if ((this->ancestor != NULL) && (this->ancestor->_private != NULL)) {
-    printf("unref ancestor %p\n", this->ancestor);
-    fflush(stdout);
-
     XmlNode *ancestor = static_cast<XmlNode *>(this->doc->_private);
     ancestor->Unref();
   }
