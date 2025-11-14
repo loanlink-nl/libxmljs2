@@ -65,8 +65,6 @@ XmlProcessingInstruction::XmlProcessingInstruction(
     this->doc = xml_obj->doc;
 
     XmlDocument *doc = static_cast<XmlDocument *>(this->doc->_private);
-    printf("ref doc pi\n");
-    fflush(stdout);
     doc->Ref();
     this->Value().Set("document", doc->Value());
   }

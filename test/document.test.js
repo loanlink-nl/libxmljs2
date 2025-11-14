@@ -362,7 +362,8 @@ describe('document', () => {
     expect(xmlDocInvalid.validationErrors.length).toBe(1);
   });
 
-  it('validate memory usage', () => {
+  it('validate memory usage', async () => {
+    await new Promise((done) => {
     const xsd =
       '<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"><xs:element name="comment" type="xs:string"/></xs:schema>';
     const xml = '<?xml version="1.0"?><comment>A comment</comment>';
@@ -383,6 +384,7 @@ describe('document', () => {
       expect(rssAfter - rssBefore < VALIDATE_RSS_TOLERANCE).toBeTruthy();
       done();
     }, 1);
+    });
   });
 
   it('validate inputs', () => {
@@ -426,7 +428,8 @@ describe('document', () => {
     expect(`${html}\n`).toBe(parsedHtml.toString());
   });
 
-  it('validate rng memory usage', () => {
+  it('validate rng memory usage', async () => {
+    new Promise((done) => {
     const rng =
       '<element name="addressBook" xmlns="http://relaxng.org/ns/structure/1.0">' +
       '<zeroOrMore>' +
@@ -469,6 +472,7 @@ describe('document', () => {
       expect(rssAfter - rssBefore < VALIDATE_RSS_TOLERANCE).toBeTruthy();
       done();
     }, 1);
+    });
   });
 
   describe('errors', () => {

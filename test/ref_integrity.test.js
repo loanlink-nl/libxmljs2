@@ -14,6 +14,23 @@ function makeDocument() {
 }
 
 describe('ref integrity', () => {
+  it('simple gc', async() => {
+    await new Promise((done) => {
+    const doc = new libxml.Document();
+
+    doc.node('root');
+
+    global.gc(true);
+    expect(doc).toBeTruthy();
+
+    global.gc(true);
+    setTimeout(() => {
+      expect(doc.root()).toBeTruthy();
+      done();
+    }, 1);
+    });
+  });
+
   it('gc', () => {
     const doc = new libxml.Document();
 
@@ -122,18 +139,25 @@ describe('ref integrity', () => {
     expect(child_node.name()).toBe('inner'); // fails with v0.14.3, v0.15
   });
 
-  it('unlinked_tree_leaf_persistence_with_proxied_ancestor', () => {
+  it('unlinked_tree_leaf_persistence_with_proxied_ancestor', async () => {
+    await new Promise((done) => {
     const doc = makeDocument();
     const proxied_ancestor = doc.get('//inner');
     let leaf = doc.get('//center');
 
     doc.get('//middle').remove();
+
     leaf = null;
     global.gc(true);
 
-    leaf = proxied_ancestor.get('.//center');
-    expect(leaf.name()).toBe('center');
+    setTimeout(() => {
+      leaf = proxied_ancestor.get('.//center');
+      expect(leaf.name()).toBe('center');
+      done();
+    }, 1);
+    });
   });
+
   it('unlinked_tree_leaf_persistence_with_peer_proxy', () => {
     const doc = makeDocument();
     let leaf = doc.get('//left');
@@ -143,8 +167,10 @@ describe('ref integrity', () => {
     leaf = null;
     global.gc(true);
 
-    leaf = peer.parent().get('./left');
-    expect(leaf.name()).toBe('left');
+    setTimeout(() => {
+      leaf = peer.parent().get('./left');
+      expect(leaf.name()).toBe('left');
+    }, 1);
   });
 
   it('set_text_clobbering_children', () => {

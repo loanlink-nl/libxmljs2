@@ -422,10 +422,6 @@ xmlNode *get_wrapped_descendant(xmlNode *xml_obj,
 }
 
 template <class T> XmlNode<T>::~XmlNode() {
-  if ((this->doc != NULL) && (this->doc->_private != NULL)) {
-    static_cast<XmlDocument *>(this->doc->_private)->Unref();
-  }
-
   this->unref_wrapped_ancestor();
   if (this->xml_obj == NULL) {
     return;
@@ -470,7 +466,7 @@ template <class T> void XmlNode<T>::ref_wrapped_ancestor() {
 
 template <class T> void XmlNode<T>::unref_wrapped_ancestor() {
   if ((this->ancestor != NULL) && (this->ancestor->_private != NULL)) {
-    XmlNode *ancestor = static_cast<XmlNode *>(this->doc->_private);
+    XmlNode *ancestor = static_cast<XmlNode *>(this->ancestor->_private);
     ancestor->Unref();
   }
 
@@ -615,11 +611,6 @@ Napi::Value XmlNode<T>::to_string(Napi::Env env, int options) {
 
 template <class T> void XmlNode<T>::remove() {
   this->unref_wrapped_ancestor();
-  // Clear the document reference when node is removed from tree
-  Napi::Value val = this->Value();
-  if (val.IsObject()) {
-    val.As<Napi::Object>().Delete("document");
-  }
   xmlUnlinkNode(xml_obj);
 }
 

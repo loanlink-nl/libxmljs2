@@ -49,8 +49,6 @@ XmlComment::XmlComment(const Napi::CallbackInfo &info) : XmlNode(info) {
     this->doc = xml_obj->doc;
 
     XmlDocument *doc = static_cast<XmlDocument *>(this->doc->_private);
-    printf("ref doc comm\n");
-    fflush(stdout);
     doc->Ref();
     this->Value().Set("document", doc->Value());
   }

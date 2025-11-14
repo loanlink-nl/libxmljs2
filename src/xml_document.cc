@@ -48,11 +48,6 @@ XmlDocument::XmlDocument(const Napi::CallbackInfo &info)
 }
 
 XmlDocument::~XmlDocument() {
-  xmlNode *root = xmlDocGetRootElement(this->xml_obj);
-  if (root->_private) {
-    static_cast<XmlElement *>(root->_private)->Unref();
-  }
-
   this->xml_obj->_private = NULL;
   xmlFreeDoc(this->xml_obj);
 }
@@ -122,7 +117,6 @@ Napi::Value XmlDocument::Root(const Napi::CallbackInfo &info) {
   XmlElement *element = XmlElement::Unwrap(info[0].ToObject());
   xmlDocSetRootElement(this->xml_obj, element->xml_obj);
   element->ref_wrapped_ancestor();
-  element->Ref();
   return info[0];
 }
 

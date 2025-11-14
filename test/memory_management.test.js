@@ -36,31 +36,26 @@ describe('memory management', () => {
       setTimeout(() => {
         expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
         done();
-      }, 100);
+      }, 1);
     });
   });
 
-  it.only('inaccessible document freed when node freed', async () => {
+  it('inaccessible document freed when node freed', async () => {
     await new Promise((done) => {
       const xml_memory_before_document = libxml.memoryUsage();
       
-      // Wrap in IIFE to ensure variables are properly scoped for GC
-      (() => {
-        let nodes = [];
-
-        for (let i = 0; i < 1; i += 1) {
-          nodes.push(makeDocument().get('//center'));
-        }
-
-        nodes = null;
-      })();
+      let nodes = [];
+      for (let i = 0; i < 10; i += 1) {
+        nodes.push(makeDocument().get('//center'));
+      }
+      nodes = null;
 
       global.gc(true);
 
       setTimeout(() => {
         expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
         done();
-      }, 100);
+      }, 1);
     })
   });
 

@@ -42,8 +42,9 @@ Napi::Value XmlXpathContext::evaluate(Napi::Env env, const xmlChar *xpath) {
 
       Napi::Array nodes = Napi::Array::New(env, xpathobj->nodesetval->nodeNr);
       for (int i = 0; i != xpathobj->nodesetval->nodeNr; ++i) {
-        Napi::Value node_obj =
-            XmlNodeInstance::NewInstance(env, xpathobj->nodesetval->nodeTab[i]);
+        xmlNode *node = xpathobj->nodesetval->nodeTab[i];
+        Napi::Object node_obj =
+            XmlNodeInstance::NewInstance(env, node).ToObject();
         nodes.Set(i, node_obj);
       }
 
