@@ -70,7 +70,7 @@ Napi::Value XmlComment::Text(const Napi::CallbackInfo &info) {
     this->set_content(content.c_str());
   }
 
-  return scope.Escape(info.This());
+  return info.This();
 }
 
 void XmlComment::set_content(const char *content) {

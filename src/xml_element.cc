@@ -76,11 +76,17 @@ Napi::Value XmlElement::NewInstance(Napi::Env env, xmlNode *node) {
   Napi::EscapableHandleScope scope(env);
 
   if (node->_private) {
+    printf("New el already existing %s\n", node->name);
+    fflush(stdout);
+
     return scope.Escape(static_cast<XmlNode *>(node->_private)->Value());
   }
 
-  Napi::Value external = Napi::External<xmlNode>::New(env, &(*node));
+  Napi::Value external = Napi::External<xmlNode>::New(env, node);
   Napi::Object instance = XmlElement::constructor.New({external});
+
+  printf("New el created %s\n", node->name);
+  fflush(stdout);
 
   return scope.Escape(instance);
 }
@@ -93,7 +99,7 @@ Napi::Value XmlElement::Name(const Napi::CallbackInfo &info) {
 
   std::string name = info[0].As<Napi::String>().Utf8Value();
   this->set_name(name.c_str());
-  return scope.Escape(info.This());
+  return info.This();
 }
 
 Napi::Value XmlElement::Attr(const Napi::CallbackInfo &info) {
@@ -111,7 +117,7 @@ Napi::Value XmlElement::Attr(const Napi::CallbackInfo &info) {
   std::string value = info[1].As<Napi::String>().Utf8Value();
   this->set_attr(name.c_str(), value.c_str());
 
-  return scope.Escape(info.This());
+  return info.This();
 }
 
 Napi::Value XmlElement::Attrs(const Napi::CallbackInfo &info) {
@@ -148,7 +154,7 @@ Napi::Value XmlElement::AddChild(const Napi::CallbackInfo &info) {
     static_cast<XmlNode *>(imported_child->_private)->ref_wrapped_ancestor();
   }
 
-  return scope.Escape(info.This());
+  return info.This();
 }
 
 Napi::Value XmlElement::AddCData(const Napi::CallbackInfo &info) {
@@ -167,7 +173,7 @@ Napi::Value XmlElement::AddCData(const Napi::CallbackInfo &info) {
                                    xmlStrlen((const xmlChar *)content));
 
   this->add_cdata(elem);
-  return scope.Escape(info.This());
+  return info.This();
 }
 
 Napi::Value XmlElement::Find(const Napi::CallbackInfo &info) {
@@ -195,7 +201,8 @@ Napi::Value XmlElement::Find(const Napi::CallbackInfo &info) {
     }
   }
 
-  return scope.Escape(ctxt.evaluate(env, (const xmlChar *)xpath.c_str()));
+  Napi::Value res = ctxt.evaluate(env, (const xmlChar *)xpath.c_str());
+  return scope.Escape(res);
 }
 
 Napi::Value XmlElement::NextElement(const Napi::CallbackInfo &info) {
@@ -220,7 +227,7 @@ Napi::Value XmlElement::Text(const Napi::CallbackInfo &info) {
     this->set_content(content.c_str());
   }
 
-  return scope.Escape(info.This());
+  return info.This();
 }
 
 Napi::Value XmlElement::Child(const Napi::CallbackInfo &info) {
@@ -274,7 +281,7 @@ Napi::Value XmlElement::AddPrevSibling(const Napi::CallbackInfo &info) {
     static_cast<XmlNode *>(imported_sibling->_private)->ref_wrapped_ancestor();
   }
 
-  return scope.Escape(info[0]);
+  return info[0];
 }
 
 Napi::Value XmlElement::AddNextSibling(const Napi::CallbackInfo &info) {
@@ -299,7 +306,7 @@ Napi::Value XmlElement::AddNextSibling(const Napi::CallbackInfo &info) {
     static_cast<XmlNode *>(imported_sibling->_private)->ref_wrapped_ancestor();
   }
 
-  return scope.Escape(info[0]);
+  return info[0];
 }
 
 Napi::Value XmlElement::Replace(const Napi::CallbackInfo &info) {
@@ -325,7 +332,7 @@ Napi::Value XmlElement::Replace(const Napi::CallbackInfo &info) {
     this->replace_element(imported_sibling);
   }
 
-  return scope.Escape(info[0]);
+  return info[0];
 }
 
 void XmlElement::set_name(const char *name) {
@@ -334,10 +341,11 @@ void XmlElement::set_name(const char *name) {
 
 Napi::Value XmlElement::get_name(Napi::Env env) {
   Napi::EscapableHandleScope scope(env);
-  if (xml_obj->name)
+  if (this->xml_obj->name) {
     return scope.Escape(Napi::String::New(env, (const char *)xml_obj->name));
-  else
+  } else {
     return scope.Escape(env.Undefined());
+  }
 }
 
 // TODO(sprsquish) make these work with namespaces

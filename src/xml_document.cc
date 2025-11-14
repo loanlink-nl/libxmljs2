@@ -48,8 +48,16 @@ XmlDocument::XmlDocument(const Napi::CallbackInfo &info)
 }
 
 XmlDocument::~XmlDocument() {
-  xml_obj->_private = NULL;
-  xmlFreeDoc(xml_obj);
+  xmlNode *root = xmlDocGetRootElement(this->xml_obj);
+  if (root->_private) {
+    printf("Document down unref root %s\n", root->name);
+    fflush(stdout);
+
+    static_cast<XmlElement *>(root->_private)->Unref();
+  }
+
+  this->xml_obj->_private = NULL;
+  xmlFreeDoc(this->xml_obj);
 }
 
 Napi::Value XmlDocument::Encoding(const Napi::CallbackInfo &info) {
@@ -69,7 +77,7 @@ Napi::Value XmlDocument::Encoding(const Napi::CallbackInfo &info) {
   // set the encoding otherwise
   std::string encoding = info[0].ToString().Utf8Value();
   this->setEncoding(encoding);
-  return scope.Escape(info.This());
+  return info.This();
 }
 
 void XmlDocument::setEncoding(const std::string encoding) {
@@ -115,10 +123,10 @@ Napi::Value XmlDocument::Root(const Napi::CallbackInfo &info) {
   // set the element as the root element for the document
   // allows for proper retrieval of root later
   XmlElement *element = XmlElement::Unwrap(info[0].ToObject());
-
-  xmlDocSetRootElement(xml_obj, element->xml_obj);
+  xmlDocSetRootElement(this->xml_obj, element->xml_obj);
   element->ref_wrapped_ancestor();
-  return scope.Escape(info[0]);
+  element->Ref();
+  return info[0];
 }
 
 Napi::Value XmlDocument::GetDtd(const Napi::CallbackInfo &info) {
@@ -194,7 +202,7 @@ Napi::Value XmlDocument::SetDtd(const Napi::CallbackInfo &info) {
   xmlCreateIntSubset(this->xml_obj, (const xmlChar *)name.c_str(),
                      (const xmlChar *)extId, (const xmlChar *)sysId);
 
-  return scope.Escape(info.This());
+  return info.This();
 }
 
 Napi::Value XmlDocument::ToString(const Napi::CallbackInfo &info) {

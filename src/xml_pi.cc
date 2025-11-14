@@ -98,7 +98,7 @@ Napi::Value XmlProcessingInstruction::Name(const Napi::CallbackInfo &info) {
   std::string name = info[0].As<Napi::String>().Utf8Value();
   this->set_name(name.c_str());
 
-  return scope.Escape(info.This());
+  return info.This();
 }
 
 Napi::Value XmlProcessingInstruction::Text(const Napi::CallbackInfo &info) {
@@ -111,7 +111,7 @@ Napi::Value XmlProcessingInstruction::Text(const Napi::CallbackInfo &info) {
     this->set_content(content.c_str());
   }
 
-  return scope.Escape(info.This());
+  return info.This();
 }
 
 void XmlProcessingInstruction::set_name(const char *name) {

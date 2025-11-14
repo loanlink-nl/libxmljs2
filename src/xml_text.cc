@@ -110,7 +110,7 @@ Napi::Value XmlText::Text(const Napi::CallbackInfo &info) {
     this->set_content(content.c_str());
   }
 
-  return scope.Escape(info.This());
+  return info.This();
 }
 
 Napi::Value XmlText::AddPrevSibling(const Napi::CallbackInfo &info) {
@@ -137,7 +137,7 @@ Napi::Value XmlText::AddPrevSibling(const Napi::CallbackInfo &info) {
   }
   this->add_prev_sibling(imported_sibling);
 
-  return scope.Escape(info[0]);
+  return info[0];
 }
 
 Napi::Value XmlText::AddNextSibling(const Napi::CallbackInfo &info) {
@@ -164,7 +164,7 @@ Napi::Value XmlText::AddNextSibling(const Napi::CallbackInfo &info) {
   }
   this->add_next_sibling(imported_sibling);
 
-  return scope.Escape(info[0]);
+  return info[0];
 }
 
 Napi::Value XmlText::Replace(const Napi::CallbackInfo &info) {
@@ -192,7 +192,7 @@ Napi::Value XmlText::Replace(const Napi::CallbackInfo &info) {
     this->replace_element(imported_sibling);
   }
 
-  return scope.Escape(info[0]);
+  return info[0];
 }
 
 Napi::Value XmlText::Path(const Napi::CallbackInfo &info) {
@@ -207,7 +207,7 @@ Napi::Value XmlText::Name(const Napi::CallbackInfo &info) {
 
   if (info.Length() == 0)
     return scope.Escape(this->get_name(env));
-  return scope.Escape(info.This());
+  return info.This();
 }
 
 void XmlText::set_content(const char *content) {

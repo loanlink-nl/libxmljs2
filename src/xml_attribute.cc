@@ -78,7 +78,7 @@ Napi::Value XmlAttribute::AttrValue(const Napi::CallbackInfo &info) {
   if (info.Length() > 0) {
     std::string value_str = info[0].As<Napi::String>().Utf8Value();
     this->set_value(value_str.c_str());
-    return scope.Escape(info.This());
+    return info.This();
   }
 
   // attr.value();

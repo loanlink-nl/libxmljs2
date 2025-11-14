@@ -17,41 +17,7 @@ template <class T> Napi::FunctionReference XmlNode<T>::constructor;
 
 template <class T>
 XmlNode<T>::XmlNode(const Napi::CallbackInfo &info)
-    : Napi::ObjectWrap<T>(info) {
-  // Napi::Env env = info.Env();
-
-  // If called with no arguments, the derived class constructor will set xml_obj
-  // if (info.Length() == 0) {
-  this->xml_obj = NULL;
-  this->ancestor = NULL;
-  this->doc = NULL;
-  //   return;
-  // }
-
-  // if (!info[0].IsExternal()) {
-  //   return;
-  // }
-  //
-  // auto external = info[0].As<Napi::External<xmlNode>>();
-  // xmlNode *data = external.Data();
-  //
-  // this->xml_obj = data;
-  // this->xml_obj->_private = this;
-  // this->ancestor = NULL;
-  //
-  // if ((xml_obj->doc != NULL) && (xml_obj->doc->_private != NULL)) {
-  //   this->doc = xml_obj->doc;
-  //
-  //   XmlDocument *doc = static_cast<XmlDocument *>(this->doc->_private);
-  //   printf("ref doc node\n");
-  //   fflush(stdout);
-  //   doc->Ref();
-  // }
-  //
-  // this->Value().Set("_xmlNode",
-  //                   Napi::External<xmlNode>::New(env, this->xml_obj));
-  // this->ref_wrapped_ancestor();
-}
+    : Napi::ObjectWrap<T>(info) {}
 
 template <class T> Napi::Value XmlNode<T>::Doc(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
@@ -115,7 +81,7 @@ Napi::Value XmlNode<T>::Namespace(const Napi::CallbackInfo &info) {
   }
 
   this->set_namespace(ns->xml_obj);
-  return scope.Escape(info.This());
+  return info.This();
 }
 
 template <class T>
@@ -234,7 +200,7 @@ Napi::Value XmlNode<T>::Remove(const Napi::CallbackInfo &info) {
   Napi::EscapableHandleScope scope(env);
   this->remove();
 
-  return scope.Escape(info.This());
+  return info.This();
 }
 
 template <class T>
@@ -494,21 +460,26 @@ template <class T> void XmlNode<T>::ref_wrapped_ancestor() {
   if (ancestor != this->ancestor) {
     this->unref_wrapped_ancestor();
     this->ancestor = ancestor;
+
+    printf("ref ancestor %p in %s\n", this->ancestor, this->xml_obj->name);
+    fflush(stdout);
   }
 
   if (this->ancestor != NULL) {
-    this->Value().Set(
-        "_ancestor", static_cast<XmlNode *>(this->ancestor->_private)->Value());
+    XmlNode *node = static_cast<XmlNode *>(this->ancestor->_private);
+    node->Ref();
   }
 }
 
 template <class T> void XmlNode<T>::unref_wrapped_ancestor() {
   if ((this->ancestor != NULL) && (this->ancestor->_private != NULL)) {
-    Napi::Value val = this->Value();
-    if (val.IsObject()) {
-      val.As<Napi::Object>().Delete("_ancestor");
-    }
+    printf("unref ancestor %p\n", this->ancestor);
+    fflush(stdout);
+
+    XmlNode *ancestor = static_cast<XmlNode *>(this->doc->_private);
+    ancestor->Unref();
   }
+
   this->ancestor = NULL;
 }
 
