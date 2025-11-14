@@ -497,7 +497,8 @@ template <class T> void XmlNode<T>::ref_wrapped_ancestor() {
   }
 
   if (this->ancestor != NULL) {
-    this->Value().Set("_ancestor", static_cast<XmlNode *>(this->ancestor->_private)->Value());
+    this->Value().Set(
+        "_ancestor", static_cast<XmlNode *>(this->ancestor->_private)->Value());
   }
 }
 
