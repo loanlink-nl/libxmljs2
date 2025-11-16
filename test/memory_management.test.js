@@ -52,10 +52,10 @@ describe('memory management', () => {
       doc1 = null;
       doc2 = null;
 
-      Bun.gc(true);
+      global.gc(true);
 
       process.nextTick(() => {
-        Bun.gc(true);
+        global.gc(true);
 
         setTimeout(() => {
           expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
@@ -77,10 +77,14 @@ describe('memory management', () => {
 
       global.gc(true);
 
-      setTimeout(() => {
-        expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
-        done();
-      }, 1);
+      process.nextTick(() => {
+        global.gc(true);
+
+        setTimeout(() => {
+          expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
+          done();
+        }, 1);
+      });
     })
   });
 
@@ -99,7 +103,7 @@ describe('memory management', () => {
       global.gc(true);
 
       process.nextTick(() => {
-        Bun.gc(true);
+        global.gc(true);
 
         setTimeout(() => {
           expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
