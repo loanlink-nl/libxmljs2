@@ -46,9 +46,7 @@ XmlComment::XmlComment(const Napi::CallbackInfo &info) : XmlNode(info) {
   this->ancestor = NULL;
 
   if ((xml_obj->doc != NULL) && (xml_obj->doc->_private != NULL)) {
-    this->doc = xml_obj->doc;
-
-    XmlDocument *doc = static_cast<XmlDocument *>(this->doc->_private);
+    XmlDocument *doc = static_cast<XmlDocument *>(this->xml_obj->doc->_private);
     doc->Ref();
     this->Value().Set("document", doc->Value());
   }

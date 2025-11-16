@@ -17,6 +17,7 @@ Napi::FunctionReference XmlElement::constructor;
 // JS-signature: (doc: Document, name: string, content?: string)
 XmlElement::XmlElement(const Napi::CallbackInfo &info) : XmlNode(info) {
   Napi::Env env = info.Env();
+  Napi::HandleScope scope(env);
 
   xmlNode *elem;
   if (info.Length() == 1 && info[0].IsExternal()) {
@@ -58,10 +59,6 @@ XmlElement::XmlElement(const Napi::CallbackInfo &info) : XmlNode(info) {
   this->xml_obj = elem;
   this->xml_obj->_private = this;
   this->ancestor = NULL;
-
-  if ((this->xml_obj->doc != NULL) && (this->xml_obj->doc->_private != NULL)) {
-    this->doc = this->xml_obj->doc;
-  }
 
   this->Value().Set("_xmlNode",
                     Napi::External<xmlNode>::New(env, this->xml_obj));

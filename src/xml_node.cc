@@ -422,10 +422,11 @@ xmlNode *get_wrapped_descendant(xmlNode *xml_obj,
 }
 
 template <class T> XmlNode<T>::~XmlNode() {
-  this->unref_wrapped_ancestor();
   if (this->xml_obj == NULL) {
     return;
   }
+
+  this->unref_wrapped_ancestor();
 
   this->xml_obj->_private = NULL;
   if (this->xml_obj->parent == NULL) {
@@ -716,7 +717,7 @@ Napi::Function XmlNode<T>::Init(Napi::Env env, Napi::Object exports) {
 
 // The magic happens here
 Napi::Value SetupXmlNodeInheritance(Napi::Env env, Napi::Object exports) {
-  Napi::Function XmlNode = XmlNodeInstance::Init(env, exports);
+  Napi::Function XmlNodeBase = XmlNodeInstance::Init(env, exports);
   Napi::Function XmlElement = XmlElement::Init(env, exports);
   Napi::Function XmlText = XmlText::Init(env, exports);
   Napi::Function XmlComment = XmlComment::Init(env, exports);
@@ -724,7 +725,7 @@ Napi::Value SetupXmlNodeInheritance(Napi::Env env, Napi::Object exports) {
       XmlProcessingInstruction::Init(env, exports);
   Napi::Function XmlAttribute = XmlAttribute::Init(env, exports);
 
-  exports.Set("XmlNode", XmlNode);
+  exports.Set("XmlNode", XmlNodeBase);
   exports.Set("Element", XmlElement);
   exports.Set("Text", XmlText);
   exports.Set("Comment", XmlComment);
@@ -736,21 +737,21 @@ Napi::Value SetupXmlNodeInheritance(Napi::Env env, Napi::Object exports) {
                                 .ToObject()
                                 .Get("setPrototypeOf")
                                 .As<Napi::Function>();
-  setProto.Call({XmlElement, XmlNode});
-  setProto.Call({XmlElement.Get("prototype"), XmlNode.Get("prototype")});
+  setProto.Call({XmlElement, XmlNodeBase});
+  setProto.Call({XmlElement.Get("prototype"), XmlNodeBase.Get("prototype")});
 
-  setProto.Call({XmlText, XmlNode});
-  setProto.Call({XmlText.Get("prototype"), XmlNode.Get("prototype")});
+  setProto.Call({XmlText, XmlNodeBase});
+  setProto.Call({XmlText.Get("prototype"), XmlNodeBase.Get("prototype")});
 
-  setProto.Call({XmlComment, XmlNode});
-  setProto.Call({XmlComment.Get("prototype"), XmlNode.Get("prototype")});
+  setProto.Call({XmlComment, XmlNodeBase});
+  setProto.Call({XmlComment.Get("prototype"), XmlNodeBase.Get("prototype")});
 
-  setProto.Call({XmlProcessingInstruction, XmlNode});
-  setProto.Call(
-      {XmlProcessingInstruction.Get("prototype"), XmlNode.Get("prototype")});
+  setProto.Call({XmlProcessingInstruction, XmlNodeBase});
+  setProto.Call({XmlProcessingInstruction.Get("prototype"),
+                 XmlNodeBase.Get("prototype")});
 
-  setProto.Call({XmlAttribute, XmlNode});
-  setProto.Call({XmlAttribute.Get("prototype"), XmlNode.Get("prototype")});
+  setProto.Call({XmlAttribute, XmlNodeBase});
+  setProto.Call({XmlAttribute.Get("prototype"), XmlNodeBase.Get("prototype")});
 
   return exports;
 }

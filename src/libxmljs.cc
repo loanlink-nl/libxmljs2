@@ -45,7 +45,7 @@ void adjustExternalMemory() {
 void *xmlMemMallocWrap(size_t size) {
   void *res = xmlMemMalloc(size);
 
-  // no need to udpate memory if we didn't allocate
+  // no need to update memory if we didn't allocate
   if (!res) {
     return res;
   }
@@ -216,25 +216,24 @@ Napi::Object listFeatures(Napi::Env env) {
 
 Napi::Value XmlMemUsed(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  Napi::EscapableHandleScope scope(env);
-  return scope.Escape(Napi::Number::New(env, xmlMemUsed()));
+  int memUsed = xmlMemUsed();
+  return Napi::Number::New(env, memUsed);
 }
 
 Napi::Value XmlNodeCount(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  Napi::EscapableHandleScope scope(env);
-  return scope.Escape(Napi::Number::New(env, nodeCount));
+  return Napi::Number::New(env, nodeCount);
 }
 
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
   // Store the global environment for memory adjustments
   globalEnv = env;
 
+  SetupXmlNodeInheritance(env, exports);
+
   XmlDocument::Init(env, exports);
   XmlTextWriter::Init(env, exports);
   XmlSaxParser::Init(env, exports);
-
-  SetupXmlNodeInheritance(env, exports);
 
   exports.Set("libxml_version", Napi::String::New(env, LIBXML_DOTTED_VERSION));
 
@@ -248,7 +247,6 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("libxml", exports);
 
   exports.Set("xmlMemUsed", Napi::Function::New(env, XmlMemUsed));
-
   exports.Set("xmlNodeCount", Napi::Function::New(env, XmlNodeCount));
 
   return exports;

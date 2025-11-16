@@ -30,7 +30,6 @@ XmlDocument::XmlDocument(const Napi::CallbackInfo &info)
   if (info.Length() > 0 && info[0].IsExternal()) {
     xml_obj = info[0].As<Napi::External<xmlDoc>>().Data();
     xml_obj->_private = this;
-
     return;
   }
 
@@ -101,7 +100,7 @@ Napi::Value XmlDocument::Root(const Napi::CallbackInfo &info) {
 
   if (info.Length() == 0 || info[0].IsUndefined()) {
     if (!root) {
-      return scope.Escape(env.Null());
+      return env.Null();
     }
     return scope.Escape(XmlElement::NewInstance(env, root));
   }
@@ -109,7 +108,7 @@ Napi::Value XmlDocument::Root(const Napi::CallbackInfo &info) {
   if (root != NULL) {
     Napi::Error::New(env, "Holder document already has a root node")
         .ThrowAsJavaScriptException();
-    return scope.Escape(env.Undefined());
+    return env.Undefined();
   }
 
   // set the element as the root element for the document
@@ -117,7 +116,7 @@ Napi::Value XmlDocument::Root(const Napi::CallbackInfo &info) {
   XmlElement *element = XmlElement::Unwrap(info[0].ToObject());
   xmlDocSetRootElement(this->xml_obj, element->xml_obj);
   element->ref_wrapped_ancestor();
-  return info[0];
+  return scope.Escape(info[0]);
 }
 
 Napi::Value XmlDocument::GetDtd(const Napi::CallbackInfo &info) {
@@ -276,8 +275,7 @@ Napi::Value XmlDocument::ToString(const Napi::CallbackInfo &info) {
 
 Napi::Value XmlDocument::Type(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  Napi::EscapableHandleScope scope(env);
-  return scope.Escape(Napi::String::New(env, "document"));
+  return Napi::String::New(env, "document");
 }
 
 // not called from node
@@ -294,33 +292,6 @@ Napi::Value XmlDocument::NewInstance(Napi::Env env, xmlDoc *doc) {
 
   return scope.Escape(obj);
 }
-
-// /// this is a blank object with prototype methods
-// /// not exposed to the user and not called from js
-// Napi::Value XmlDocument::NewInstance(const Napi::CallbackInfo &info) {
-//   Napi::Env env = info.Env();
-//
-//   const char *version = info.Length() > 0 && info[0].IsString()
-//                             ? info[0].ToString().Utf8Value().c_str()
-//                             : "1.0";
-//   xmlDoc *doc = xmlNewDoc((const xmlChar *)(version));
-//
-//   const char *encoding = info.Length() > 1 && info[1].IsString()
-//                              ? info[1].ToString().Utf8Value().c_str()
-//                              : "utf8";
-//
-//   XmlDocument *document = new XmlDocument(info);
-//
-//   // Replace the doc created in constructor
-//   document->xml_obj->_private = NULL;
-//   xmlFreeDoc(document->xml_obj);
-//   document->xml_obj = doc;
-//   doc->_private = document;
-//
-//   document->setEncoding(encoding);
-//
-//   return info.This();
-// }
 
 int getParserOption(Napi::Object props, const char *key, int value,
                     bool defaultValue = true) {
@@ -475,8 +446,7 @@ Napi::Value XmlDocument::FromHtml(const Napi::CallbackInfo &info) {
   ErrorArrayContext ctx{env, Napi::Array::New(env)};
 
   xmlResetLastError();
-  xmlSetStructuredErrorFunc(reinterpret_cast<void *>(&ctx),
-                            XmlSyntaxError::PushToArray);
+  xmlSetStructuredErrorFunc(&ctx, XmlSyntaxError::PushToArray);
 
   int opts = (int)getParserOptions(options);
   if (options.Has("excludeImpliedElements") &&
@@ -521,12 +491,12 @@ Napi::Value XmlDocument::FromHtml(const Napi::CallbackInfo &info) {
 Napi::Value XmlDocument::FromXml(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::EscapableHandleScope scope(env);
+  Napi::Array errors = Napi::Array::New(env);
 
-  ErrorArrayContext ctx{env, Napi::Array::New(env)};
+  ErrorArrayContext ctx{env, errors};
 
   xmlResetLastError();
-  xmlSetStructuredErrorFunc(reinterpret_cast<void *>(&ctx),
-                            XmlSyntaxError::PushToArray);
+  xmlSetStructuredErrorFunc(&ctx, XmlSyntaxError::PushToArray);
   Napi::Object options = info[1].ToObject();
 
   // the base URL that will be used for this document
@@ -547,7 +517,7 @@ Napi::Value XmlDocument::FromXml(const Napi::CallbackInfo &info) {
   }
 
   int opts = (int)getParserOptions(options);
-  xmlDocPtr doc;
+  xmlDoc *doc;
   if (!info[0].IsBuffer()) {
     // Parse a string
     std::string str = info[0].ToString().Utf8Value();
@@ -564,16 +534,15 @@ Napi::Value XmlDocument::FromXml(const Napi::CallbackInfo &info) {
     xmlError *error = xmlGetLastError();
     if (error) {
       XmlSyntaxError::BuildSyntaxError(env, error).ThrowAsJavaScriptException();
-      return scope.Escape(env.Undefined());
+      return env.Undefined();
     }
     Napi::Error::New(env, "Could not parse XML string")
         .ThrowAsJavaScriptException();
-    return scope.Escape(env.Undefined());
+    return env.Undefined();
   }
 
   if (opts & XML_PARSE_XINCLUDE) {
-    xmlSetStructuredErrorFunc(reinterpret_cast<void *>(&ctx),
-                              XmlSyntaxError::PushToArray);
+    xmlSetStructuredErrorFunc(&ctx, XmlSyntaxError::PushToArray);
     int ret = xmlXIncludeProcessFlags(doc, opts);
     xmlSetStructuredErrorFunc(NULL, NULL);
 
@@ -582,15 +551,15 @@ Napi::Value XmlDocument::FromXml(const Napi::CallbackInfo &info) {
       if (error) {
         XmlSyntaxError::BuildSyntaxError(env, error)
             .ThrowAsJavaScriptException();
-        return scope.Escape(env.Undefined());
+        return env.Undefined();
       }
       Napi::Error::New(env, "Could not perform XInclude substitution")
           .ThrowAsJavaScriptException();
-      return scope.Escape(env.Undefined());
+      return env.Undefined();
     }
   }
 
-  auto x = XmlDocument::NewInstance(env, doc);
+  Napi::Value x = XmlDocument::NewInstance(env, doc);
   Napi::Object doc_handle = x.ToObject();
   doc_handle.Set("errors", ctx.errors);
 
@@ -598,7 +567,7 @@ Napi::Value XmlDocument::FromXml(const Napi::CallbackInfo &info) {
   if (root_node == NULL) {
     Napi::Error::New(env, "parsed document has no root element")
         .ThrowAsJavaScriptException();
-    return scope.Escape(env.Undefined());
+    return env.Undefined();
   }
 
   // create the xml document handle to return
@@ -623,8 +592,7 @@ Napi::Value XmlDocument::Validate(const Napi::CallbackInfo &info) {
   ErrorArrayContext ctx{env, errors};
 
   xmlResetLastError();
-  xmlSetStructuredErrorFunc(reinterpret_cast<void *>(&ctx),
-                            XmlSyntaxError::PushToArray);
+  xmlSetStructuredErrorFunc(&ctx, XmlSyntaxError::PushToArray);
 
   XmlDocument *documentSchema =
       Napi::ObjectWrap<XmlDocument>::Unwrap(info[0].ToObject());
@@ -680,8 +648,7 @@ Napi::Value XmlDocument::RngValidate(const Napi::CallbackInfo &info) {
   ErrorArrayContext ctx{env, errors};
 
   xmlResetLastError();
-  xmlSetStructuredErrorFunc(reinterpret_cast<void *>(&ctx),
-                            XmlSyntaxError::PushToArray);
+  xmlSetStructuredErrorFunc(&ctx, XmlSyntaxError::PushToArray);
 
   XmlDocument *documentSchema =
       Napi::ObjectWrap<XmlDocument>::Unwrap(info[0].ToObject());
@@ -803,8 +770,6 @@ void XmlDocument::Init(Napi::Env env, Napi::Object exports) {
   exports.Set("Document", ctor);
   exports.Set("fromXml", Napi::Function::New(env, XmlDocument::FromXml));
   exports.Set("fromHtml", Napi::Function::New(env, XmlDocument::FromHtml));
-
-  SetupXmlNodeInheritance(env, exports);
 
   XmlNamespace::Init(env, exports);
 }

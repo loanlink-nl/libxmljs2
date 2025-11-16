@@ -22,9 +22,6 @@ public:
   void unref_wrapped_ancestor();
   xmlNode *get_wrapped_ancestor();
 
-  // the doc ref'd by this proxy
-  xmlDoc *doc;
-
   static Napi::FunctionReference constructor;
 
   // create new XmlElement, XmlAttribute, etc. to wrap a libxml xmlNode
