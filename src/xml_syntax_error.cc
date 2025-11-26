@@ -54,11 +54,12 @@ Napi::Error XmlSyntaxError::BuildSyntaxError(Napi::Env env, xmlError *error) {
 
   if (error->node) {
     xmlNode *node = static_cast<xmlNode *>(error->node);
-    char *xpath = xmlCharToChar(xmlGetNodePath(node));
-
-    set_string_field(env, err.Value(), "xpath", xpath);
-
-    free(xpath);
+    xmlChar *nodePath = xmlGetNodePath(node);
+    if (nodePath) {
+      set_string_field(env, err.Value(), "xpath",
+                       reinterpret_cast<const char *>(nodePath));
+      xmlFree(nodePath);
+    }
   }
 
   // only add if we have something interesting
