@@ -78,6 +78,11 @@ describe('document', () => {
     expect('utf8').toBe(doc.encoding());
   });
 
+  it('encoding', () => {
+    const doc = new libxml.Document('2.0');
+    doc.encoding('utf8');
+  });
+
   it('type', () => {
     const doc = new libxml.Document('2.0');
 
