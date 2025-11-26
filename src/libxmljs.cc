@@ -126,6 +126,9 @@ void deregisterNodeNamespaces(xmlNode *xml_obj) {
   }
 }
 
+// this is called for any created nodes
+void xmlRegisterNodeCallback(xmlNode *xml_obj) { nodeCount++; }
+
 /*
  * Before libxmljs nodes are freed, they are passed to the deregistration
  * callback, (configured by `xmlDeregisterNodeDefault`).
@@ -147,9 +150,6 @@ void xmlDeregisterNodeCallback(xmlNode *xml_obj) {
   }
   return;
 }
-
-// this is called for any created nodes
-void xmlRegisterNodeCallback(xmlNode *xml_obj) { nodeCount++; }
 
 LibXMLJS::LibXMLJS() {
   // set the callback for when a node is created
