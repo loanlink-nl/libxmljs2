@@ -32,7 +32,11 @@ XmlText::XmlText(const Napi::CallbackInfo &info) : XmlNode<XmlText>(info) {
   // if we were created for an existing xml node, then we don't need
   // to create a new node on the document
   xmlNode *textNode;
+  Napi::Value externalValue;
+  
   if (info.Length() == 1 && info[0].IsExternal()) {
+    // Reuse the external that was passed in instead of creating a new one
+    externalValue = info[0];
     textNode = info[0].As<Napi::External<xmlNode>>().Data();
   } else {
     DOCUMENT_ARG_CHECK;
@@ -55,6 +59,9 @@ XmlText::XmlText(const Napi::CallbackInfo &info) : XmlNode<XmlText>(info) {
 
     textNode =
         xmlNewDocText(document->xml_obj, (const xmlChar *)content.c_str());
+    
+    // Create new external for newly created nodes
+    externalValue = Napi::External<xmlNode>::New(env, textNode);
   }
 
   this->xml_obj = textNode;
@@ -67,8 +74,7 @@ XmlText::XmlText(const Napi::CallbackInfo &info) : XmlNode<XmlText>(info) {
     this->Value().Set("document", doc->Value());
   }
 
-  this->Value().Set("_xmlNode",
-                    Napi::External<xmlNode>::New(env, this->xml_obj));
+  this->Value().Set("_xmlNode", externalValue);
   this->ref_wrapped_ancestor();
 }
 

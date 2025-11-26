@@ -20,7 +20,11 @@ XmlElement::XmlElement(const Napi::CallbackInfo &info) : XmlNode(info) {
   Napi::HandleScope scope(env);
 
   xmlNode *elem;
+  Napi::Value externalValue;
+  
   if (info.Length() == 1 && info[0].IsExternal()) {
+    // Reuse the external that was passed in instead of creating a new one
+    externalValue = info[0];
     elem = info[0].As<Napi::External<xmlNode>>().Data();
   } else if (info.Length() == 2 || info.Length() == 3) {
     DOCUMENT_ARG_CHECK;
@@ -48,6 +52,9 @@ XmlElement::XmlElement(const Napi::CallbackInfo &info) : XmlNode(info) {
                          encodedContent);
     if (encodedContent)
       xmlFree(encodedContent);
+    
+    // Create new external for newly created nodes
+    externalValue = Napi::External<xmlNode>::New(env, elem);
 
   } else {
     Napi::Error::New(env,
@@ -60,8 +67,7 @@ XmlElement::XmlElement(const Napi::CallbackInfo &info) : XmlNode(info) {
   this->xml_obj->_private = this;
   this->ancestor = NULL;
 
-  this->Value().Set("_xmlNode",
-                    Napi::External<xmlNode>::New(env, this->xml_obj));
+  this->Value().Set("_xmlNode", externalValue);
   this->ref_wrapped_ancestor();
 }
 

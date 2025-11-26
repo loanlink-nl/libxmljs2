@@ -19,7 +19,11 @@ XmlProcessingInstruction::XmlProcessingInstruction(
   // if we were created for an existing xml node, then we don't need
   // to create a new node on the document
   xmlNode *pi;
+  Napi::Value externalValue;
+  
   if (info.Length() == 1 && info[0].IsExternal()) {
+    // Reuse the external that was passed in instead of creating a new one
+    externalValue = info[0];
     pi = info[0].As<Napi::External<xmlNode>>().Data();
   } else {
     DOCUMENT_ARG_CHECK;
@@ -55,6 +59,9 @@ XmlProcessingInstruction::XmlProcessingInstruction(
 
     pi = xmlNewDocPI(document->xml_obj, (const xmlChar *)name.c_str(),
                      (xmlChar *)content);
+    
+    // Create new external for newly created nodes
+    externalValue = Napi::External<xmlNode>::New(env, pi);
   }
 
   this->xml_obj = pi;
@@ -67,8 +74,7 @@ XmlProcessingInstruction::XmlProcessingInstruction(
     this->Value().Set("document", doc->Value());
   }
 
-  this->Value().Set("_xmlNode",
-                    Napi::External<xmlNode>::New(env, this->xml_obj));
+  this->Value().Set("_xmlNode", externalValue);
   this->ref_wrapped_ancestor();
 }
 
