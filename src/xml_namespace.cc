@@ -47,14 +47,14 @@ XmlNamespace::XmlNamespace(const Napi::CallbackInfo &info)
     xmlNs *ns = xmlNewNs(node->xml_obj, (const xmlChar *)href,
                          prefix ? (const xmlChar *)prefix : NULL);
 
-    xml_obj = ns;
+    this->xml_obj = ns;
   } else {
     Napi::Error::New(env, "You must provide a node to attach this namespace to")
         .ThrowAsJavaScriptException();
     return;
   }
 
-  xml_obj->_private = this;
+  this->xml_obj->_private = this;
 
   /*
    * If a context is present and wrapped, increment its refcount to ensure
