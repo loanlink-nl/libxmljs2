@@ -66,6 +66,11 @@ XmlElement::XmlElement(const Napi::CallbackInfo &info) : XmlNode(info) {
   this->xml_obj->_private = this;
   this->ancestor = NULL;
 
+  if ((this->xml_obj->doc != NULL) && (this->xml_obj->doc->_private != NULL)) {
+    XmlDocument *doc = static_cast<XmlDocument *>(this->xml_obj->doc->_private);
+    this->Value().Set("document", doc->Value());
+  }
+
   this->ref_wrapped_ancestor();
 }
 

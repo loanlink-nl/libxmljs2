@@ -23,7 +23,6 @@ XmlAttribute::XmlAttribute(const Napi::CallbackInfo &info) : XmlNode(info) {
 
   if ((xml_obj->doc != NULL) && (xml_obj->doc->_private != NULL)) {
     XmlDocument *doc = static_cast<XmlDocument *>(this->xml_obj->doc->_private);
-    doc->Ref();
     this->Value().Set("document", doc->Value());
   }
 

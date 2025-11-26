@@ -18,7 +18,7 @@ XmlComment::XmlComment(const Napi::CallbackInfo &info) : XmlNode(info) {
   // if we were created for an existing xml node, then we don't need
   // to create a new node on the document
   xmlNode *comm;
-  
+
   if (info.Length() == 1 && info[0].IsExternal()) {
     // Unwrap the external to get the xmlNode pointer
     comm = info[0].As<Napi::External<xmlNode>>().Data();
@@ -49,7 +49,6 @@ XmlComment::XmlComment(const Napi::CallbackInfo &info) : XmlNode(info) {
 
   if ((xml_obj->doc != NULL) && (xml_obj->doc->_private != NULL)) {
     XmlDocument *doc = static_cast<XmlDocument *>(this->xml_obj->doc->_private);
-    doc->Ref();
     this->Value().Set("document", doc->Value());
   }
 

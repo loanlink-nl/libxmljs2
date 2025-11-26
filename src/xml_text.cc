@@ -32,7 +32,7 @@ XmlText::XmlText(const Napi::CallbackInfo &info) : XmlNode<XmlText>(info) {
   // if we were created for an existing xml node, then we don't need
   // to create a new node on the document
   xmlNode *textNode;
-  
+
   if (info.Length() == 1 && info[0].IsExternal()) {
     // Unwrap the external to get the xmlNode pointer
     textNode = info[0].As<Napi::External<xmlNode>>().Data();
@@ -65,7 +65,6 @@ XmlText::XmlText(const Napi::CallbackInfo &info) : XmlNode<XmlText>(info) {
 
   if ((this->xml_obj->doc != NULL) && (this->xml_obj->doc->_private != NULL)) {
     XmlDocument *doc = static_cast<XmlDocument *>(this->xml_obj->doc->_private);
-    doc->Ref();
     this->Value().Set("document", doc->Value());
   }
 

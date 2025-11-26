@@ -77,14 +77,14 @@ describe('memory management', () => {
 
       global.gc(true);
 
-      process.nextTick(() => {
+      setTimeout(() => {
         global.gc(true);
 
         setTimeout(() => {
           expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
           done();
         }, 1);
-      });
+      }, 1);
     })
   });
 
@@ -102,14 +102,14 @@ describe('memory management', () => {
 
       global.gc(true);
 
-      process.nextTick(() => {
+      setTimeout(() => {
         global.gc(true);
 
         setTimeout(() => {
           expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
           done();
         }, 1);
-      });
+      }, 1);
     });
   });
 

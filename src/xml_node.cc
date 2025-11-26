@@ -197,7 +197,8 @@ Napi::Value XmlNode<T>::ToString(const Napi::CallbackInfo &info) {
 template <class T>
 Napi::Value XmlNode<T>::Remove(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
-  Napi::EscapableHandleScope scope(env);
+  Napi::HandleScope scope(env);
+
   this->remove();
 
   return info.This();
@@ -431,12 +432,14 @@ template <class T> XmlNode<T>::~XmlNode() {
   this->xml_obj->_private = NULL;
   if (this->xml_obj->parent == NULL) {
     if (get_wrapped_descendant(this->xml_obj) == NULL) {
+      xmlUnlinkNode(this->xml_obj);
       xmlFreeNode(this->xml_obj);
     }
   } else {
     xmlNode *ancestor = get_wrapped_ancestor_or_root(this->xml_obj);
     if ((ancestor->_private == NULL) && (ancestor->parent == NULL) &&
         (get_wrapped_descendant(ancestor, this->xml_obj) == NULL)) {
+      xmlUnlinkNode(ancestor);
       xmlFreeNode(ancestor);
     }
   }
@@ -612,7 +615,7 @@ Napi::Value XmlNode<T>::to_string(Napi::Env env, int options) {
 
 template <class T> void XmlNode<T>::remove() {
   this->unref_wrapped_ancestor();
-  xmlUnlinkNode(xml_obj);
+  xmlUnlinkNode(this->xml_obj);
 }
 
 template <class T> void XmlNode<T>::add_child(xmlNode *child) {
@@ -628,7 +631,7 @@ template <class T> void XmlNode<T>::add_next_sibling(xmlNode *node) {
 }
 
 template <class T> xmlNode *XmlNode<T>::import_node(xmlNode *node) {
-  if (xml_obj->doc == node->doc) {
+  if (this->xml_obj->doc == node->doc) {
     if ((node->parent != NULL) && (node->_private != NULL)) {
       static_cast<XmlNode *>(node->_private)->remove();
     }
