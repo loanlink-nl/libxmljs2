@@ -71,11 +71,20 @@ void XmlSaxParser::initializeContext() {
 void XmlSaxParser::releaseContext() {
   if (context_) {
     context_->_private = 0;
+    
+    // Stop parsing if still in progress to ensure proper cleanup
+    if (context_->instate != XML_PARSER_EOF && 
+        context_->instate != XML_PARSER_START) {
+      xmlStopParser(context_);
+    }
+    
+    // Free document first, then context will clean up remaining structures
     if (context_->myDoc != NULL) {
       xmlFreeDoc(context_->myDoc);
       context_->myDoc = NULL;
     }
 
+    // Free the parser context (this also frees internal structures)
     xmlFreeParserCtxt(context_);
     context_ = 0;
   }
@@ -126,8 +135,8 @@ Napi::Value XmlSaxParser::Push(const Napi::CallbackInfo &info) {
 
 void XmlSaxParser::initialize_push_parser() {
   context_ = xmlCreatePushParserCtxt(&sax_handler_, NULL, NULL, 0, "");
-  context_->replaceEntities = 1;
   initializeContext();
+  context_->replaceEntities = 1;
 }
 
 void XmlSaxParser::push(const char *str, unsigned int size, bool terminate) {
