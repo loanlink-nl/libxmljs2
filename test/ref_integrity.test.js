@@ -141,20 +141,20 @@ describe('ref integrity', () => {
 
   it('unlinked_tree_leaf_persistence_with_proxied_ancestor', async () => {
     await new Promise((done) => {
-    const doc = makeDocument();
-    const proxied_ancestor = doc.get('//inner');
-    let leaf = doc.get('//center');
+      const doc = makeDocument();
+      const proxied_ancestor = doc.get('//inner');
+      let leaf = doc.get('//center');
 
-    doc.get('//middle').remove();
+      doc.get('//middle').remove();
 
-    leaf = null;
-    global.gc(true);
+      leaf = null;
+      global.gc(true);
 
-    setTimeout(() => {
-      leaf = proxied_ancestor.get('.//center');
-      expect(leaf.name()).toBe('center');
-      done();
-    }, 1);
+      setTimeout(() => {
+        leaf = proxied_ancestor.get('.//center');
+        expect(leaf.name()).toBe('center');
+        done();
+      }, 1);
     });
   });
 
@@ -174,7 +174,7 @@ describe('ref integrity', () => {
   });
 
   it('set_text_clobbering_children', () => {
-    const doc = libxml.parseHtml(
+    const doc = libxml.parseXml(
       '<root><child><inner>old</inner></child></root>'
     );
     const child = doc.get('//child');
