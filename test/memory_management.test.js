@@ -70,7 +70,7 @@ describe('memory management', () => {
       const xml_memory_before_document = libxml.memoryUsage();
       
       let nodes = [];
-      for (let i = 0; i < 1; i += 1) {
+      for (let i = 0; i < 100; i += 1) {
         nodes.push(makeDocument().get('//center'));
       }
       nodes = null;
