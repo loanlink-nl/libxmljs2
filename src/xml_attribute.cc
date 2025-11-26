@@ -27,8 +27,6 @@ XmlAttribute::XmlAttribute(const Napi::CallbackInfo &info) : XmlNode(info) {
     this->Value().Set("document", doc->Value());
   }
 
-  this->Value().Set("_xmlNode",
-                    Napi::External<xmlNode>::New(env, this->xml_obj));
   this->ref_wrapped_ancestor();
 }
 

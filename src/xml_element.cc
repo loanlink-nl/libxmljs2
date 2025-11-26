@@ -6,8 +6,12 @@
 #include "libxmljs.h"
 
 #include "xml_attribute.h"
+#include "xml_comment.h"
 #include "xml_document.h"
 #include "xml_element.h"
+#include "xml_node.h"
+#include "xml_pi.h"
+#include "xml_text.h"
 #include "xml_xpath_context.h"
 
 namespace libxmljs {
@@ -20,11 +24,9 @@ XmlElement::XmlElement(const Napi::CallbackInfo &info) : XmlNode(info) {
   Napi::HandleScope scope(env);
 
   xmlNode *elem;
-  Napi::Value externalValue;
-  
+
   if (info.Length() == 1 && info[0].IsExternal()) {
-    // Reuse the external that was passed in instead of creating a new one
-    externalValue = info[0];
+    // Unwrap the external to get the xmlNode pointer
     elem = info[0].As<Napi::External<xmlNode>>().Data();
   } else if (info.Length() == 2 || info.Length() == 3) {
     DOCUMENT_ARG_CHECK;
@@ -52,9 +54,6 @@ XmlElement::XmlElement(const Napi::CallbackInfo &info) : XmlNode(info) {
                          encodedContent);
     if (encodedContent)
       xmlFree(encodedContent);
-    
-    // Create new external for newly created nodes
-    externalValue = Napi::External<xmlNode>::New(env, elem);
 
   } else {
     Napi::Error::New(env,
@@ -67,7 +66,6 @@ XmlElement::XmlElement(const Napi::CallbackInfo &info) : XmlNode(info) {
   this->xml_obj->_private = this;
   this->ancestor = NULL;
 
-  this->Value().Set("_xmlNode", externalValue);
   this->ref_wrapped_ancestor();
 }
 
@@ -123,9 +121,28 @@ Napi::Value XmlElement::AddChild(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::EscapableHandleScope scope(env);
   Napi::Object jsNode = info[0].ToObject();
-  Napi::Value extVal = jsNode.Get("_xmlNode");
 
-  xmlNode *child = extVal.As<Napi::External<xmlNode>>().Data();
+  // Try to unwrap as different node types to get the xmlNode pointer
+  // This avoids creating/storing External objects which can leak
+  xmlNode *child = nullptr;
+
+  if (jsNode.InstanceOf(XmlElement::constructor.Value())) {
+    child = XmlElement::Unwrap(jsNode)->xml_obj;
+  } else if (jsNode.InstanceOf(XmlText::constructor.Value())) {
+    child = XmlText::Unwrap(jsNode)->xml_obj;
+  } else if (jsNode.InstanceOf(XmlProcessingInstruction::constructor.Value())) {
+    child = XmlProcessingInstruction::Unwrap(jsNode)->xml_obj;
+  } else if (jsNode.InstanceOf(XmlComment::constructor.Value())) {
+    child = XmlComment::Unwrap(jsNode)->xml_obj;
+  } else if (jsNode.InstanceOf(XmlAttribute::constructor.Value())) {
+    child = XmlAttribute::Unwrap(jsNode)->xml_obj;
+  }
+
+  if (!child) {
+    Napi::Error::New(env, "Could not unwrap child node")
+        .ThrowAsJavaScriptException();
+    return scope.Escape(env.Undefined());
+  }
 
   xmlNode *imported_child = this->import_node(child);
   if (imported_child == NULL) {

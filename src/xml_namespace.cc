@@ -55,7 +55,6 @@ XmlNamespace::XmlNamespace(const Napi::CallbackInfo &info)
   }
 
   xml_obj->_private = this;
-  this->Value().Set("_xmlNode", Napi::External<xmlNs>::New(env, this->xml_obj));
 
   /*
    * If a context is present and wrapped, increment its refcount to ensure
