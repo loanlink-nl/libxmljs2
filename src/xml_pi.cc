@@ -162,6 +162,7 @@ Napi::Function XmlProcessingInstruction::Init(Napi::Env env,
 
   constructor = Napi::Persistent(func);
   constructor.SuppressDestruct();
+  env.AddCleanupHook([]() { constructor.Reset(); });
 
   exports.Set("ProcessingInstruction", func);
 

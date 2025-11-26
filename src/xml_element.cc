@@ -538,6 +538,7 @@ Napi::Function XmlElement::Init(Napi::Env env, Napi::Object exports) {
 
   constructor = Napi::Persistent(func);
   constructor.SuppressDestruct();
+  env.AddCleanupHook([]() { constructor.Reset(); });
 
   exports.Set("Element", func);
 

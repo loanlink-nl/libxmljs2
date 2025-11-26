@@ -371,6 +371,11 @@ void XmlSaxParser::error(void *context, const char *msg, ...) {
   free(message);
 }
 
+static void CleanupSaxParserCtxt(void *arg) {
+  XmlSaxParserCtxt *data = static_cast<XmlSaxParserCtxt *>(arg);
+  delete data;
+}
+
 Napi::Value XmlSaxParser::Init(Napi::Env env, Napi::Object exports) {
   Napi::EscapableHandleScope scope(env);
   // SAX Parser
@@ -388,6 +393,9 @@ Napi::Value XmlSaxParser::Init(Napi::Env env, Napi::Object exports) {
       push_parser_ctx);
 
   exports.Set("SaxPushParser", push_parser_func);
+
+  env.AddCleanupHook(CleanupSaxParserCtxt, parser_ctx);
+  env.AddCleanupHook(CleanupSaxParserCtxt, push_parser_ctx);
 
   return scope.Escape(exports);
 }

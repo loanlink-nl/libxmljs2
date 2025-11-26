@@ -120,6 +120,7 @@ Napi::Function XmlComment::Init(Napi::Env env, Napi::Object exports) {
 
   constructor = Napi::Persistent(func);
   constructor.SuppressDestruct();
+  env.AddCleanupHook([]() { constructor.Reset(); });
 
   exports.Set("Comment", func);
 
