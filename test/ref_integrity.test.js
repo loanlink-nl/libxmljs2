@@ -91,16 +91,6 @@ describe('ref integrity', () => {
     global.gc(true);
   });
 
-  it('test', async () => {
-    const doc = libxml.parseXml('<doc />');
-    doc.get('//doc').remove();
-    global.gc(true);
-
-    const doc2 = libxml.parseXml('<doc2 />');
-    doc2.get('//doc2')
-    global.gc(true);
-  });
-
   it('unlinked_tree_persistence_parent_proxied_first', () => {
     const doc = makeDocument();
     let parent_node = doc.get('//middle');
@@ -196,4 +186,16 @@ describe('ref integrity', () => {
     expect(inner.parent()).toBe(doc);
     expect(inner.text()).toBe('old');
   });
+
+  it("doesn't segfault", async () => {
+    const doc = libxml.parseXml('<doc />');
+    doc.get('//doc').remove();
+    global.gc(true);
+
+    const doc2 = libxml.parseXml('<doc2 />');
+    doc2.get('//doc2')
+
+    global.gc(true);
+  });
+
 });
