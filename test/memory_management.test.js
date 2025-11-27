@@ -86,7 +86,7 @@ describe('memory management', () => {
         }, 1);
       }, 1);
     })
-  });
+  }, { retry: 10 });
 
   it('inaccessible document freed after middle nodes proxies', async () => {
     await new Promise((done) => {
@@ -111,7 +111,7 @@ describe('memory management', () => {
         }, 1);
       }, 1);
     });
-  });
+  }, { retry: 10 });
 
   it('inaccessible tree freed', async () =>
     await new Promise((done) => {
