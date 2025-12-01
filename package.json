@@ -7,11 +7,6 @@
     "Marco Rogers"
   ],
   "binary": {
-    "module_name": "xmljs",
-    "module_path": "./build/Release/{napi_build_version}",
-    "host": "https://github.com",
-    "remote_path": "./loanlink-nl/libxmljs2/releases/download/v{version}/",
-    "package_name": "{napi_build_version}-{platform}-{arch}-{libc}.tar.gz",
     "napi_versions": [8]
   },
   "description": "libxml bindings for v8 javascript engine",
