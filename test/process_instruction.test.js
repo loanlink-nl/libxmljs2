@@ -1,11 +1,11 @@
-const libxml = require('../index');
+import libxml from "../index.js";
 
 describe('pi', () => {
   it('invalid new', () => {
     const doc = new libxml.Document();
 
     expect(() => libxml.ProcessingInstruction(doc, '')).toThrow(
-      "Class constructor ProcessingInstruction cannot be invoked without 'new'"
+      "Class constructors cannot be invoked without 'new'"
     );
     expect(() => new libxml.ProcessingInstruction(undefined, '')).toThrow(
       'document argument required'

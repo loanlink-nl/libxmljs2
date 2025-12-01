@@ -1,45 +1,34 @@
 // js acts as a wrapper to the c++ bindings
 // prefer to do error handling and other abstrctions in the
 // js layer and only go to c++ when we need to hit libxml
-const bindings = require('./lib/bindings');
+import bindings from "./lib/bindings.js";
 
 // document parsing for backwards compat
-const Document = require('./lib/document');
+import Document from "./lib/document.js";
+import Element from "./lib/element.js";
+import { SaxParser, SaxPushParser } from "./lib/sax_parser.js";
+import { version } from "./package.json";
 
-// / parse an xml string and return a Document
-module.exports.parseXml = Document.fromXml;
+export default {
+  parseXml: Document.fromXml,
+  parseHtml: Document.fromHtml,
+  parseHtmlFragment: Document.fromHtmlFragment,
+  version,
+  libxml_version: bindings.libxml_version,
+  libxml_parser_version: bindings.libxml_parser_version,
+  libxml_debug_enabled: bindings.libxml_debug_enabled,
+  features: bindings.features,
+  Comment: bindings.Comment,
+  Document,
+  Element,
+  ProcessingInstruction: bindings.ProcessingInstruction,
+  Text: bindings.Text,
+  SaxParser,
+  SaxPushParser,
+  memoryUsage: bindings.xmlMemUsed,
+  nodeCount: bindings.xmlNodeCount,
+  TextWriter: bindings.TextWriter,
+  parseXmlString: Document.fromXml,
+  parseHtmlString: Document.fromHtml,
+};
 
-// / parse an html string and return a Document
-module.exports.parseHtml = Document.fromHtml;
-module.exports.parseHtmlFragment = Document.fromHtmlFragment;
-
-// constants
-module.exports.version = require('./package.json').version;
-module.exports.libxml_version = bindings.libxml_version;
-module.exports.libxml_parser_version = bindings.libxml_parser_version;
-module.exports.libxml_debug_enabled = bindings.libxml_debug_enabled;
-module.exports.features = bindings.features;
-
-// lib exports
-module.exports.Comment = bindings.Comment;
-module.exports.Document = Document;
-module.exports.Element = require('./lib/element');
-module.exports.ProcessingInstruction = bindings.ProcessingInstruction;
-module.exports.Text = bindings.Text;
-
-// Compatibility synonyms
-Document.fromXmlString = Document.fromXml;
-Document.fromHtmlString = Document.fromHtml;
-module.exports.parseXmlString = module.exports.parseXml;
-module.exports.parseHtmlString = module.exports.parseHtml;
-
-const sax_parser = require('./lib/sax_parser');
-
-module.exports.SaxParser = sax_parser.SaxParser;
-module.exports.SaxPushParser = sax_parser.SaxPushParser;
-
-module.exports.memoryUsage = bindings.xmlMemUsed;
-
-module.exports.nodeCount = bindings.xmlNodeCount;
-
-module.exports.TextWriter = bindings.TextWriter;

@@ -6,34 +6,32 @@
 
 namespace libxmljs {
 
-class XmlText : public XmlNode {
+class XmlText : public XmlNode<XmlText> {
 public:
-  explicit XmlText(xmlNode *node);
+  explicit XmlText(const Napi::CallbackInfo &info);
 
-  static void Initialize(v8::Local<v8::Object> target);
+  static Napi::Function Init(Napi::Env env, Napi::Object exports);
 
-  static Nan::Persistent<v8::FunctionTemplate> constructor_template;
+  static Napi::FunctionReference constructor;
 
   // create new xml element to wrap the node
-  static v8::Local<v8::Object> New(xmlNode *node);
+  static Napi::Value NewInstance(Napi::Env env, xmlNode *node);
 
 protected:
-  static NAN_METHOD(New);
-  static NAN_METHOD(Text);
-  static NAN_METHOD(Replace);
-  static NAN_METHOD(Path);
-  static NAN_METHOD(Name);
+  Napi::Value Text(const Napi::CallbackInfo &info);
+  Napi::Value Replace(const Napi::CallbackInfo &info);
+  Napi::Value Path(const Napi::CallbackInfo &info);
+  Napi::Value Name(const Napi::CallbackInfo &info);
+  Napi::Value NextElement(const Napi::CallbackInfo &info);
+  Napi::Value PrevElement(const Napi::CallbackInfo &info);
+  Napi::Value AddPrevSibling(const Napi::CallbackInfo &info);
+  Napi::Value AddNextSibling(const Napi::CallbackInfo &info);
 
-  static NAN_METHOD(NextElement);
-  static NAN_METHOD(PrevElement);
-  static NAN_METHOD(AddPrevSibling);
-  static NAN_METHOD(AddNextSibling);
-
-  v8::Local<v8::Value> get_next_element();
-  v8::Local<v8::Value> get_prev_element();
-  v8::Local<v8::Value> get_content();
-  v8::Local<v8::Value> get_path();
-  v8::Local<v8::Value> get_name();
+  Napi::Value get_next_element(Napi::Env env);
+  Napi::Value get_prev_element(Napi::Env env);
+  Napi::Value get_content(Napi::Env env);
+  Napi::Value get_path(Napi::Env env);
+  Napi::Value get_name(Napi::Env env);
   void set_content(const char *content);
   void replace_text(const char *content);
   void replace_element(xmlNode *element);

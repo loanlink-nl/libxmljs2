@@ -1,5 +1,5 @@
-const fs = require('node:fs');
-const libxml = require('../index');
+import fs from "node:fs";
+import libxml from "../index.js";
 
 function test_parser_option(input, options, expected) {
   let output = libxml.parseXml(input, options).toString();

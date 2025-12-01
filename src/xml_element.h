@@ -7,53 +7,53 @@
 
 namespace libxmljs {
 
-class XmlElement : public XmlNode {
+class XmlElement : public XmlNode<XmlElement> {
 public:
-  explicit XmlElement(xmlNode *node);
+  XmlElement(const Napi::CallbackInfo &info);
 
-  static void Initialize(v8::Local<v8::Object> target);
-
-  static Nan::Persistent<v8::FunctionTemplate> constructor_template;
+  static Napi::Function Init(Napi::Env env, Napi::Object exports);
 
   // create new xml element to wrap the node
-  static v8::Local<v8::Object> New(xmlNode *node);
+  static Napi::Value NewInstance(Napi::Env env, xmlNode *node);
 
 protected:
-  static NAN_METHOD(New);
-  static NAN_METHOD(Name);
-  static NAN_METHOD(Attr);
-  static NAN_METHOD(Attrs);
-  static NAN_METHOD(Find);
-  static NAN_METHOD(Text);
-  static NAN_METHOD(Path);
-  static NAN_METHOD(Child);
-  static NAN_METHOD(ChildNodes);
-  static NAN_METHOD(AddChild);
-  static NAN_METHOD(AddCData);
-  static NAN_METHOD(NextElement);
-  static NAN_METHOD(PrevElement);
-  static NAN_METHOD(AddPrevSibling);
-  static NAN_METHOD(AddNextSibling);
-  static NAN_METHOD(Replace);
+  Napi::Value Name(const Napi::CallbackInfo &info);
+  Napi::Value Attr(const Napi::CallbackInfo &info);
+  Napi::Value Attrs(const Napi::CallbackInfo &info);
+  Napi::Value Find(const Napi::CallbackInfo &info);
+  Napi::Value Text(const Napi::CallbackInfo &info);
+  Napi::Value Path(const Napi::CallbackInfo &info);
+  Napi::Value Child(const Napi::CallbackInfo &info);
+  Napi::Value ChildNodes(const Napi::CallbackInfo &info);
+  Napi::Value AddChild(const Napi::CallbackInfo &info);
+  Napi::Value AddCData(const Napi::CallbackInfo &info);
+  Napi::Value NextElement(const Napi::CallbackInfo &info);
+  Napi::Value PrevElement(const Napi::CallbackInfo &info);
+  Napi::Value AddPrevSibling(const Napi::CallbackInfo &info);
+  Napi::Value AddNextSibling(const Napi::CallbackInfo &info);
+  Napi::Value Replace(const Napi::CallbackInfo &info);
 
   void set_name(const char *name);
 
-  v8::Local<v8::Value> get_name();
-  v8::Local<v8::Value> get_child(int32_t idx);
-  v8::Local<v8::Value> get_child_nodes();
-  v8::Local<v8::Value> get_path();
-  v8::Local<v8::Value> get_attr(const char *name);
-  v8::Local<v8::Value> get_attrs();
+  Napi::Value get_name(Napi::Env env);
+  Napi::Value get_child(Napi::Env env, int32_t idx);
+  Napi::Value get_child_nodes(Napi::Env env);
+  Napi::Value get_path(Napi::Env env);
+  Napi::Value get_attr(Napi::Env env, const char *name);
+  Napi::Value get_attrs(Napi::Env env);
   void set_attr(const char *name, const char *value);
   void add_cdata(xmlNode *cdata);
   void unlink_children();
   void set_content(const char *content);
-  v8::Local<v8::Value> get_content();
-  v8::Local<v8::Value> get_next_element();
-  v8::Local<v8::Value> get_prev_element();
+  Napi::Value get_content(Napi::Env env);
+  Napi::Value get_next_element(Napi::Env env);
+  Napi::Value get_prev_element(Napi::Env env);
   void replace_element(xmlNode *element);
   void replace_text(const char *content);
   bool child_will_merge(xmlNode *child);
+
+private:
+  static Napi::FunctionReference constructor;
 };
 
 } // namespace libxmljs

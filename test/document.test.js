@@ -1,23 +1,5 @@
-const libxml = require('../index');
-
-function rssAfterGarbageCollection(maxCycles = 10) {
-  let rss = libxml.memoryUsage();
-  let freedMemory = 0;
-
-  do {
-    global.gc();
-
-    const rssAfterGc = libxml.memoryUsage();
-
-    freedMemory = rss - rssAfterGc;
-    rss = rssAfterGc;
-
-    // eslint-disable-next-line no-param-reassign
-    maxCycles -= 1;
-  } while (freedMemory !== 0 && maxCycles > 0);
-
-  return rss;
-}
+import libxml from "../index.js";
+import { setupGC } from "./setup.js";
 
 describe('document', () => {
   const VALIDATE_RSS_TOLERANCE = 1;
@@ -84,8 +66,8 @@ describe('document', () => {
   it('blank', () => {
     const doc = new libxml.Document();
 
-    expect('1.0').toBe(doc.version());
-    expect('utf8').toBe(doc.encoding());
+    expect(doc.version()).toBe('1.0');
+    expect(doc.encoding()).toBe('utf8');
   });
 
   it('version', () => {
@@ -93,6 +75,11 @@ describe('document', () => {
 
     expect('2.0').toBe(doc.version());
     expect('utf8').toBe(doc.encoding());
+  });
+
+  it('encoding', () => {
+    const doc = new libxml.Document('2.0');
+    doc.encoding('utf8');
   });
 
   it('type', () => {
@@ -379,22 +366,37 @@ describe('document', () => {
     expect(xmlDocInvalid.validationErrors.length).toBe(1);
   });
 
-  it('validate memory usage', () => {
+  it('validate memory usage', async () => {
+    const { traceGC, awaitGC } = setupGC();
+
     const xsd =
       '<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"><xs:element name="comment" type="xs:string"/></xs:schema>';
     const xml = '<?xml version="1.0"?><comment>A comment</comment>';
 
-    const xsdDoc = libxml.parseXml(xsd);
-    const xmlDoc = libxml.parseXml(xml);
 
-    const rssBefore = rssAfterGarbageCollection();
+    let xsdDoc = libxml.parseXml(xsd);
+    let xmlDoc = libxml.parseXml(xml);
+    traceGC(xsdDoc, 'xsdDoc');
+    traceGC(xmlDoc, 'xmlDoc');
+
+    const rssBefore = libxml.memoryUsage();
 
     for (let i = 0; i < 10000; i += 1) {
       xmlDoc.validate(xsdDoc);
     }
-    expect(
-      rssAfterGarbageCollection() - rssBefore < VALIDATE_RSS_TOLERANCE
-    ).toBeTruthy();
+
+    let rssAfter = libxml.memoryUsage();
+    expect(rssAfter - rssBefore < VALIDATE_RSS_TOLERANCE).toBeTruthy();
+
+    xsdDoc = null;
+    xmlDoc = null;
+
+    await awaitGC('xsdDoc');
+    await awaitGC('xmlDoc');
+
+    rssAfter = libxml.memoryUsage();
+
+    expect(rssAfter - rssBefore < VALIDATE_RSS_TOLERANCE).toBeTruthy();
   });
 
   it('validate inputs', () => {
@@ -438,7 +440,9 @@ describe('document', () => {
     expect(`${html}\n`).toBe(parsedHtml.toString());
   });
 
-  it('validate rng memory usage', () => {
+  it('validate rng memory usage', async () => {
+    const { traceGC, awaitGC } = setupGC();
+
     const rng =
       '<element name="addressBook" xmlns="http://relaxng.org/ns/structure/1.0">' +
       '<zeroOrMore>' +
@@ -465,17 +469,26 @@ describe('document', () => {
       '</card>' +
       '</addressBook>';
 
-    const rngDoc = libxml.parseXml(rng);
-    const xmlDoc = libxml.parseXml(xml_valid);
+    const rssBefore = libxml.memoryUsage();
 
-    const rssBefore = rssAfterGarbageCollection();
+    let rngDoc = libxml.parseXml(rng);
+    let xmlDoc = libxml.parseXml(xml_valid);
+
+    traceGC(rngDoc, 'rngDoc');
+    traceGC(xmlDoc, 'xmlDoc');
 
     for (let i = 0; i < 10000; i += 1) {
       xmlDoc.rngValidate(rngDoc);
     }
-    expect(
-      rssAfterGarbageCollection() - rssBefore < VALIDATE_RSS_TOLERANCE
-    ).toBeTruthy();
+
+    rngDoc = null;
+    xmlDoc = null;
+
+    await awaitGC('rngDoc');
+    await awaitGC('xmlDoc');
+
+    const rssAfter = libxml.memoryUsage();
+    expect(rssAfter - rssBefore < VALIDATE_RSS_TOLERANCE).toBeTruthy();
   });
 
   describe('errors', () => {

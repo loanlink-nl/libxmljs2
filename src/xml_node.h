@@ -2,13 +2,16 @@
 #ifndef SRC_XML_NODE_H_
 #define SRC_XML_NODE_H_
 
-#include "nan.h"
 #include <libxml/tree.h>
+#include <napi.h>
 
 namespace libxmljs {
 
-class XmlNode : public Nan::ObjectWrap {
+template <class T> class XmlNode : public Napi::ObjectWrap<T> {
 public:
+  XmlNode(const Napi::CallbackInfo &info);
+  virtual ~XmlNode();
+
   xmlNode *xml_obj;
 
   // reference to a parent XmlNode or XmlElement
@@ -18,47 +21,41 @@ public:
   void ref_wrapped_ancestor();
   void unref_wrapped_ancestor();
   xmlNode *get_wrapped_ancestor();
-  int refs() { return refs_; };
 
-  // the doc ref'd by this proxy
-  xmlDoc *doc;
-
-  explicit XmlNode(xmlNode *node);
-  virtual ~XmlNode();
-
-  static void Initialize(v8::Local<v8::Object> target);
-  static Nan::Persistent<v8::FunctionTemplate> constructor_template;
+  static Napi::FunctionReference constructor;
 
   // create new XmlElement, XmlAttribute, etc. to wrap a libxml xmlNode
-  static v8::Local<v8::Value> New(xmlNode *node);
+  static Napi::Value NewInstance(Napi::Env env, xmlNode *node);
+
+  static Napi::Function Init(Napi::Env env, Napi::Object exports);
+
+  Napi::Value Doc(const Napi::CallbackInfo &info);
+  Napi::Value Namespace(const Napi::CallbackInfo &info);
+  Napi::Value Namespaces(const Napi::CallbackInfo &info);
+  Napi::Value Parent(const Napi::CallbackInfo &info);
+  Napi::Value NextSibling(const Napi::CallbackInfo &info);
+  Napi::Value PrevSibling(const Napi::CallbackInfo &info);
+  Napi::Value LineNumber(const Napi::CallbackInfo &info);
+  Napi::Value Type(const Napi::CallbackInfo &info);
+  Napi::Value ToString(const Napi::CallbackInfo &info);
+  Napi::Value Remove(const Napi::CallbackInfo &info);
+  Napi::Value Clone(const Napi::CallbackInfo &info);
 
 protected:
-  static NAN_METHOD(Doc);
-  static NAN_METHOD(Namespace);
-  static NAN_METHOD(Namespaces);
-  static NAN_METHOD(Parent);
-  static NAN_METHOD(NextSibling);
-  static NAN_METHOD(PrevSibling);
-  static NAN_METHOD(LineNumber);
-  static NAN_METHOD(Type);
-  static NAN_METHOD(ToString);
-  static NAN_METHOD(Remove);
-  static NAN_METHOD(Clone);
-
-  v8::Local<v8::Value> get_doc();
-  v8::Local<v8::Value> remove_namespace();
-  v8::Local<v8::Value> get_namespace();
+  Napi::Value get_doc(Napi::Env env);
+  Napi::Value remove_namespace(Napi::Env env);
+  Napi::Value get_namespace(Napi::Env env);
   void set_namespace(xmlNs *ns);
   xmlNs *find_namespace(const char *search_str);
-  v8::Local<v8::Value> get_all_namespaces();
-  v8::Local<v8::Value> get_local_namespaces();
-  v8::Local<v8::Value> get_parent();
-  v8::Local<v8::Value> get_prev_sibling();
-  v8::Local<v8::Value> get_next_sibling();
-  v8::Local<v8::Value> get_line_number();
-  v8::Local<v8::Value> clone(bool recurse);
-  v8::Local<v8::Value> get_type();
-  v8::Local<v8::Value> to_string(int options = 0);
+  Napi::Value get_all_namespaces(Napi::Env env);
+  Napi::Value get_local_namespaces(Napi::Env env);
+  Napi::Value get_parent(Napi::Env env);
+  Napi::Value get_prev_sibling(Napi::Env env);
+  Napi::Value get_next_sibling(Napi::Env env);
+  Napi::Value get_line_number(Napi::Env env);
+  Napi::Value clone(Napi::Env env, bool recurse);
+  Napi::Value get_type(Napi::Env env);
+  Napi::Value to_string(Napi::Env env, int options = 0);
   void remove();
   void add_child(xmlNode *child);
   void add_prev_sibling(xmlNode *element);
@@ -67,6 +64,14 @@ protected:
   void replace_text(const char *content);
   xmlNode *import_node(xmlNode *node);
 };
+
+class XmlNodeInstance : public XmlNode<XmlNodeInstance> {
+public:
+  using XmlNode::XmlNode;
+  virtual ~XmlNodeInstance();
+};
+
+Napi::Value SetupXmlNodeInheritance(Napi::Env env, Napi::Object exports);
 
 } // namespace libxmljs
 
