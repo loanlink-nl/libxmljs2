@@ -1,4 +1,5 @@
 const libxml = require('../index');
+const { setupGC } = require('./setup.js');
 
 global.gc ??= (typeof Bun !== 'undefined' ? Bun.gc : undefined);
 if (!global.gc) {
@@ -91,89 +92,94 @@ describe('ref integrity', () => {
     global.gc(true);
   });
 
-  it('unlinked_tree_persistence_parent_proxied_first', () => {
+  it('unlinked_tree_persistence_parent_proxied_first', async () => {
+    const { traceGC, awaitGC } = setupGC();
     const doc = makeDocument();
     let parent_node = doc.get('//middle');
+    traceGC(parent_node, 'parent_node');
+
     const child_node = doc.get('//inner');
 
     parent_node.remove();
     parent_node = null;
-    global.gc(true);
+    await awaitGC('parent_node');
 
     expect(child_node.name()).toBe('inner'); // works with >= v0.14.3
   });
 
-  it('unlinked_tree_proxied_leaf_persistent_ancestor_first', () => {
+  it('unlinked_tree_proxied_leaf_persistent_ancestor_first', async () => {
+    const { traceGC, awaitGC } = setupGC();
     const doc = makeDocument();
     let ancestor = doc.get('//middle');
+    traceGC(ancestor, 'ancestor');
+
     const leaf = doc.get('//center');
 
     ancestor.remove();
     ancestor = null;
-    global.gc(true);
+    await awaitGC('ancestor');
 
     expect(leaf.name()).toBe('center'); // fails with v0.14.3, v0.15
   });
 
-  it('unlinked_tree_proxied_leaf_persistent_descendant_first', () => {
+  it('unlinked_tree_proxied_leaf_persistent_descendant_first', async () => {
+    const { traceGC, awaitGC } = setupGC();
     const doc = makeDocument();
     const leaf = doc.get('//center');
     let ancestor = doc.get('//middle');
+    traceGC(ancestor, 'ancestor');
 
     ancestor.remove(); // make check here?
     ancestor = null;
-    global.gc(true);
+    await awaitGC('ancestor');
 
     expect(leaf.name()).toBe('center');
   });
 
-  it('unlinked_tree_persistence_child_proxied_first', () => {
+  it('unlinked_tree_persistence_child_proxied_first', async () => {
+    const { traceGC, awaitGC } = setupGC();
     const doc = makeDocument();
     const child_node = doc.get('//inner');
     let parent_node = doc.get('//middle');
+    traceGC(parent_node, 'parent_node');
 
     parent_node.remove();
     parent_node = null;
-    global.gc(true);
+    await awaitGC('parent_node');
 
     expect(child_node.name()).toBe('inner'); // fails with v0.14.3, v0.15
   });
 
   it('unlinked_tree_leaf_persistence_with_proxied_ancestor', async () => {
-    await new Promise((done) => {
+    const { traceGC, awaitGC } = setupGC();
       const doc = makeDocument();
       const proxied_ancestor = doc.get('//inner');
       let leaf = doc.get('//center');
+      traceGC(leaf, 'leaf');
 
       doc.get('//middle').remove();
 
       leaf = null;
-      global.gc(true);
+      await awaitGC('leaf');
 
-      setTimeout(() => {
-        leaf = proxied_ancestor.get('.//center');
-        expect(leaf.name()).toBe('center');
-        done();
-      }, 1);
-    });
+      leaf = proxied_ancestor.get('.//center');
+      expect(leaf.name()).toBe('center');
   });
 
   it('unlinked_tree_leaf_persistence_with_peer_proxy', async () => {
-    await new Promise((done) => {
+    const { traceGC, awaitGC } = setupGC();
       const doc = makeDocument();
       let leaf = doc.get('//left');
+      traceGC(leaf, 'leaf');
+
       const peer = doc.get('//right');
 
       doc.get('//middle').remove();
       leaf = null;
-      global.gc(true);
+      await awaitGC('leaf');
 
-      setTimeout(() => {
-        leaf = peer.parent().get('./left');
-        expect(leaf.name()).toBe('left');
-        done();
-      }, 1);
-    });
+      leaf = peer.parent().get('./left');
+      expect(leaf.name()).toBe('left');
   });
 
 

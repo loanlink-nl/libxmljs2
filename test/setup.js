@@ -1,32 +1,33 @@
 global.gc ??= (typeof Bun !== 'undefined' ? Bun.gc : undefined);
 if (!global.gc) {
-  throw new Error('must run with --expose_gc for memory management tests');
+  throw new Error('must run with --expose-gc for memory management tests');
 }
 
-function collectGarbage(minCycles = 3, maxCycles = 15) {
-  let cycles = 0;
-  let freedRss = 0;
-  let lastFreedRss = 0;
-  let usage = process.memoryUsage();
+export function setupGC() {
+  const registry = new FinalizationRegistry(message => {
+    events.add(message)
+  });
 
-  do {
-    global.gc();
+  const events = new Set()
 
-    const usageAfterGc = process.memoryUsage();
+  function traceGC(obj, message) {
+    registry.register(obj, message)
+  }
 
-    lastFreedRss = freedRss;
-    freedRss = lastFreedRss + usage.rss - usageAfterGc.rss;
-    usage = usageAfterGc;
+  async function awaitGC(message) {
+    return new Promise(resolve => {
+      global.gc()
 
-    cycles += 1;
-  } while (cycles < minCycles || (freedRss !== 0 && cycles < maxCycles));
+      const timer = setInterval(() => {
+        if (events.has(message)) {
+          events.delete(message)
+          clearInterval(timer)
+          resolve()
+        }
+      })
+    })
+  }
 
-  return usage;
+  return { traceGC, awaitGC };
 }
 
-afterEach(() => {
-  collectGarbage(8);
-  // Memory leak test
-  // eslint-disable-next-line jest/no-standalone-expect
-  // expect(libxml.nodeCount()).not.toBeGreaterThan(0);
-});

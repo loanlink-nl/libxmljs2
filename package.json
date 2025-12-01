@@ -18,7 +18,7 @@
   "scripts": {
     "build": "node-gyp rebuild",
     "test:bun": "bun test",
-    "test:node": "NODE_OPTIONS=--expose-gc vitest --globals",
+    "test:node": "NODE_OPTIONS='--expose-gc' vitest --globals --test-timeout=1000",
     "prebuildify": "prebuildify --napi --strip",
     "typecheck": "tsd",
     "install": "node-gyp-build"

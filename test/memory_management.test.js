@@ -1,9 +1,5 @@
 const libxml = require('../index');
-
-global.gc ??= (typeof Bun !== 'undefined' ? Bun.gc : undefined);
-if (!global.gc) {
-  throw new Error('must run with --expose_gc for memory management tests');
-}
+const { setupGC } = require('./setup');
 
 function makeDocument() {
   const body =
@@ -15,103 +11,81 @@ function makeDocument() {
 
 
 describe('memory management', () => {
-  beforeEach(() => {
-    global.gc(true);
-  });
-
-  afterEach(() => {
-    global.gc(true);
-  });
-
   it('inaccessible document freed', async () => {
+    const { traceGC, awaitGC } = setupGC();
+
     const xml_memory_before_document = libxml.memoryUsage();
 
-    await new Promise((done) => {
-      for (let i = 0; i < 100; i += 1) {
-        makeDocument();
-      }
+    for (let i = 0; i < 100; i += 1) {
+      traceGC(makeDocument(), `doc-${i}`);
+    }
 
-      global.gc(true);
-
-      setTimeout(() => {
-        done();
-      }, 1);
-    });
+    await awaitGC('doc-99');
 
     expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
   });
 
   it("calling root doesn't keep the document alive", async () => {
+    const { traceGC, awaitGC } = setupGC();
+
     const xml_memory_before_document = libxml.memoryUsage();
 
-    await new Promise((done) => {
-      let doc1 = new libxml.Document();
-      let doc2 = new libxml.Document("2.0");
+    let doc1 = new libxml.Document();
+    let doc2 = new libxml.Document("2.0");
+    traceGC(doc1, 'doc1');
+    traceGC(doc2, 'doc2');
 
-      doc1.type();
+    doc1.type();
 
-      doc1 = null;
-      doc2 = null;
+    doc1 = null;
+    doc2 = null;
 
-      global.gc(true);
-
-      process.nextTick(() => {
-        global.gc(true);
-
-        setTimeout(() => {
-          done();
-        }, 1);
-      });
-    });
+    await awaitGC('doc1');
+    await awaitGC('doc2');
 
     expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
   });
 
   it('inaccessible document freed when node freed', async () => {
+    const { traceGC, awaitGC } = setupGC();
     const xml_memory_before_document = libxml.memoryUsage();
 
-    await new Promise((done) => {
-      let nodes = [];
-      for (let i = 0; i < 100; i += 1) {
-        nodes.push(makeDocument().get('//center'));
-      }
-      nodes = null;
+    let nodes = [];
+    traceGC(nodes, 'nodes');
 
-      global.gc(true);
+    for (let i = 0; i < 100; i += 1) {
+      let doc = makeDocument();
+      traceGC(doc, `doc-${i}`);
+      nodes.push(doc.get('//center'));
+    }
 
-      setTimeout(() => {
-        global.gc(true);
+    nodes = null;
 
-        setTimeout(() => {
-          done();
-        }, 1);
-      }, 1);
-    })
+    await awaitGC('nodes');
+    await awaitGC('doc-99');
 
     expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
   });
 
   it('inaccessible document freed after middle node proxies', async () => {
+    const { traceGC, awaitGC } = setupGC();
     const xml_memory_before_document = libxml.memoryUsage();
 
-    await new Promise((done) => {
-      let doc = makeDocument();
-      // eslint-disable-next-line no-unused-vars
-      let middle = doc.get('//middle');
-      let inner = doc.get('//inner');
+    let doc = makeDocument();
+    // eslint-disable-next-line no-unused-vars
+    let middle = doc.get('//middle');
+    let inner = doc.get('//inner');
 
-      inner.remove(); // v0.14.3, v0.15: proxy ref'd parent but can't unref when destroyed
-      doc = middle = inner = null;
+    traceGC(doc, 'doc');
+    traceGC(middle, 'middle');
+    traceGC(inner, 'inner');
 
-      global.gc(true);
+    inner.remove(); // v0.14.3, v0.15: proxy ref'd parent but can't unref when destroyed
+    doc = middle = inner = null;
 
-      setTimeout(() => {
-        global.gc(true);
-        setTimeout(() => {
-          done();
-        }, 10);
-      }, 10);
-    });
+    await awaitGC('doc');
+    await awaitGC('middle');
+    await awaitGC('inner');
 
     expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
   });
@@ -134,24 +108,20 @@ describe('memory management', () => {
   });
 
   it('namespace list freed', async () => {
+    const { traceGC, awaitGC } = setupGC();
     let xmlMemBefore;
 
-    await new Promise((done) => {
-      const doc = makeDocument();
-      const el = doc.get('//center');
+    const doc = makeDocument();
+    const el = doc.get('//center');
+    el.namespace('bar', null);
 
-      el.namespace('bar', null);
-      xmlMemBefore = libxml.memoryUsage();
+    xmlMemBefore = libxml.memoryUsage();
 
-      for (let i; i < 1000; i += 1) {
-        el.namespaces();
-      }
+    for (let i; i < 1000; i += 1) {
+      traceGC(el.namespaces(), `namespaces-${i}`);
+    }
 
-      global.gc(true);
-      setTimeout(() => {
-        done();
-      }, 1);
-    });
+    await awaitGC(`namespaces-0`);
 
     expect(libxml.memoryUsage() <= xmlMemBefore).toBeTruthy();
   });
