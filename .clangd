@@ -10,18 +10,18 @@ CompileFlags:
     - -DBUILDING_NODE_EXTENSION
     - -DNODE_ADDON_API_CPP_EXCEPTIONS
     
-    # Include paths - Node.js headers
-    - -I/Users/max/.nvm/versions/node/v24.3.0/include/node
+    # Include paths - Node.js API headers (relative path)
+    - -I../node_modules/node-api-headers/include
     
-    # Include paths - node-addon-api headers (absolute path)
-    - -I/Users/max/code/loanlink/archive/libxmljs2/node_modules/node-addon-api
+    # Include paths - node-addon-api headers (relative path)
+    - -I../node_modules/node-addon-api
     
-    # Include paths - nan headers (absolute path)
-    - -I/Users/max/code/loanlink/archive/libxmljs2/node_modules/nan
+    # Include paths - nan headers (relative path)
+    - -I../node_modules/nan
     
-    # Include paths - vendor libxml (absolute path)
-    - -I/Users/max/code/loanlink/archive/libxmljs2/vendor/libxml/include
-    - -I/Users/max/code/loanlink/archive/libxmljs2/vendor/libxml/include/libxml
+    # Include paths - vendor libxml (relative path)
+    - -I../vendor/libxml/include
+    - -I../vendor/libxml/include/libxml
     
   Remove:
     # Remove any conflicting flags
