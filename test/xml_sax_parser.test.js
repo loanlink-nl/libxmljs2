@@ -1,6 +1,5 @@
-const fs = require('node:fs');
-
-const libxml = require('../index');
+import fs from "node:fs";
+import libxml from "../index.js";
 
 global.gc ??= (typeof Bun !== 'undefined' ? Bun.gc : undefined);
 

@@ -1,5 +1,5 @@
-const libxml = require('../index');
-const { setupGC } = require('./setup');
+import libxml from "../index.js";
+import { setupGC } from "./setup.js";
 
 describe('document', () => {
   const VALIDATE_RSS_TOLERANCE = 1;

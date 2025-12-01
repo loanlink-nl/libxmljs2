@@ -1,6 +1,7 @@
 {
   "name": "@loanlink-nl/libxmljs2",
   "author": "LoanLink",
+  "type": "module",
   "contributors": [
     "Jeff Smick",
     "Marco Rogers"
@@ -18,7 +19,7 @@
   "scripts": {
     "build": "node-gyp rebuild",
     "test:bun": "bun test --timeout 1000",
-    "test:node": "NODE_OPTIONS='--expose-gc' vitest --globals --test-timeout=1000 --pool=forks",
+    "test:node": "NODE_OPTIONS='--expose-gc' vitest --globals --test-timeout=1000 --pool=vmForks",
     "prebuildify": "prebuildify --napi --strip",
     "typecheck": "tsd",
     "install": "node-gyp-build"

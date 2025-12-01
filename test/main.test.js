@@ -1,5 +1,5 @@
-const pkg = require('../package');
-const libxml = require('..');
+import libxml from "../index.js";
+import pkg from "../package.json";
 
 describe('main', () => {
   it('constants', () => {

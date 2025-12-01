@@ -1,5 +1,5 @@
-const libxml = require('../index');
-const { setupGC } = require('./setup.js');
+import libxml from "../index.js";
+import { setupGC } from "./setup.js";
 
 function makeDocument() {
   const body =

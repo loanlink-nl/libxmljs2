@@ -1,4 +1,4 @@
-var libxml = require('../');
+import libxml from "../index.js";
 
 var doc = libxml.Document();
 var elem = doc.node('name1');
