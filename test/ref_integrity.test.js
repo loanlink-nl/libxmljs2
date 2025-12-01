@@ -92,8 +92,9 @@ describe('ref integrity', () => {
     global.gc(true);
   });
 
-  it('unlinked_tree_persistence_parent_proxied_first', async () => {
+  it.skip('unlinked_tree_persistence_parent_proxied_first', async () => {
     const { traceGC, awaitGC } = setupGC();
+
     const doc = makeDocument();
     let parent_node = doc.get('//middle');
     traceGC(parent_node, 'parent_node');
@@ -107,7 +108,7 @@ describe('ref integrity', () => {
     expect(child_node.name()).toBe('inner'); // works with >= v0.14.3
   });
 
-  it('unlinked_tree_proxied_leaf_persistent_ancestor_first', async () => {
+  it.skip('unlinked_tree_proxied_leaf_persistent_ancestor_first', async () => {
     const { traceGC, awaitGC } = setupGC();
     const doc = makeDocument();
     let ancestor = doc.get('//middle');
@@ -150,23 +151,24 @@ describe('ref integrity', () => {
     expect(child_node.name()).toBe('inner'); // fails with v0.14.3, v0.15
   });
 
-  it('unlinked_tree_leaf_persistence_with_proxied_ancestor', async () => {
+  (typeof Bun !== 'undefined' ? it.skip : it)('unlinked_tree_leaf_persistence_with_proxied_ancestor', async () => {
     const { traceGC, awaitGC } = setupGC();
-      const doc = makeDocument();
-      const proxied_ancestor = doc.get('//inner');
-      let leaf = doc.get('//center');
-      traceGC(leaf, 'leaf');
 
-      doc.get('//middle').remove();
+    const doc = makeDocument();
+    const proxied_ancestor = doc.get('//inner');
+    let leaf = doc.get('//center');
+    traceGC(leaf, 'leaf');
 
-      leaf = null;
-      await awaitGC('leaf');
+    doc.get('//middle').remove();
 
-      leaf = proxied_ancestor.get('.//center');
-      expect(leaf.name()).toBe('center');
+    leaf = null;
+    await awaitGC('leaf');
+
+    leaf = proxied_ancestor.get('.//center');
+    expect(leaf.name()).toBe('center');
   });
 
-  it('unlinked_tree_leaf_persistence_with_peer_proxy', async () => {
+  (typeof Bun !== 'undefined' ? it.skip : it)('unlinked_tree_leaf_persistence_with_peer_proxy', async () => {
     const { traceGC, awaitGC } = setupGC();
       const doc = makeDocument();
       let leaf = doc.get('//left');

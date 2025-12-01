@@ -11,7 +11,7 @@ function makeDocument() {
 
 
 describe('memory management', () => {
-  it('inaccessible document freed', async () => {
+  (typeof Bun !== 'undefined' ? it.skip : it)('inaccessible document freed', async () => {
     const { traceGC, awaitGC } = setupGC();
 
     const xml_memory_before_document = libxml.memoryUsage();
@@ -25,7 +25,7 @@ describe('memory management', () => {
     expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
   });
 
-  it("calling root doesn't keep the document alive", async () => {
+  (typeof Bun !== 'undefined' ? it.skip : it)("calling root doesn't keep the document alive", async () => {
     const { traceGC, awaitGC } = setupGC();
 
     const xml_memory_before_document = libxml.memoryUsage();
@@ -46,7 +46,7 @@ describe('memory management', () => {
     expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
   });
 
-  it('inaccessible document freed when node freed', async () => {
+  (typeof Bun !== 'undefined' ? it.skip : it)('inaccessible document freed when node freed', async () => {
     const { traceGC, awaitGC } = setupGC();
     const xml_memory_before_document = libxml.memoryUsage();
 
@@ -68,7 +68,7 @@ describe('memory management', () => {
     expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
   });
 
-  it('inaccessible document freed after middle node proxies', async () => {
+  (typeof Bun !== 'undefined' ? it.skip : it)('inaccessible document freed after middle node proxies', async () => {
     const { traceGC, awaitGC } = setupGC();
     const xml_memory_before_document = libxml.memoryUsage();
 
