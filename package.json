@@ -17,7 +17,7 @@
   "version": "0.37.0",
   "scripts": {
     "build": "node-gyp rebuild",
-    "test:bun": "bun test",
+    "test:bun": "bun test --timeout 1000",
     "test:node": "NODE_OPTIONS='--expose-gc' vitest --globals --test-timeout=1000",
     "prebuildify": "prebuildify --napi --strip",
     "typecheck": "tsd",
