@@ -24,9 +24,9 @@ describe('memory management', () => {
   });
 
   it('inaccessible document freed', async () => {
-    await new Promise((done) => {
-      const xml_memory_before_document = libxml.memoryUsage();
+    const xml_memory_before_document = libxml.memoryUsage();
 
+    await new Promise((done) => {
       for (let i = 0; i < 100; i += 1) {
         makeDocument();
       }
@@ -34,10 +34,11 @@ describe('memory management', () => {
       global.gc(true);
 
       setTimeout(() => {
-        expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
         done();
       }, 1);
     });
+
+    expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
   });
 
   it("calling root doesn't keep the document alive", async () => {
@@ -58,17 +59,18 @@ describe('memory management', () => {
         global.gc(true);
 
         setTimeout(() => {
-          expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
           done();
         }, 1);
       });
     });
+
+    expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
   });
 
   it('inaccessible document freed when node freed', async () => {
+    const xml_memory_before_document = libxml.memoryUsage();
+
     await new Promise((done) => {
-      const xml_memory_before_document = libxml.memoryUsage();
-      
       let nodes = [];
       for (let i = 0; i < 100; i += 1) {
         nodes.push(makeDocument().get('//center'));
@@ -81,17 +83,18 @@ describe('memory management', () => {
         global.gc(true);
 
         setTimeout(() => {
-          expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
           done();
         }, 1);
       }, 1);
     })
+
+    expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
   }, { retry: 10 });
 
   it('inaccessible document freed after middle nodes proxies', async () => {
+    const xml_memory_before_document = libxml.memoryUsage();
+
     await new Promise((done) => {
-      const xml_memory_before_document = libxml.memoryUsage();
-      
       let doc = makeDocument();
       // eslint-disable-next-line no-unused-vars
       let middle = doc.get('//middle');
@@ -106,33 +109,40 @@ describe('memory management', () => {
         global.gc(true);
 
         setTimeout(() => {
-          expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
           done();
         }, 1);
       }, 1);
     });
+
+    expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
   }, { retry: 10 });
 
-  it('inaccessible tree freed', async () =>
+  it('inaccessible tree freed', async () => {
+    let xml_memory_after_document;
+
     await new Promise((done) => {
       const doc = makeDocument();
-      const xml_memory_after_document = libxml.memoryUsage();
+      xml_memory_after_document = libxml.memoryUsage();
 
       doc.get('//middle').remove();
       global.gc(true);
       setTimeout(() => {
-        expect(libxml.memoryUsage() <= xml_memory_after_document).toBeTruthy();
         done();
       }, 1);
-    }));
+    });
+
+    expect(libxml.memoryUsage() <= xml_memory_after_document).toBeTruthy();
+  });
 
   it('namespace list freed', async () => {
-    await  new Promise((done) => {
+    let xmlMemBefore;
+
+    await new Promise((done) => {
       const doc = makeDocument();
       const el = doc.get('//center');
 
       el.namespace('bar', null);
-      const xmlMemBefore = libxml.memoryUsage();
+      xmlMemBefore = libxml.memoryUsage();
 
       for (let i; i < 1000; i += 1) {
         el.namespaces();
@@ -140,9 +150,10 @@ describe('memory management', () => {
 
       global.gc(true);
       setTimeout(() => {
-        expect(libxml.memoryUsage() <= xmlMemBefore).toBeTruthy();
         done();
       }, 1);
     });
+
+    expect(libxml.memoryUsage() <= xmlMemBefore).toBeTruthy();
   });
 });

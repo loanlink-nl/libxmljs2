@@ -22,18 +22,6 @@ void set_numeric_field(Napi::Env env, Napi::Object obj, const char *name,
   obj.Set(name, Napi::Number::New(env, value));
 }
 
-char *xmlCharToChar(xmlChar *xmlStr) {
-  char *charStr = (char *)malloc(xmlStrlen(xmlStr) + 1);
-  if (charStr == NULL) {
-    return NULL;
-  }
-
-  strncpy(charStr, (char *)xmlStr, xmlStrlen(xmlStr));
-  charStr[xmlStrlen(xmlStr)] = '\0';
-
-  return charStr;
-}
-
 } // anonymous namespace
 
 namespace libxmljs {

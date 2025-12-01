@@ -1,18 +1,26 @@
 name: builds
 
 on:
-  push:
-    tags:
-      - v*
+  workflow_dispatch:
   pull_request:
+  push:
     branches:
       - main
-
+    tags:
+      - '*'
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
 jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
+        os:
+          - macos-latest
+          - ubuntu-20.04
+          - windows-latest
         os:
           [
             windows-2025,
@@ -31,13 +39,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-      - run: corepack enable
-      - run: pnpm i --frozen-lockfile
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
         env:
           npm_config_build_from_source: true
-      - run: pnpm tsd
-      - run: pnpm test
-      - run: pnpm prebuild
+      - run: bun run tsd
+      - run: bun test
+      - run: bun run build
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.os }}-${{ matrix.node }}-binary
@@ -55,13 +63,12 @@ jobs:
       - uses: actions/checkout@v4
       - run: |
           apk add --no-cache python3 make g++
-      - run: corepack enable
-      - run: pnpm i --frozen-lockfile
+      - run: bun i --frozen-lockfile
         env:
           npm_config_build_from_source: true
-      - run: pnpm tsd
-      - run: pnpm test
-      - run: pnpm prebuild
+      - run: bun tsd
+      - run: bun test
+      - run: bun prebuild
       - uses: actions/upload-artifact@v4
         with:
           name: alpine-${{ matrix.node }}-binary

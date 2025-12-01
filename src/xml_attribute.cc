@@ -7,8 +7,6 @@ namespace libxmljs {
 Napi::FunctionReference XmlAttribute::constructor;
 
 XmlAttribute::XmlAttribute(const Napi::CallbackInfo &info) : XmlNode(info) {
-  Napi::Env env = info.Env();
-
   // if we were created for an existing xml node, then we don't need
   // to create a new node on the document
   if (info.Length() != 1 || !info[0].IsExternal()) {
@@ -114,8 +112,8 @@ Napi::Value XmlAttribute::get_value(Napi::Env env) {
 }
 
 void XmlAttribute::set_value(const char *value) {
-  if (xml_obj->children)
-    xmlFreeNodeList(xml_obj->children);
+  // if (xml_obj->children)
+  //   xmlFreeNodeList(xml_obj->children);
 
   xml_obj->children = xml_obj->last = NULL;
 

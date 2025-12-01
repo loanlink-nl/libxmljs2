@@ -14,10 +14,10 @@ CompileFlags:
     - -I/Users/max/.nvm/versions/node/v24.3.0/include/node
     
     # Include paths - node-addon-api headers (absolute path)
-    - -I/Users/max/code/loanlink/archive/libxmljs2/node_modules/.pnpm/node-addon-api@8.5.0/node_modules/node-addon-api
+    - -I/Users/max/code/loanlink/archive/libxmljs2/node_modules/node-addon-api
     
     # Include paths - nan headers (absolute path)
-    - -I/Users/max/code/loanlink/archive/libxmljs2/node_modules/.pnpm/nan@2.22.2/node_modules/nan
+    - -I/Users/max/code/loanlink/archive/libxmljs2/node_modules/nan
     
     # Include paths - vendor libxml (absolute path)
     - -I/Users/max/code/loanlink/archive/libxmljs2/vendor/libxml/include
