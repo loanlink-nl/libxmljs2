@@ -373,16 +373,20 @@ describe('document', () => {
       '<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"><xs:element name="comment" type="xs:string"/></xs:schema>';
     const xml = '<?xml version="1.0"?><comment>A comment</comment>';
 
-    const rssBefore = libxml.memoryUsage();
 
     let xsdDoc = libxml.parseXml(xsd);
     let xmlDoc = libxml.parseXml(xml);
     traceGC(xsdDoc, 'xsdDoc');
     traceGC(xmlDoc, 'xmlDoc');
 
+    const rssBefore = libxml.memoryUsage();
+
     for (let i = 0; i < 10000; i += 1) {
       xmlDoc.validate(xsdDoc);
     }
+
+    let rssAfter = libxml.memoryUsage();
+    expect(rssAfter - rssBefore < VALIDATE_RSS_TOLERANCE).toBeTruthy();
 
     xsdDoc = null;
     xmlDoc = null;
@@ -390,7 +394,8 @@ describe('document', () => {
     await awaitGC('xsdDoc');
     await awaitGC('xmlDoc');
 
-    const rssAfter = libxml.memoryUsage();
+    rssAfter = libxml.memoryUsage();
+
     expect(rssAfter - rssBefore < VALIDATE_RSS_TOLERANCE).toBeTruthy();
   });
 

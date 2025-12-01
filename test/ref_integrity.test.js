@@ -1,11 +1,6 @@
 const libxml = require('../index');
 const { setupGC } = require('./setup.js');
 
-global.gc ??= (typeof Bun !== 'undefined' ? Bun.gc : undefined);
-if (!global.gc) {
-  throw new Error('must run with --expose_gc for ref integrity tests');
-}
-
 function makeDocument() {
   const body =
     "<?xml version='1.0' encoding='UTF-8'?>\n" +
@@ -17,18 +12,18 @@ function makeDocument() {
 describe('ref integrity', () => {
   it('simple gc', async() => {
     await new Promise((done) => {
-    const doc = new libxml.Document();
+      const doc = new libxml.Document();
 
-    doc.node('root');
+      doc.node('root');
 
-    global.gc(true);
-    expect(doc).toBeTruthy();
+      global.gc(true);
+      expect(doc).toBeTruthy();
 
-    global.gc(true);
-    setTimeout(() => {
-      expect(doc.root()).toBeTruthy();
-      done();
-    }, 1);
+      global.gc(true);
+      setTimeout(() => {
+        expect(doc.root()).toBeTruthy();
+        done();
+      }, 1);
     });
   });
 
