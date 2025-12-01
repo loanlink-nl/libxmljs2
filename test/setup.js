@@ -16,15 +16,14 @@ export function setupGC() {
 
   async function awaitGC(message) {
     return new Promise(resolve => {
-      global.gc()
-
       const timer = setInterval(() => {
+        global.gc()
         if (events.has(message)) {
           events.delete(message)
           clearInterval(timer)
           resolve()
         }
-      })
+      }, 10)
     })
   }
 
