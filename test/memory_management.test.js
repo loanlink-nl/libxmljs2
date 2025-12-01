@@ -108,12 +108,9 @@ describe('memory management', () => {
       setTimeout(() => {
         global.gc(true);
         setTimeout(() => {
-          global.gc(true);
-          setTimeout(() => {
-            done();
-          }, 1);
-        }, 1);
-      }, 1);
+          done();
+        }, 10);
+      }, 10);
     });
 
     expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
