@@ -158,19 +158,22 @@ describe('ref integrity', () => {
     });
   });
 
-  it('unlinked_tree_leaf_persistence_with_peer_proxy', () => {
-    const doc = makeDocument();
-    let leaf = doc.get('//left');
-    const peer = doc.get('//right');
+  it('unlinked_tree_leaf_persistence_with_peer_proxy', async () => {
+    await new Promise((done) => {
+      const doc = makeDocument();
+      let leaf = doc.get('//left');
+      const peer = doc.get('//right');
 
-    doc.get('//middle').remove();
-    leaf = null;
-    global.gc(true);
+      doc.get('//middle').remove();
+      leaf = null;
+      global.gc(true);
 
-    setTimeout(() => {
-      leaf = peer.parent().get('./left');
-      expect(leaf.name()).toBe('left');
-    }, 1);
+      setTimeout(() => {
+        leaf = peer.parent().get('./left');
+        expect(leaf.name()).toBe('left');
+        done();
+      }, 1);
+    });
   });
 
 
