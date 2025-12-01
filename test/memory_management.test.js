@@ -107,9 +107,11 @@ describe('memory management', () => {
 
       setTimeout(() => {
         global.gc(true);
-
         setTimeout(() => {
-          done();
+          global.gc(true);
+          setTimeout(() => {
+            done();
+          }, 1);
         }, 1);
       }, 1);
     });
