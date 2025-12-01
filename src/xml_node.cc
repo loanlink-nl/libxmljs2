@@ -432,8 +432,7 @@ template <class T> XmlNode<T>::~XmlNode() {
   this->xml_obj->_private = NULL;
   if (this->xml_obj->parent == NULL) {
     if (get_wrapped_descendant(this->xml_obj) == NULL) {
-      // xmlUnlinkNode(this->xml_obj);
-      // xmlFreeNode(this->xml_obj);
+      xmlFreeNode(this->xml_obj);
     }
   } else {
     xmlNode *ancestor = get_wrapped_ancestor_or_root(this->xml_obj);
