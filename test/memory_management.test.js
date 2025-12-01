@@ -57,6 +57,7 @@ describe('memory management', () => {
       let doc = makeDocument();
       traceGC(doc, `doc-${i}`);
       nodes.push(doc.get('//center'));
+      doc = null;
     }
 
     nodes = null;
