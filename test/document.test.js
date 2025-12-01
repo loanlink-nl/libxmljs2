@@ -1,6 +1,5 @@
 const libxml = require('../index');
-
-global.gc ??= (typeof Bun !== 'undefined' ? Bun.gc : undefined);
+const { setupGC } = require('./setup');
 
 describe('document', () => {
   const VALIDATE_RSS_TOLERANCE = 1;
@@ -368,28 +367,31 @@ describe('document', () => {
   });
 
   it('validate memory usage', async () => {
-    await new Promise((done) => {
+    const { traceGC, awaitGC } = setupGC();
+
     const xsd =
       '<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"><xs:element name="comment" type="xs:string"/></xs:schema>';
     const xml = '<?xml version="1.0"?><comment>A comment</comment>';
 
-    const xsdDoc = libxml.parseXml(xsd);
-    const xmlDoc = libxml.parseXml(xml);
-
     const rssBefore = libxml.memoryUsage();
+
+    let xsdDoc = libxml.parseXml(xsd);
+    let xmlDoc = libxml.parseXml(xml);
+    traceGC(xsdDoc, 'xsdDoc');
+    traceGC(xmlDoc, 'xmlDoc');
 
     for (let i = 0; i < 10000; i += 1) {
       xmlDoc.validate(xsdDoc);
     }
 
-    global.gc(true);
+    xsdDoc = null;
+    xmlDoc = null;
 
-    setTimeout(() => {
-      const rssAfter = libxml.memoryUsage();
-      expect(rssAfter - rssBefore < VALIDATE_RSS_TOLERANCE).toBeTruthy();
-      done();
-    }, 1);
-    });
+    await awaitGC('xsdDoc');
+    await awaitGC('xmlDoc');
+
+    const rssAfter = libxml.memoryUsage();
+    expect(rssAfter - rssBefore < VALIDATE_RSS_TOLERANCE).toBeTruthy();
   });
 
   it('validate inputs', () => {
@@ -434,7 +436,8 @@ describe('document', () => {
   });
 
   it('validate rng memory usage', async () => {
-    new Promise((done) => {
+    const { traceGC, awaitGC } = setupGC();
+
     const rng =
       '<element name="addressBook" xmlns="http://relaxng.org/ns/structure/1.0">' +
       '<zeroOrMore>' +
@@ -461,23 +464,26 @@ describe('document', () => {
       '</card>' +
       '</addressBook>';
 
-    const rngDoc = libxml.parseXml(rng);
-    const xmlDoc = libxml.parseXml(xml_valid);
-
     const rssBefore = libxml.memoryUsage();
+
+    let rngDoc = libxml.parseXml(rng);
+    let xmlDoc = libxml.parseXml(xml_valid);
+
+    traceGC(rngDoc, 'rngDoc');
+    traceGC(xmlDoc, 'xmlDoc');
 
     for (let i = 0; i < 10000; i += 1) {
       xmlDoc.rngValidate(rngDoc);
     }
 
-    global.gc(true);
+    rngDoc = null;
+    xmlDoc = null;
 
-    setTimeout(() => {
-      const rssAfter = libxml.memoryUsage();
-      expect(rssAfter - rssBefore < VALIDATE_RSS_TOLERANCE).toBeTruthy();
-      done();
-    }, 1);
-    });
+    await awaitGC('rngDoc');
+    await awaitGC('xmlDoc');
+
+    const rssAfter = libxml.memoryUsage();
+    expect(rssAfter - rssBefore < VALIDATE_RSS_TOLERANCE).toBeTruthy();
   });
 
   describe('errors', () => {
