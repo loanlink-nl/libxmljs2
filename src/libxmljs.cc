@@ -170,7 +170,7 @@ LibXMLJS::LibXMLJS() {
   xml_memory_used = xmlMemUsed();
 }
 
-LibXMLJS::~LibXMLJS() { xmlCleanupParser(); }
+// LibXMLJS::~LibXMLJS() { xmlCleanupParser(); }
 
 Napi::Object listFeatures(Napi::Env env) {
   Napi::Object target = Napi::Object::New(env);
