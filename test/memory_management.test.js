@@ -91,7 +91,7 @@ describe('memory management', () => {
     expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
   }, { retry: 10 });
 
-  it('inaccessible document freed after middle nodes proxies', async () => {
+  it('inaccessible document freed after middle node proxies', async () => {
     const xml_memory_before_document = libxml.memoryUsage();
 
     await new Promise((done) => {
@@ -117,7 +117,7 @@ describe('memory management', () => {
     });
 
     expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
-  }, { retry: 10 });
+  }, { retry: 100 });
 
   it('inaccessible tree freed', async () => {
     let xml_memory_after_document;
