@@ -31,7 +31,16 @@
   "bugs": {
     "url": "http://github.com/loanlink-nl/libxmljs2/issues"
   },
-  "main": "./index",
+  "main": "./index.js",
+  "exports": {
+    ".": {
+      "import": "./index.js",
+      "require": "./index.js",
+      "types": "./index.d.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "types": "./index.d.ts",
   "license": "MIT",
   "engines": {
     "node": ">=20"
@@ -46,17 +55,15 @@
     "prebuilds"
   ],
   "dependencies": {
-    "@types/node": "^24.10.1",
-    "bindings": "1.5.0",
     "node-addon-api": "^7.0.0",
     "node-gyp-build": "^4.8.4",
-    "prebuild": "13.0.1",
-    "prebuildify": "^6.0.1",
-    "vitest": "^4.0.14"
+    "prebuildify": "^6.0.1"
   },
   "devDependencies": {
+    "@types/node": "^24.10.1",
     "node-gyp": "12.1.0",
     "tsd": "0.33.0",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vitest": "^4.0.14"
   }
 }
