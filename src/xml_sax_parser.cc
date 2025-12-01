@@ -54,8 +54,8 @@ XmlSaxParser::XmlSaxParser(const Napi::CallbackInfo &info)
 
   sax_handler_ = tmp;
 
-  auto ctx = static_cast<XmlSaxParserCtxt>(info.Data());
-  if (ctx.is_push_parser) {
+  auto ctx = static_cast<XmlSaxParserCtxt *>(info.Data());
+  if (ctx->is_push_parser) {
     this->initialize_push_parser();
   }
 }
