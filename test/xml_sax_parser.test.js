@@ -2,18 +2,7 @@ const fs = require('node:fs');
 
 const libxml = require('../index');
 
-global.gc ??= Bun.gc;
-
-function clone(obj) {
-  if (obj == null || typeof obj != 'object') return obj;
-
-  const temp = new obj.constructor();
-
-  // eslint-disable-next-line guard-for-in,no-caller
-  for (const key in obj) temp[key] = arguments.callee(obj[key]);
-
-  return temp;
-}
+global.gc ??= (typeof Bun !== 'undefined' ? Bun.gc : undefined);
 
 function createParser(parserType, callbacks) {
   // can connect by passing in as arguments to constructor
@@ -56,7 +45,7 @@ function createParser(parserType, callbacks) {
 }
 
 describe('xml sax parser', () => {
-  const callbackTest = {
+  const callbackTest = () => ({
     startDocument: [],
     endDocument: [],
 
@@ -70,9 +59,9 @@ describe('xml sax parser', () => {
 
     warning: [],
     error: [],
-  };
+  });
 
-  const callbackControl = {
+  const callbackControl = () => ({
     startDocument: [[]],
 
     endDocument: [[]],
@@ -142,22 +131,22 @@ describe('xml sax parser', () => {
     warning: [["xmlParsePITarget: invalid name prefix 'xml'\n"]],
 
     error: [['Premature end of data in tag error line 2\n']],
-  };
+  });
 
   const filename = `${__dirname}/fixtures/sax_parser.xml`;
 
   it('sax', () => {
-    const callbacks = clone(callbackTest);
+    const callbacks = callbackTest();
     // eslint-disable-next-line no-sync
     const str = fs.readFileSync(filename, 'utf8');
     const parser = createParser('SaxParser', callbacks);
 
     parser.parseString(str);
-    expect(callbackControl).toEqual(callbacks);
+    expect(callbackControl()).toEqual(callbacks);
   });
 
   it('sax_push_chunked', () => {
-    const callbacks = clone(callbackTest);
+    const callbacks = callbackTest();
     // eslint-disable-next-line no-sync
     const str_ary = fs.readFileSync(filename, 'utf8').split('\n');
     const parser = createParser('SaxPushParser', callbacks);
@@ -166,7 +155,7 @@ describe('xml sax parser', () => {
       parser.push(str_ary[i], i + 1 === str_ary.length);
     }
 
-    const control = clone(callbackControl);
+    const control = callbackControl();
 
     control.error = [['Extra content at the end of the document\n']];
     expect(control).toEqual(callbacks);
@@ -174,7 +163,7 @@ describe('xml sax parser', () => {
 
   // eslint-disable-next-line jest/expect-expect
   it('string_parser', () => {
-    const callbacks = clone(callbackTest);
+    const callbacks = callbackTest();
     // eslint-disable-next-line no-sync
     const str = fs.readFileSync(filename, 'utf8');
     const parser = createParser('SaxParser', callbacks);

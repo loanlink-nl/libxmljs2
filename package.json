@@ -17,6 +17,8 @@
   "version": "0.37.0",
   "scripts": {
     "build": "node-gyp rebuild",
+    "test:bun": "bun test",
+    "test:node": "NODE_OPTIONS=--expose-gc vitest --globals",
     "prebuildify": "prebuildify --napi --strip",
     "typecheck": "tsd",
     "install": "node-gyp-build"
@@ -48,7 +50,8 @@
     "node-addon-api": "^7.0.0",
     "node-gyp-build": "^4.8.4",
     "prebuild": "13.0.1",
-    "prebuildify": "^6.0.1"
+    "prebuildify": "^6.0.1",
+    "vitest": "^4.0.14"
   },
   "devDependencies": {
     "node-gyp": "12.1.0",

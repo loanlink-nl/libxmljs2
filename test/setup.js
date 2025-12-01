@@ -1,4 +1,4 @@
-global.gc ??= Bun.gc;
+global.gc ??= (typeof Bun !== 'undefined' ? Bun.gc : undefined);
 if (!global.gc) {
   throw new Error('must run with --expose_gc for memory management tests');
 }

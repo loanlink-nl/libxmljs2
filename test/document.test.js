@@ -1,6 +1,6 @@
 const libxml = require('../index');
 
-global.gc ??= Bun.gc
+global.gc ??= (typeof Bun !== 'undefined' ? Bun.gc : undefined);
 
 describe('document', () => {
   const VALIDATE_RSS_TOLERANCE = 1;

@@ -1,6 +1,6 @@
 const libxml = require('../index');
 
-global.gc ??= Bun.gc;
+global.gc ??= (typeof Bun !== 'undefined' ? Bun.gc : undefined);
 if (!global.gc) {
   throw new Error('must run with --expose_gc for memory management tests');
 }
@@ -89,7 +89,7 @@ describe('memory management', () => {
     })
 
     expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
-  }, { retry: 10 });
+  });
 
   it('inaccessible document freed after middle node proxies', async () => {
     const xml_memory_before_document = libxml.memoryUsage();
@@ -114,7 +114,7 @@ describe('memory management', () => {
     });
 
     expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
-  }, { retry: 100 });
+  });
 
   it('inaccessible tree freed', async () => {
     let xml_memory_after_document;
