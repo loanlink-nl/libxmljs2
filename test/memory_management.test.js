@@ -117,7 +117,7 @@ describe('memory management', () => {
 
     xmlMemBefore = libxml.memoryUsage();
 
-    for (let i; i < 1000; i += 1) {
+    for (let i = 0; i < 1000; i += 1) {
       traceGC(el.namespaces(), `namespaces-${i}`);
     }
 
