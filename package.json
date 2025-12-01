@@ -7,18 +7,19 @@
   ],
   "binary": {
     "module_name": "xmljs",
-    "module_path": "./build/Release/",
+    "module_path": "./build/Release/{napi_build_version}",
     "host": "https://github.com",
     "remote_path": "./loanlink-nl/libxmljs2/releases/download/v{version}/",
-    "package_name": "{node_abi}-{platform}-{arch}-{libc}.tar.gz"
+    "package_name": "{napi_build_version}-{platform}-{arch}-{libc}.tar.gz",
+    "napi_versions": [8]
   },
   "description": "libxml bindings for v8 javascript engine",
   "version": "0.37.0",
   "scripts": {
-	  "prepare": "bun run build",
-	  "build": "node-pre-gyp rebuild",
-	  "install": "node-pre-gyp install --fallback-to-build --loglevel http",
-	  "tsd": "tsd"
+    "build": "node-gyp rebuild",
+    "prebuildify": "prebuildify --napi --strip",
+    "typecheck": "tsd",
+    "install": "node-gyp-build"
   },
   "repository": {
     "type": "git",
@@ -30,7 +31,7 @@
   "main": "./index",
   "license": "MIT",
   "engines": {
-    "node": ">=22"
+    "node": ">=20"
   },
   "files": [
     "index.js",
@@ -38,18 +39,19 @@
     "src",
     "lib",
     "vendor",
-    "binding.gyp"
+    "binding.gyp",
+    "prebuilds"
   ],
   "dependencies": {
-		"bindings": "1.5.0"
+    "bindings": "1.5.0",
+    "node-addon-api": "^7.0.0",
+    "node-gyp-build": "^4.8.4",
+    "prebuild": "13.0.1",
+    "prebuildify": "^6.0.1"
   },
   "devDependencies": {
-		"@mapbox/node-pre-gyp": "2.0.3",
-		"node-addon-api": "8.5.0",
-		"node-gyp": "12.1.0",
-		"tsd": "0.33.0",
-		"typescript": "5.9.3"
+    "node-gyp": "12.1.0",
+    "tsd": "0.33.0",
+    "typescript": "5.9.3"
   }
 }
-
-
