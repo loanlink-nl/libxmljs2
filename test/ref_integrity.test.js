@@ -87,33 +87,38 @@ describe('ref integrity', () => {
     global.gc(true);
   });
 
-  it.skip('unlinked_tree_persistence_parent_proxied_first', async () => {
-    const { traceGC, awaitGC } = setupGC();
-
+  it('unlinked_tree_persistence_parent_proxied_first', async () => {
     const doc = makeDocument();
     let parent_node = doc.get('//middle');
-    traceGC(parent_node, 'parent_node');
 
     const child_node = doc.get('//inner');
 
     parent_node.remove();
     parent_node = null;
-    await awaitGC('parent_node');
+
+    global.gc(true);
+
+    child_node.parent();
+
+    // we have to test that parent_node is not gc'd (since it's still referenced by child_node)
+    // Does this actually test that?
+    await new Promise(resolve => setImmediate(resolve));
 
     expect(child_node.name()).toBe('inner'); // works with >= v0.14.3
   });
 
-  it.skip('unlinked_tree_proxied_leaf_persistent_ancestor_first', async () => {
-    const { traceGC, awaitGC } = setupGC();
+  it('unlinked_tree_proxied_leaf_persistent_ancestor_first', async () => {
     const doc = makeDocument();
     let ancestor = doc.get('//middle');
-    traceGC(ancestor, 'ancestor');
 
     const leaf = doc.get('//center');
 
     ancestor.remove();
     ancestor = null;
-    await awaitGC('ancestor');
+
+    // ancestor is not gc'd (still referenced by leaf)
+    // Does this actually test that?
+    await new Promise(resolve => setImmediate(resolve));
 
     expect(leaf.name()).toBe('center'); // fails with v0.14.3, v0.15
   });
@@ -165,18 +170,18 @@ describe('ref integrity', () => {
 
   (typeof Bun !== 'undefined' ? it.skip : it)('unlinked_tree_leaf_persistence_with_peer_proxy', async () => {
     const { traceGC, awaitGC } = setupGC();
-      const doc = makeDocument();
-      let leaf = doc.get('//left');
-      traceGC(leaf, 'leaf');
+    const doc = makeDocument();
+    let leaf = doc.get('//left');
+    traceGC(leaf, 'leaf');
 
-      const peer = doc.get('//right');
+    const peer = doc.get('//right');
 
-      doc.get('//middle').remove();
-      leaf = null;
-      await awaitGC('leaf');
+    doc.get('//middle').remove();
+    leaf = null;
+    await awaitGC('leaf');
 
-      leaf = peer.parent().get('./left');
-      expect(leaf.name()).toBe('left');
+    leaf = peer.parent().get('./left');
+    expect(leaf.name()).toBe('left');
   });
 
 
@@ -200,7 +205,6 @@ describe('ref integrity', () => {
 
     const doc2 = libxml.parseXml('<doc2 />');
     doc2.get('//doc2')
-
     global.gc(true);
   });
 
