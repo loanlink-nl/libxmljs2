@@ -489,7 +489,7 @@ describe('document', () => {
 
     const rssAfter = libxml.memoryUsage();
     expect(rssAfter - rssBefore < VALIDATE_RSS_TOLERANCE).toBeTruthy();
-  });
+  }, 5_000);
 
   describe('errors', () => {
     it('empty html doc', () => {
