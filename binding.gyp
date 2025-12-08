@@ -12,10 +12,11 @@
 			"product_extension": "node",
 			"type": "shared_library",
 	"include_dirs": [
-        'vendor/libxml2-config',
+        'vendor/libxml2.config',
+        'vendor/libxml2.config/libxml',
         'vendor/libxml2/include',
         'vendor/libxml2/include/libxml',
-		  "<!(node -p \"require('node-addon-api').include_dir\")",
+        "<!(node -p \"require('node-addon-api').include_dir\")",
         "<!(node -p \"require('node-addon-api').include\")",
 	],
 			"cflags": ["-Wall"],
