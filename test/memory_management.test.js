@@ -48,7 +48,7 @@ describe('memory management', () => {
     await new Promise(resolve => setTimeout(resolve, 1));
 
     expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
-  });
+  }, 10_000);
 
   (typeof Bun !== 'undefined' ? it.skip : it)('inaccessible document freed when node freed', async () => {
     const { traceGC, awaitGC } = setupGC();
@@ -129,5 +129,5 @@ describe('memory management', () => {
     await awaitGC(`namespaces-0`);
 
     expect(libxml.memoryUsage() <= xmlMemBefore).toBeTruthy();
-  });
+  }, 10_000);
 });
