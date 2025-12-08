@@ -1,5 +1,5 @@
 import libxml from "../index.js";
-import pkg from "../package.json";
+import pkg from "../package.json" with { type: "json" };
 
 describe('main', () => {
   it('constants', () => {

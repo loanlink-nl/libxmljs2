@@ -7,13 +7,12 @@ import bindings from "./lib/bindings.js";
 import Document from "./lib/document.js";
 import Element from "./lib/element.js";
 import { SaxParser, SaxPushParser } from "./lib/sax_parser.js";
-import { version } from "./package.json";
 
 export default {
   parseXml: Document.fromXml,
   parseHtml: Document.fromHtml,
   parseHtmlFragment: Document.fromHtmlFragment,
-  version,
+  version: "0.0.2",
   libxml_version: bindings.libxml_version,
   libxml_parser_version: bindings.libxml_parser_version,
   libxml_debug_enabled: bindings.libxml_debug_enabled,
