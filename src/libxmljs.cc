@@ -189,7 +189,6 @@ Napi::Object listFeatures(Napi::Env env) {
   FEAT(HTTP);
   FEAT(VALID);
   FEAT(HTML);
-  FEAT(LEGACY);
   FEAT(C14N);
   FEAT(CATALOG);
   FEAT(XPATH);
