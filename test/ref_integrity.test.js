@@ -207,5 +207,4 @@ describe('ref integrity', () => {
     doc2.get('//doc2')
     global.gc(true);
   });
-
 });
