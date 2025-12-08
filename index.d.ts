@@ -8,7 +8,7 @@ interface StringMap {
   [key: string]: string;
 }
 
-interface ParserOptions {
+export interface ParserOptions {
   recover?: boolean;
   noent?: boolean;
   dtdload?: boolean;
@@ -42,22 +42,29 @@ interface ParserOptions {
   ignore_enc?: boolean;
   big_lines?: boolean;
   baseUrl?: string;
+  encoding?: string;
 }
 
-export function parseXml(source: string | Buffer, options?: ParserOptions): Document;
+export type XmlParserOptions = ParserOptions;
+export function parseXml(source: string | Buffer, options?: XmlParserOptions): Document;
 export function parseXmlString(
   source: string,
-  options?: ParserOptions
+  options?: XmlParserOptions
 ): Document;
 
-export function parseHtml(source: string | Buffer, options?: ParserOptions): Document;
+export type HtmlParserOptions = ParserOptions & {
+  excludeImpliedElements?: boolean;
+};
+export function parseHtml(source: string | Buffer, options?: HtmlParserOptions): Document;
 export function parseHtmlString(
   source: string,
-  options?: ParserOptions
+  options?: HtmlParserOptions
 ): Document;
+
+export type HtmlFragmentParserOptions = Omit<HtmlParserOptions, "doctype" | "implied">;
 export function parseHtmlFragment(
   source: string | Buffer,
-  options?: ParserOptions
+  options?: HtmlFragmentParserOptions
 ): Document;
 
 export function memoryUsage(): number;
