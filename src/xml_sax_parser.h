@@ -2,26 +2,26 @@
 #ifndef SRC_XML_SAX_PARSER_H_
 #define SRC_XML_SAX_PARSER_H_
 
-#include <node.h>
+#include <libxml/parser.h>
+#include <napi.h>
 
 namespace libxmljs {
 
-class XmlSaxParser : public Nan::ObjectWrap {
+struct XmlSaxParserCtxt {
+  bool is_push_parser;
+};
+
+class XmlSaxParser : public Napi::ObjectWrap<XmlSaxParser> {
 public:
-  XmlSaxParser();
+  XmlSaxParser(const Napi::CallbackInfo &info);
   virtual ~XmlSaxParser();
 
-  static void Initialize(v8::Local<v8::Object> target);
+  static Napi::Value Init(Napi::Env env, Napi::Object exports);
 
-  static NAN_METHOD(NewParser);
+  Napi::Value ParseString(const Napi::CallbackInfo &info);
+  Napi::Value Push(const Napi::CallbackInfo &info);
 
-  static NAN_METHOD(NewPushParser);
-
-  static NAN_METHOD(ParseString);
-  static NAN_METHOD(Push);
-
-  void Callback(const char *what, int argc = 0,
-                v8::Local<v8::Value> argv[] = NULL);
+  void Callback(const char *what, int argc = 0, Napi::Value *argv = NULL);
 
   void parse_string(const char *str, unsigned int size);
 

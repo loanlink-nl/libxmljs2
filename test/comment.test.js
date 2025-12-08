@@ -1,4 +1,4 @@
-const libxml = require('../index');
+import libxml from "../index.js";
 
 describe('comment', () => {
   describe('throws', () => {
@@ -6,7 +6,7 @@ describe('comment', () => {
       const doc = new libxml.Document();
 
       expect(() => libxml.Comment(doc, 'Test')).toThrow(
-        "Class constructor Comment cannot be invoked without 'new'"
+        "Class constructors cannot be invoked without 'new'"
       );
     });
     it('throws if doc is a primitive', () => {

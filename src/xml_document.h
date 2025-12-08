@@ -4,62 +4,53 @@
 
 #include <libxml/tree.h>
 
-#include "libxmljs.h"
+#include <napi.h>
 
 namespace libxmljs {
 
-class XmlDocument : public Nan::ObjectWrap {
+class XmlDocument : public Napi::ObjectWrap<XmlDocument> {
 
 public:
-  // used to create new instanced of a document handle
-  static Nan::Persistent<v8::FunctionTemplate> constructor_template;
+  explicit XmlDocument(const Napi::CallbackInfo &info);
+  virtual ~XmlDocument();
+
+  // used to create new instances of a document handle
+  static Napi::FunctionReference constructor;
 
   // TODO make private with accessor
   xmlDoc *xml_obj;
 
-  virtual ~XmlDocument();
-
   // setup the document handle bindings and internal constructor
-  static void Initialize(v8::Local<v8::Object> target);
+  static void Init(Napi::Env env, Napi::Object exports);
 
   // create a new document handle initialized with the
   // given xmlDoc object, intended for use in c++ space
-  static v8::Local<v8::Object> New(xmlDoc *doc);
-
-  // publicly expose ref functions
-  using Nan::ObjectWrap::Ref;
-  using Nan::ObjectWrap::Unref;
-
-  // expose ObjectWrap::refs_ (for testing)
-  int refs() { return refs_; }
+  static Napi::Value NewInstance(Napi::Env env, xmlDoc *doc);
 
 protected:
-  // initialize a new document
-  explicit XmlDocument(xmlDoc *doc);
+  static Napi::Value FromHtml(const Napi::CallbackInfo &info);
+  static Napi::Value FromXml(const Napi::CallbackInfo &info);
 
-  static NAN_METHOD(New);
-  static NAN_METHOD(FromHtml);
-  static NAN_METHOD(FromXml);
-  static NAN_METHOD(SetDtd);
+  Napi::Value SetDtd(const Napi::CallbackInfo &info);
 
   // document handle methods
-  static NAN_METHOD(Root);
-  static NAN_METHOD(GetDtd);
-  static NAN_METHOD(Encoding);
-  static NAN_METHOD(Version);
-  static NAN_METHOD(Doc);
-  static NAN_METHOD(Errors);
-  static NAN_METHOD(ToString);
-  static NAN_METHOD(Validate);
-  static NAN_METHOD(RngValidate);
-  static NAN_METHOD(SchematronValidate);
-  static NAN_METHOD(type);
+  Napi::Value Root(const Napi::CallbackInfo &info);
+  Napi::Value GetDtd(const Napi::CallbackInfo &info);
+  Napi::Value Encoding(const Napi::CallbackInfo &info);
+  Napi::Value Version(const Napi::CallbackInfo &info);
+  Napi::Value Doc(const Napi::CallbackInfo &info);
+  Napi::Value Errors(const Napi::CallbackInfo &info);
+  Napi::Value ToString(const Napi::CallbackInfo &info);
+  Napi::Value Validate(const Napi::CallbackInfo &info);
+  Napi::Value RngValidate(const Napi::CallbackInfo &info);
+  Napi::Value SchematronValidate(const Napi::CallbackInfo &info);
+  Napi::Value Type(const Napi::CallbackInfo &info);
 
   // Static member variables
   static const int DEFAULT_PARSING_OPTS;
   static const int EXCLUDE_IMPLIED_ELEMENTS;
 
-  void setEncoding(const char *encoding);
+  void setEncoding(const std::string encoding);
 };
 
 } // namespace libxmljs

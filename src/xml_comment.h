@@ -6,23 +6,22 @@
 
 namespace libxmljs {
 
-class XmlComment : public XmlNode {
+class XmlComment : public XmlNode<XmlComment> {
 public:
-  explicit XmlComment(xmlNode *node);
+  explicit XmlComment(const Napi::CallbackInfo &info);
 
-  static void Initialize(v8::Local<v8::Object> target);
+  static Napi::Function Init(Napi::Env env, Napi::Object exports);
 
-  static Nan::Persistent<v8::FunctionTemplate> constructor_template;
+  static Napi::FunctionReference constructor;
 
   // create new xml comment to wrap the node
-  static v8::Local<v8::Object> New(xmlNode *node);
+  static Napi::Value NewInstance(Napi::Env env, xmlNode *node);
 
 protected:
-  static NAN_METHOD(New);
-  static NAN_METHOD(Text);
+  Napi::Value Text(const Napi::CallbackInfo &info);
 
   void set_content(const char *content);
-  v8::Local<v8::Value> get_content();
+  Napi::Value get_content(Napi::Env env);
 };
 
 } // namespace libxmljs

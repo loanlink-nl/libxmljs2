@@ -1,4 +1,4 @@
-const libxml = require('../index');
+import libxml from "../index.js";
 
 describe('searching', () => {
   it('get', () => {

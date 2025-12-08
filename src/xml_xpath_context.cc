@@ -1,12 +1,18 @@
 // Copyright 2009, Squish Tech, LLC.
+#include <cstring>
+
+#include "libxmljs.h"
+
+#include "xml_attribute.h"
+#include "xml_comment.h"
+#include "xml_document.h"
 
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
 
 #include "xml_element.h"
+#include "xml_node.h"
 #include "xml_xpath_context.h"
-
-using namespace v8;
 
 namespace libxmljs {
 
@@ -21,22 +27,25 @@ void XmlXpathContext::register_ns(const xmlChar *prefix, const xmlChar *uri) {
   xmlXPathRegisterNs(ctxt, prefix, uri);
 }
 
-Local<Value> XmlXpathContext::evaluate(const xmlChar *xpath) {
-  Nan::EscapableHandleScope scope;
+Napi::Value XmlXpathContext::evaluate(Napi::Env env, const xmlChar *xpath) {
+  Napi::EscapableHandleScope scope(env);
   xmlXPathObject *xpathobj = xmlXPathEval(xpath, ctxt);
-  Local<Value> res;
+  Napi::Value res;
 
   if (xpathobj) {
     switch (xpathobj->type) {
     case XPATH_NODESET: {
       if (xmlXPathNodeSetIsEmpty(xpathobj->nodesetval)) {
-        res = Nan::New<Array>(0);
+        res = Napi::Array::New(env, 0);
         break;
       }
 
-      Local<Array> nodes = Nan::New<Array>(xpathobj->nodesetval->nodeNr);
+      Napi::Array nodes = Napi::Array::New(env, xpathobj->nodesetval->nodeNr);
       for (int i = 0; i != xpathobj->nodesetval->nodeNr; ++i) {
-        Nan::Set(nodes, i, XmlNode::New(xpathobj->nodesetval->nodeTab[i]));
+        xmlNode *node = xpathobj->nodesetval->nodeTab[i];
+        Napi::Value node_val = XmlNodeInstance::NewInstance(env, node);
+        Napi::Object node_obj = node_val.ToObject();
+        nodes.Set(i, node_obj);
       }
 
       res = nodes;
@@ -44,23 +53,24 @@ Local<Value> XmlXpathContext::evaluate(const xmlChar *xpath) {
     }
 
     case XPATH_BOOLEAN:
-      res = Nan::New<Boolean>(xpathobj->boolval);
+      res = Napi::Boolean::New(env, xpathobj->boolval);
       break;
 
     case XPATH_NUMBER:
-      res = Nan::New<Number>(xpathobj->floatval);
+      res = Napi::Number::New(env, xpathobj->floatval);
       break;
 
     case XPATH_STRING:
-      res = Nan::New<String>((const char *)xpathobj->stringval,
-                             xmlStrlen(xpathobj->stringval))
-                .ToLocalChecked();
+      res = Napi::String::New(env, (const char *)xpathobj->stringval,
+                              xmlStrlen(xpathobj->stringval));
       break;
 
     default:
-      res = Nan::Null();
+      res = env.Null();
       break;
     }
+  } else {
+    res = env.Null();
   }
 
   xmlXPathFreeObject(xpathobj);

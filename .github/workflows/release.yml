@@ -1,0 +1,29 @@
+name: release
+
+permissions:
+  id-token: write
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          registry-url: 'https://registry.npmjs.org'
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: libxmljs2-prebuilds-*
+          path: prebuilds
+          merge-multiple: true
+      - run: tree prebuilds
+      - run: bun publish --provenance --no-git-checks
+

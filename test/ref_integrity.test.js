@@ -1,8 +1,5 @@
-const libxml = require('../index');
-
-if (!global.gc) {
-  throw new Error('must run with --expose_gc for ref integrity tests');
-}
+import libxml from "../index.js";
+import { setupGC } from "./setup.js";
 
 function makeDocument() {
   const body =
@@ -12,35 +9,33 @@ function makeDocument() {
   return libxml.parseXml(body);
 }
 
-function collectGarbage(minCycles = 3, maxCycles = 10) {
-  let cycles = 0;
-  let freedRss = 0;
-  let usage = process.memoryUsage();
-
-  do {
-    global.gc();
-
-    const usageAfterGc = process.memoryUsage();
-
-    freedRss = usage.rss - usageAfterGc.rss;
-    usage = usageAfterGc;
-
-    cycles += 1;
-  } while (cycles < minCycles || (freedRss !== 0 && cycles < maxCycles));
-
-  return usage;
-}
-
 describe('ref integrity', () => {
+  it('simple gc', async() => {
+    await new Promise((done) => {
+      const doc = new libxml.Document();
+
+      doc.node('root');
+
+      global.gc(true);
+      expect(doc).toBeTruthy();
+
+      global.gc(true);
+      setTimeout(() => {
+        expect(doc.root()).toBeTruthy();
+        done();
+      }, 1);
+    });
+  });
+
   it('gc', () => {
     const doc = new libxml.Document();
 
     doc.node('root').node('child').node('grandchild').parent().node('child2');
-    global.gc();
+    global.gc(true);
     expect(doc).toBeTruthy();
-    global.gc();
+    global.gc(true);
     expect(doc.root()).toBeTruthy();
-    global.gc();
+    global.gc(true);
     expect('child').toBe(doc.root().childNodes()[0].name());
   });
 
@@ -49,7 +44,7 @@ describe('ref integrity', () => {
       .parseXml('<root> <child> <grandchildren/> </child> <child2/> </root>')
       .childNodes();
 
-    global.gc();
+    global.gc(true);
 
     expect(nodes[0].doc()).toBeTruthy();
     expect(nodes[1].name()).toBe('child');
@@ -73,7 +68,7 @@ describe('ref integrity', () => {
       }
     })();
 
-    global.gc();
+    global.gc(true);
     expect(children[0].attrs()).toBeTruthy();
   });
 
@@ -87,86 +82,111 @@ describe('ref integrity', () => {
     let ns = el.namespace('bar', null);
 
     el = null;
-    global.gc();
+    global.gc(true);
     ns = null;
-    global.gc();
+    global.gc(true);
   });
 
-  it('unlinked_tree_persistence_parent_proxied_first', () => {
+  it('unlinked_tree_persistence_parent_proxied_first', async () => {
     const doc = makeDocument();
     let parent_node = doc.get('//middle');
+
     const child_node = doc.get('//inner');
 
     parent_node.remove();
     parent_node = null;
-    collectGarbage();
+
+    global.gc(true);
+
+    child_node.parent();
+
+    // we have to test that parent_node is not gc'd (since it's still referenced by child_node)
+    // Does this actually test that?
+    await new Promise(resolve => setImmediate(resolve));
 
     expect(child_node.name()).toBe('inner'); // works with >= v0.14.3
   });
 
-  it('unlinked_tree_proxied_leaf_persistent_ancestor_first', () => {
+  it('unlinked_tree_proxied_leaf_persistent_ancestor_first', async () => {
     const doc = makeDocument();
     let ancestor = doc.get('//middle');
+
     const leaf = doc.get('//center');
 
     ancestor.remove();
     ancestor = null;
-    collectGarbage();
+
+    // ancestor is not gc'd (still referenced by leaf)
+    // Does this actually test that?
+    await new Promise(resolve => setImmediate(resolve));
 
     expect(leaf.name()).toBe('center'); // fails with v0.14.3, v0.15
   });
 
-  it('unlinked_tree_proxied_leaf_persistent_descendant_first', () => {
+  it('unlinked_tree_proxied_leaf_persistent_descendant_first', async () => {
+    const { traceGC, awaitGC } = setupGC();
     const doc = makeDocument();
     const leaf = doc.get('//center');
     let ancestor = doc.get('//middle');
+    traceGC(ancestor, 'ancestor');
 
     ancestor.remove(); // make check here?
     ancestor = null;
-    collectGarbage();
+    await awaitGC('ancestor');
 
     expect(leaf.name()).toBe('center');
   });
 
-  it('unlinked_tree_persistence_child_proxied_first', () => {
+  it('unlinked_tree_persistence_child_proxied_first', async () => {
+    const { traceGC, awaitGC } = setupGC();
     const doc = makeDocument();
     const child_node = doc.get('//inner');
     let parent_node = doc.get('//middle');
+    traceGC(parent_node, 'parent_node');
 
     parent_node.remove();
     parent_node = null;
-    collectGarbage();
+    await awaitGC('parent_node');
 
     expect(child_node.name()).toBe('inner'); // fails with v0.14.3, v0.15
   });
 
-  it('unlinked_tree_leaf_persistence_with_proxied_ancestor', () => {
+  it('unlinked_tree_leaf_persistence_with_proxied_ancestor', async () => {
+    const { traceGC, awaitGC } = setupGC();
+
     const doc = makeDocument();
     const proxied_ancestor = doc.get('//inner');
     let leaf = doc.get('//center');
+    traceGC(leaf, 'leaf');
 
     doc.get('//middle').remove();
+
     leaf = null;
-    collectGarbage();
+    await awaitGC('leaf');
 
     leaf = proxied_ancestor.get('.//center');
     expect(leaf.name()).toBe('center');
   });
-  it('unlinked_tree_leaf_persistence_with_peer_proxy', () => {
+
+  it('unlinked_tree_leaf_persistence_with_peer_proxy', async () => {
+    const { traceGC, awaitGC } = setupGC();
     const doc = makeDocument();
     let leaf = doc.get('//left');
+    traceGC(leaf, 'leaf');
+
     const peer = doc.get('//right');
 
     doc.get('//middle').remove();
     leaf = null;
-    collectGarbage();
+    await awaitGC('leaf');
 
     leaf = peer.parent().get('./left');
     expect(leaf.name()).toBe('left');
   });
 
+
   it('set_text_clobbering_children', () => {
-    const doc = libxml.parseHtml(
+    const doc = libxml.parseXml(
       '<root><child><inner>old</inner></child></root>'
     );
     const child = doc.get('//child');
@@ -176,5 +196,15 @@ describe('ref integrity', () => {
 
     expect(inner.parent()).toBe(doc);
     expect(inner.text()).toBe('old');
+  });
+
+  it("doesn't segfault", async () => {
+    const doc = libxml.parseXml('<doc />');
+    doc.get('//doc').remove();
+    global.gc(true);
+
+    const doc2 = libxml.parseXml('<doc2 />');
+    doc2.get('//doc2')
+    global.gc(true);
   });
 });
