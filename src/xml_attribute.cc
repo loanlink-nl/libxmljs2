@@ -36,7 +36,10 @@ Napi::Value XmlAttribute::NewInstance(Napi::Env env, xmlNode *xml_obj,
   assert(attr);
 
   if (attr->_private) {
-    return scope.Escape(static_cast<XmlNode *>(xml_obj->_private)->Value());
+    auto instance = static_cast<XmlNode *>(xml_obj->_private)->Value();
+    if (!instance.IsEmpty()) {
+      return scope.Escape(instance);
+    }
   }
 
   auto external = Napi::External<xmlAttr>::New(env, attr);
@@ -49,7 +52,10 @@ Napi::Value XmlAttribute::NewInstance(Napi::Env env, xmlAttr *attr) {
   assert(attr->type == XML_ATTRIBUTE_NODE);
 
   if (attr->_private) {
-    return scope.Escape(static_cast<XmlNode *>(attr->_private)->Value());
+    auto instance = static_cast<XmlNode *>(attr->_private)->Value();
+    if (!instance.IsEmpty()) {
+      return scope.Escape(instance);
+    }
   }
 
   auto external = Napi::External<xmlAttr>::New(env, attr);

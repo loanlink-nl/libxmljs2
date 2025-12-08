@@ -151,7 +151,7 @@ describe('ref integrity', () => {
     expect(child_node.name()).toBe('inner'); // fails with v0.14.3, v0.15
   });
 
-  (typeof Bun !== 'undefined' ? it.skip : it)('unlinked_tree_leaf_persistence_with_proxied_ancestor', async () => {
+  it('unlinked_tree_leaf_persistence_with_proxied_ancestor', async () => {
     const { traceGC, awaitGC } = setupGC();
 
     const doc = makeDocument();
@@ -168,7 +168,7 @@ describe('ref integrity', () => {
     expect(leaf.name()).toBe('center');
   });
 
-  (typeof Bun !== 'undefined' ? it.skip : it)('unlinked_tree_leaf_persistence_with_peer_proxy', async () => {
+  it('unlinked_tree_leaf_persistence_with_peer_proxy', async () => {
     const { traceGC, awaitGC } = setupGC();
     const doc = makeDocument();
     let leaf = doc.get('//left');

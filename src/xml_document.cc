@@ -284,7 +284,10 @@ Napi::Value XmlDocument::NewInstance(Napi::Env env, xmlDoc *doc) {
   Napi::EscapableHandleScope scope(env);
 
   if (doc->_private) {
-    return scope.Escape(static_cast<XmlDocument *>(doc->_private)->Value());
+    auto instance = static_cast<XmlDocument *>(doc->_private)->Value();
+    if (!instance.IsEmpty()) {
+      return scope.Escape(instance);
+    }
   }
 
   auto external = Napi::External<xmlDoc>::New(env, doc);

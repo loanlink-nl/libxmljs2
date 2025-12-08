@@ -101,7 +101,10 @@ Napi::Value XmlNamespace::NewInstance(Napi::Env env, xmlNs *node) {
   Napi::EscapableHandleScope scope(env);
 
   if (node->_private) {
-    return scope.Escape(static_cast<XmlNamespace *>(node->_private)->Value());
+    auto instance = static_cast<XmlNamespace *>(node->_private)->Value();
+    if (!instance.IsEmpty()) {
+      return scope.Escape(instance);
+    }
   }
 
   auto external = Napi::External<xmlNs>::New(env, node);

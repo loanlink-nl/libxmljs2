@@ -88,7 +88,10 @@ Napi::Value XmlComment::NewInstance(Napi::Env env, xmlNode *node) {
   Napi::EscapableHandleScope scope(env);
 
   if (node->_private) {
-    return scope.Escape(static_cast<XmlNode *>(node->_private)->Value());
+    auto instance = static_cast<XmlNode *>(node->_private)->Value();
+    if (!instance.IsEmpty()) {
+      return scope.Escape(instance);
+    }
   }
 
   Napi::Function cons = constructor.Value();

@@ -79,7 +79,9 @@ Napi::Value XmlElement::NewInstance(Napi::Env env, xmlNode *node) {
 
   if (node->_private) {
     auto instance = static_cast<XmlNode *>(node->_private)->Value();
-    return scope.Escape(instance);
+    if (!instance.IsEmpty()) {
+      return scope.Escape(instance);
+    }
   }
 
   Napi::Value external = Napi::External<xmlNode>::New(env, node);
