@@ -11,7 +11,7 @@ function makeDocument() {
 
 
 describe('memory management', () => {
-  (typeof Bun !== 'undefined' ? it.skip : it)('inaccessible document freed', async () => {
+  it('inaccessible document freed', async () => {
     const { traceGC, awaitGC } = setupGC();
 
     const xml_memory_before_document = libxml.memoryUsage();
@@ -20,12 +20,14 @@ describe('memory management', () => {
       traceGC(makeDocument(), `doc-${i}`);
     }
 
-    await awaitGC('doc-99');
+    await awaitGC('doc-0');
+    global.gc(true);
+    await new Promise(resolve => setTimeout(resolve, 1));
 
     expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
   });
 
-  (typeof Bun !== 'undefined' ? it.skip : it)("calling root doesn't keep the document alive", async () => {
+  it("calling root doesn't keep the document alive", async () => {
     const { traceGC, awaitGC } = setupGC();
 
     const xml_memory_before_document = libxml.memoryUsage();
@@ -42,6 +44,8 @@ describe('memory management', () => {
 
     await awaitGC('doc1');
     await awaitGC('doc2');
+    global.gc(true);
+    await new Promise(resolve => setTimeout(resolve, 1));
 
     expect(libxml.memoryUsage() <= xml_memory_before_document).toBeTruthy();
   });
