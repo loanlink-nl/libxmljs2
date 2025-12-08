@@ -19,11 +19,11 @@ class XmlSyntaxError {
 public:
   // push xmlError onto Napi::Array
   // helper method for xml library
-  static void PushToArray(void *errs, xmlError *error);
+  static void PushToArray(void *errs, const xmlError *error);
 
   // create a Napi::Value object for the syntax error
   // TODO make it a proper Error object
-  static Napi::Error BuildSyntaxError(Napi::Env env, xmlError *error);
+  static Napi::Error BuildSyntaxError(Napi::Env env, const xmlError *error);
 };
 
 } // namespace libxmljs

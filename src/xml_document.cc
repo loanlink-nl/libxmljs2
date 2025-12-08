@@ -471,7 +471,7 @@ Napi::Value XmlDocument::FromHtml(const Napi::CallbackInfo &info) {
   xmlSetStructuredErrorFunc(NULL, NULL);
 
   if (!doc) {
-    xmlError *error = xmlGetLastError();
+    const xmlError *error = xmlGetLastError();
     if (error) {
       XmlSyntaxError::BuildSyntaxError(env, error).ThrowAsJavaScriptException();
       return scope.Escape(env.Undefined());
@@ -534,7 +534,7 @@ Napi::Value XmlDocument::FromXml(const Napi::CallbackInfo &info) {
   xmlSetStructuredErrorFunc(NULL, NULL);
 
   if (!doc) {
-    xmlError *error = xmlGetLastError();
+    const xmlError *error = xmlGetLastError();
     if (error) {
       XmlSyntaxError::BuildSyntaxError(env, error).ThrowAsJavaScriptException();
       return env.Undefined();
@@ -550,7 +550,7 @@ Napi::Value XmlDocument::FromXml(const Napi::CallbackInfo &info) {
     xmlSetStructuredErrorFunc(NULL, NULL);
 
     if (ret < 0) {
-      xmlError *error = xmlGetLastError();
+      const xmlError *error = xmlGetLastError();
       if (error) {
         XmlSyntaxError::BuildSyntaxError(env, error)
             .ThrowAsJavaScriptException();
