@@ -10,7 +10,7 @@
     "napi_versions": [8]
   },
   "description": "libxml bindings for v8 javascript engine",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "scripts": {
     "build": "node-gyp rebuild",
     "test:bun": "bun test --timeout 1000",
