@@ -28,7 +28,7 @@ jobs:
           python-version: "3.11"
       - uses: actions/setup-node@v4
       - uses: oven-sh/setup-bun@v2
-      - run: bun install --global node-gyp
+      - run: npm install --global node-gyp
       - run: bun install --frozen-lockfile
       - run: bun run typecheck
       - run: bun run test:node
