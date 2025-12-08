@@ -31,6 +31,8 @@ jobs:
           python-version: "3.11"
       - uses: actions/setup-node@v4
       - uses: oven-sh/setup-bun@v2
+      - if: ${{ matrix.os == 'macos-latest' }}
+        run: brew install automake
       - run: bun init-submodules
       - run: bun configure
       - run: bun install --frozen-lockfile
