@@ -19,8 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
-        target: [arm64, x64]
+        os: [macos-15-intel, macos-latest, windows-latest, windows-11-arm, ubuntu-latest, ubuntu-24.04-arm]
 
     runs-on: ${{ matrix.os }}
 
@@ -31,10 +30,10 @@ jobs:
           python-version: "3.11"
       - uses: actions/setup-node@v4
       - uses: oven-sh/setup-bun@v2
-      - if: ${{ matrix.os == 'macos-latest' }}
+      - if: ${{ matrix.os == 'macos-latest' || matrix.os == 'macos-15-intel' }}
         run: brew install automake libtool
-      - if: ${{ matrix.os == 'windows-latest' }}
-        name: Install dependencies
+      - if: ${{ matrix.os == 'windows-latest' || matrix.os == 'windows-11-arm' }}
+        name: Install libiconv
         run: |
           vcpkg install libiconv
           echo "CMAKE_TOOLCHAIN_FILE=$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" >> $env:GITHUB_ENV
@@ -43,5 +42,5 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun run typecheck
       - run: bun run test:node
-      - if: ${{ matrix.os == 'macos-latest' }}
+      - if: ${{ matrix.os == 'macos-latest' || matrix.os == 'macos-15-intel' }}
         run: bun run test:bun
