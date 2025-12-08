@@ -140,7 +140,7 @@ describe('html parser', () => {
       expect.stringContaining('&#160;')
     );
 
-    doc = libxml.parseHtml('<a>Something with an emoji 😀</a>');
+    doc = libxml.parseHtml('<a>Something with an emoji 😀</a>', {encoding: 'utf8'});
     expect(doc.toString({ type: 'xhtml', encoding: 'utf8' })).toEqual(
       expect.stringContaining('😀')
     );
