@@ -1,0 +1,53 @@
+name: release
+
+permissions:
+  id-token: write
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+      - uses: oven-sh/setup-bun@v2
+      - if: ${{ matrix.os == 'windows-latest' }}
+        run: npm install --global node-gyp
+      - run: bun install --frozen-lockfile
+      - run: bun run prebuildify
+      - uses: actions/upload-artifact@v4
+        with:
+          name: libxmljs2-prebuilds-${{ matrix.os }}-${{ matrix.target }}
+          path: "prebuilds/**/*.node"
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          registry-url: 'https://registry.npmjs.org'
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: libxmljs2-prebuilds-*
+          path: prebuilds
+          merge-multiple: true
+      - run: tree prebuilds
+      - run: npm publish --no-git-checks
