@@ -439,7 +439,7 @@ Napi::Value XmlDocument::FromHtml(const Napi::CallbackInfo &info) {
 
   // the encoding to be used for this document
   // (leave NULL for libxml to autodetect)
-  const char *encoding = "UTF-8";
+  const char *encoding = NULL;
   std::string encodingStr;
   if (options.Has("encoding") && options.Get("encoding").IsString()) {
     encodingStr = options.Get("encoding").ToString().Utf8Value();
@@ -512,7 +512,7 @@ Napi::Value XmlDocument::FromXml(const Napi::CallbackInfo &info) {
 
   // the encoding to be used for this document
   // (leave NULL for libxml to autodetect)
-  const char *encoding = "UTF-8";
+  const char *encoding = NULL;
   std::string encodingStr;
   if (options.Has("encoding") && options.Get("encoding").IsString()) {
     encodingStr = options.Get("encoding").ToString().Utf8Value();
@@ -524,7 +524,7 @@ Napi::Value XmlDocument::FromXml(const Napi::CallbackInfo &info) {
   if (!info[0].IsBuffer()) {
     // Parse a string
     std::string str = info[0].ToString().Utf8Value();
-    doc = xmlReadMemory(str.c_str(), str.length(), baseUrl, "UTF-8", opts);
+    doc = xmlReadMemory(str.c_str(), str.length(), baseUrl, encoding, opts);
   } else {
     // Parse a buffer
     Napi::Buffer<char> buf = info[0].As<Napi::Buffer<char>>();
