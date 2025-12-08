@@ -11,12 +11,13 @@
 			"cflags_cc!": ["-fno-exceptions"],
 			"product_extension": "node",
 			"type": "shared_library",
-			"include_dirs": [
+	"include_dirs": [
+        'vendor/libxml2-config',
         'vendor/libxml2/include',
         'vendor/libxml2/include/libxml',
-				"<!(node -p \"require('node-addon-api').include_dir\")",
+		  "<!(node -p \"require('node-addon-api').include_dir\")",
         "<!(node -p \"require('node-addon-api').include\")",
-			],
+	],
 			"cflags": ["-Wall"],
 			"xcode_settings": {
 				"GCC_ENABLE_CPP_EXCEPTIONS": "YES",
