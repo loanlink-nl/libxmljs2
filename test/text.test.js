@@ -113,8 +113,9 @@ describe('text', () => {
 
     const children = doc.root().childNodes();
 
-    expect(children.length).toBe(2);
-    expect('quxbar').toBe(children[0].text());
+    expect(children.length).toBe(3);
+    expect('qux').toBe(children[0].text());
+    expect('bar').toBe(children[1].text());
     expect(children[0] !== qux).toBeTruthy();
 
     // passed node is not changed
@@ -133,8 +134,9 @@ describe('text', () => {
 
     const children = doc.root().childNodes();
 
-    expect(children.length).toBe(2);
-    expect('barqux').toBe(children[0].text());
+    expect(children.length).toBe(3);
+    expect('bar').toBe(children[0].text());
+    expect('qux').toBe(children[1].text());
     expect(children[0] !== qux).toBeTruthy();
 
     expect(doc).toBe(qux.parent());
