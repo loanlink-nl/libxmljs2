@@ -30,7 +30,7 @@ jobs:
       - run: bun run prebuildify
       - uses: actions/upload-artifact@v4
         with:
-          name: libxmljs2-prebuilds-${{ matrix.os }}-${{ matrix.target }}
+          name: libxmljs2-prebuilds-${{ matrix.os }}-x64+arm64
           path: "prebuilds/**/*.node"
 
   release:
