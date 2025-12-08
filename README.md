@@ -2,7 +2,7 @@
 
 N-API bindings to the native [libxml2](https://gitlab.gnome.org/GNOME/libxml2) library. 
 
-Works with Node (Bun experimental). 
+Works with Node (Bun support experimental). 
 
 Features:
 - XSD validation
@@ -13,6 +13,8 @@ Features:
 - SAX push parsing
 - HTML parsing
 - HTML fragment parsing
+
+Usage:
 
 ```javascript
 import * as libxmljs from '@loanlink-nl/libxmljs2';
@@ -28,13 +30,16 @@ const xml =
 
 const xmlDoc = libxmljs.parseXml(xml);
 
-// xpath queries
 const gchild = xmlDoc.get('//grandchild');
 
-console.log(gchild.text()); // prints "grandchild content"
+console.log(gchild.text()); 
+// "grandchild content"
 
 const children = xmlDoc.root().childNodes();
 const child = children[0];
 
-console.log(child.attr('foo').value()); // prints "bar"
+console.log(child.attr('foo').value()); 
+// "bar"
 ```
+
+If you need anything that's included in libxml2 but not exposed by this module, don't hesitate to [open an issue](https://github.com/loanlink-nl/libxmljs2/issues/new) or to create a PR.
