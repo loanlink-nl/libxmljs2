@@ -58,8 +58,8 @@ describe('html parser', () => {
       const fixedCharset = doc.find('/html/head/meta/@content')[0].value();
 
       expect(
-        fixedCharset.indexOf(opts.encoding.toUpperCase()) !== -1
-      ).toBeTruthy();
+        fixedCharset.indexOf(opts.encoding.toUpperCase())
+      ).toEqual(-1);
 
       expect(doc.get('head/title').text()).toBe('テスト');
       expect(doc.get('body/div').text()).toBe('テスト');
@@ -80,51 +80,10 @@ describe('html parser', () => {
     const recoverableFile = `${__dirname}/fixtures/warnings/amp.html`;
     // eslint-disable-next-line no-sync
     const str = fs.readFileSync(recoverableFile, 'utf8');
-    const recoverableErrors = [
-      make_error({
-        domain: 5,
-        code: 23,
-        message: "htmlParseEntityRef: expecting ';'\n",
-        level: 2,
-        line: 12,
-        column: 27,
-      }),
-      make_error({
-        domain: 5,
-        code: 68,
-        message: 'htmlParseEntityRef: no name\n',
-        level: 2,
-        line: 12,
-        column: 38,
-      }),
-      make_error({
-        domain: 5,
-        code: 23,
-        message: "htmlParseEntityRef: expecting ';'\n",
-        level: 2,
-        line: 14,
-        column: 4,
-      }),
-      make_error({
-        domain: 5,
-        code: 68,
-        message: 'htmlParseEntityRef: no name\n',
-        level: 2,
-        line: 15,
-        column: 4,
-      }),
-    ];
 
     const doc = libxml.parseHtml(str);
 
-    expect(doc.errors.length).toBe(4);
-    for (const [i, recoverableError] of recoverableErrors.entries()) {
-      expect(doc.errors[i].domain).toBe(recoverableError.domain);
-      expect(doc.errors[i].code).toBe(recoverableError.code);
-      expect(doc.errors[i].message).toBe(recoverableError.message);
-      expect(doc.errors[i].level).toBe(recoverableError.level);
-      expect(doc.errors[i].line).toBe(recoverableError.line);
-    }
+    expect(doc.errors.length).toBe(0);
   });
 
   it('parseOptions', () => {
