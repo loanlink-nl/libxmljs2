@@ -186,7 +186,6 @@ Napi::Object listFeatures(Napi::Env env) {
   FEAT(WRITER);
   FEAT(SAX1);
   FEAT(FTP);
-  FEAT(HTTP);
   FEAT(VALID);
   FEAT(HTML);
   FEAT(C14N);
