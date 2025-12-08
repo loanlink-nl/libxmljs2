@@ -1,6 +1,7 @@
 name: release
 
-permissions: {}
+permissions:
+  id-token: write
 
 on:
   push:
@@ -14,13 +15,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          registry-url: 'https://registry.npmjs.org'
       - uses: oven-sh/setup-bun@v2
-      - run: bun install --frozen-lockfile
       - uses: actions/download-artifact@v4
         with:
           pattern: libxmljs2-prebuilds-*
           path: prebuilds
           merge-multiple: true
       - run: tree prebuilds
-      - run: bun publish --no-git-checks
+      - run: bun publish --provenance --no-git-checks
 
