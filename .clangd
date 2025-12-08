@@ -16,9 +16,6 @@ CompileFlags:
     # Include paths - node-addon-api headers (relative path)
     - -I../node_modules/node-addon-api
     
-    # Include paths - nan headers (relative path)
-    - -I../node_modules/nan
-    
     # Include paths - vendor libxml (relative path)
     - -I../vendor/libxml2/include
     - -I../vendor/libxml2/include/libxml
