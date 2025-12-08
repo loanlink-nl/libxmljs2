@@ -33,10 +33,15 @@ jobs:
       - if: ${{ matrix.os == 'macos-latest' || matrix.os == 'macos-15-intel' }}
         run: brew install automake libtool
       - if: ${{ matrix.os == 'windows-latest' }}
-        name: Install libiconv
+        name: Setup vcpkg and install libiconv
         run: |
-          vcpkg install libiconv
-          echo "CMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $env:GITHUB_ENV
+          $vcpkgPath = "C:\vcpkg"
+          if (-not (Test-Path $vcpkgPath)) {
+            git clone https://github.com/Microsoft/vcpkg.git $vcpkgPath
+            & $vcpkgPath\bootstrap-vcpkg.bat
+          }
+          & $vcpkgPath\vcpkg install libiconv
+          echo "CMAKE_TOOLCHAIN_FILE=$vcpkgPath/scripts/buildsystems/vcpkg.cmake" >> $env:GITHUB_ENV
       - run: bun init-submodules
       - run: bun configure
       - run: bun install --frozen-lockfile
