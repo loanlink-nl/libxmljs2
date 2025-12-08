@@ -2,9 +2,9 @@
 
 N-API bindings to the native [libxml2](https://gitlab.gnome.org/GNOME/libxml2) library. 
 
-Works with Node (Bun support experimental). 
+Works with Node >= 20 (Bun support experimental). 
 
-Features:
+## Features:
 - XSD validation
 - RelaxNG validation
 - Schematron validation
@@ -14,7 +14,9 @@ Features:
 - HTML parsing
 - HTML fragment parsing
 
-Usage:
+If you need anything that's included in libxml2 but not exposed by this module, don't hesitate to [open an issue](https://github.com/loanlink-nl/libxmljs2/issues/new) or to create a PR.
+
+## Usage:
 
 ```javascript
 import * as libxmljs from '@loanlink-nl/libxmljs2';
@@ -42,4 +44,11 @@ console.log(child.attr('foo').value());
 // "bar"
 ```
 
-If you need anything that's included in libxml2 but not exposed by this module, don't hesitate to [open an issue](https://github.com/loanlink-nl/libxmljs2/issues/new) or to create a PR.
+## Changes
+
+Compared to [libxmljs](https://githubcom/libxmljs/libxmljs) and [libxmljs2](https://github.com/marudor/libxmljs2):
+
+- Migrated from NAN to N-API
+- Running + passing test-suite
+- Support for Node >= 20
+- Experimental Bun support
