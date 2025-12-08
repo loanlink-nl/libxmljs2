@@ -16,6 +16,7 @@
         'vendor/libxml2/include/libxml',
         'vendor/libxml2.config',
         'vendor/libxml2.config/include',
+        'vendor/libxml2',
 				"<!(node -p \"require('node-addon-api').include_dir\")",
         "<!(node -p \"require('node-addon-api').include\")",
 			],

@@ -8,5 +8,6 @@ if (platform === "darwin" || platform === "linux") {
   const cmakeArgs = process.env.CMAKE_TOOLCHAIN_FILE
     ? `-DCMAKE_TOOLCHAIN_FILE="${process.env.CMAKE_TOOLCHAIN_FILE}"`
     : "";
+  // Configure with CMake - this generates config.h and xmlversion.h in the vendor/libxml2 directory
   await $`cd vendor/libxml2 && cmake . ${cmakeArgs} && cd ../..`;
 } 
