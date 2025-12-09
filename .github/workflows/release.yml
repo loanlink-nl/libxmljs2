@@ -13,7 +13,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
+        include:
+          - os: windows-latest
+            arch: x64
+          - os: macos-latest
+            arch: arm64
+          - os: macos-15-intel
+            arch: x64
+          - os: ubuntu-latest
+            arch: x64
+          - os: ubuntu-24.04-arm
+            arch: arm64
 
     runs-on: ${{ matrix.os }}
 
@@ -24,7 +34,7 @@ jobs:
           python-version: "3.11"
       - uses: actions/setup-node@v4
       - uses: oven-sh/setup-bun@v2
-      - if: ${{ matrix.os == 'macos-latest' || matrix.os == 'macos-15-intel' }}
+      - if: ${{ startsWith(matrix.os, 'macos') }}
         run: brew install automake libtool
       - if: ${{ matrix.os == 'windows-latest' }}
         name: Download and extract libiconv
@@ -42,7 +52,7 @@ jobs:
       - run: bun run prebuildify
       - uses: actions/upload-artifact@v4
         with:
-          name: libxmljs2-prebuilds-${{ matrix.os }}-x64+arm64
+          name: ${{ matrix.os }}-${{ matrix.arch }}
           path: "prebuilds/**/*.node"
 
   release:
@@ -58,7 +68,6 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - uses: actions/download-artifact@v4
         with:
-          pattern: libxmljs2-prebuilds-*
           path: prebuilds
           merge-multiple: true
       - run: tree prebuilds
