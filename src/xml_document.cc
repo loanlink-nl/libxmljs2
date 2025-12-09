@@ -471,7 +471,7 @@ Napi::Value XmlDocument::FromHtml(const Napi::CallbackInfo &info) {
   xmlSetStructuredErrorFunc(NULL, NULL);
 
   if (!doc) {
-    xmlError *error = xmlGetLastError();
+    const xmlError *error = xmlGetLastError();
     if (error) {
       XmlSyntaxError::BuildSyntaxError(env, error).ThrowAsJavaScriptException();
       return scope.Escape(env.Undefined());
@@ -524,7 +524,7 @@ Napi::Value XmlDocument::FromXml(const Napi::CallbackInfo &info) {
   if (!info[0].IsBuffer()) {
     // Parse a string
     std::string str = info[0].ToString().Utf8Value();
-    doc = xmlReadMemory(str.c_str(), str.length(), baseUrl, "UTF-8", opts);
+    doc = xmlReadMemory(str.c_str(), str.length(), baseUrl, encoding, opts);
   } else {
     // Parse a buffer
     Napi::Buffer<char> buf = info[0].As<Napi::Buffer<char>>();
@@ -534,7 +534,7 @@ Napi::Value XmlDocument::FromXml(const Napi::CallbackInfo &info) {
   xmlSetStructuredErrorFunc(NULL, NULL);
 
   if (!doc) {
-    xmlError *error = xmlGetLastError();
+    const xmlError *error = xmlGetLastError();
     if (error) {
       XmlSyntaxError::BuildSyntaxError(env, error).ThrowAsJavaScriptException();
       return env.Undefined();
@@ -550,7 +550,7 @@ Napi::Value XmlDocument::FromXml(const Napi::CallbackInfo &info) {
     xmlSetStructuredErrorFunc(NULL, NULL);
 
     if (ret < 0) {
-      xmlError *error = xmlGetLastError();
+      const xmlError *error = xmlGetLastError();
       if (error) {
         XmlSyntaxError::BuildSyntaxError(env, error)
             .ThrowAsJavaScriptException();

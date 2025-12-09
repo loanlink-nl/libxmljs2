@@ -156,8 +156,8 @@ describe('xml sax parser', () => {
 
     const control = callbackControl();
 
-    control.error = [['Extra content at the end of the document\n']];
-    expect(control).toEqual(callbacks);
+    control.error = [['Premature end of data in tag error line 1\n']];
+    expect(callbacks).toEqual(control);
   });
 
   // eslint-disable-next-line jest/expect-expect

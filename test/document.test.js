@@ -397,7 +397,7 @@ describe('document', () => {
     rssAfter = libxml.memoryUsage();
 
     expect(rssAfter - rssBefore < VALIDATE_RSS_TOLERANCE).toBeTruthy();
-  });
+  }, 5_000);
 
   it('validate inputs', () => {
     const xml = '<?xml version="1.0"?><comment>A comment</comment>';
@@ -489,7 +489,7 @@ describe('document', () => {
 
     const rssAfter = libxml.memoryUsage();
     expect(rssAfter - rssBefore < VALIDATE_RSS_TOLERANCE).toBeTruthy();
-  });
+  }, 5_000);
 
   describe('errors', () => {
     it('empty html doc', () => {

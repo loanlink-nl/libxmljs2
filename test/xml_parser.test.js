@@ -57,11 +57,11 @@ describe('xml parser', () => {
     expect(doc.errors.length).toBe(1);
     const err = doc.errors.shift();
 
-    expect(3).toBe(err.domain);
-    expect(13).toBe(err.column);
-    expect(1).toBe(err.line);
-    expect(201).toBe(err.code);
-    expect('prefix').toBe(err.str1);
+    expect(err.domain).toBe(3);
+    expect(err.column).toBe(8);
+    expect(err.line).toBe(6);
+    expect(err.code).toBe(201);
+    expect(err.str1).toBe('prefix');
   });
 
   it('baseurl_xml', () => {
@@ -106,7 +106,7 @@ describe('xml parser', () => {
 
     const errorControl = {
       domain: 1,
-      code: 4,
+      code: 9,
       message: "Start tag expected, '<' not found\n",
       level: 3,
       file: null,

@@ -12,7 +12,6 @@ Works with Node >= 20 (Bun support experimental).
 - SAX parsing
 - SAX push parsing
 - HTML parsing
-- HTML fragment parsing
 
 If you need anything that's included in libxml2 but not exposed by this module, don't hesitate to [open an issue](https://github.com/loanlink-nl/libxmljs2/issues/new) or to create a PR.
 
@@ -52,3 +51,4 @@ Compared to [libxmljs](https://githubcom/libxmljs/libxmljs) and [libxmljs2](http
 - Running + passing test-suite
 - Support for Node >= 20
 - Experimental Bun support
+- Libxml2 2.15.1 (resolving 9 CVEs)

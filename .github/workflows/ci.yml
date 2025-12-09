@@ -19,8 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
-        target: [arm64, x64]
+        os: [macos-15-intel, macos-latest, windows-latest, ubuntu-latest, ubuntu-24.04-arm]
 
     runs-on: ${{ matrix.os }}
 
@@ -31,6 +30,18 @@ jobs:
           python-version: "3.11"
       - uses: actions/setup-node@v4
       - uses: oven-sh/setup-bun@v2
+      - if: ${{ matrix.os == 'macos-latest' || matrix.os == 'macos-15-intel' }}
+        run: brew install automake libtool
+      - if: ${{ matrix.os == 'windows-latest' }}
+        name: Download and extract libiconv
+        run: |
+          $libiconvUrl = "https://github.com/pffang/libiconv-for-Windows/releases/download/1.18/libiconv-for-Windows_prebuilt.zip"
+          $libiconvZip = "$env:RUNNER_TEMP\libiconv.zip"
+          $libiconvPath = "C:\libiconv"
+          Invoke-WebRequest -Uri $libiconvUrl -OutFile $libiconvZip
+          Expand-Archive -Path $libiconvZip -DestinationPath $libiconvPath -Force
+          Get-ChildItem -Recurse $libiconvPath | Select-Object FullName
+      - run: bun init-submodules
       - run: bun install --frozen-lockfile
       - run: bun run typecheck
       - run: bun run test:node

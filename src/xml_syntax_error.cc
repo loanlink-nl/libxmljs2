@@ -26,7 +26,8 @@ void set_numeric_field(Napi::Env env, Napi::Object obj, const char *name,
 
 namespace libxmljs {
 
-Napi::Error XmlSyntaxError::BuildSyntaxError(Napi::Env env, xmlError *error) {
+Napi::Error XmlSyntaxError::BuildSyntaxError(Napi::Env env,
+                                             const xmlError *error) {
   Napi::Error err = Napi::Error::New(env, error->message);
 
   set_numeric_field(env, err.Value(), "domain", error->domain);
@@ -58,7 +59,7 @@ Napi::Error XmlSyntaxError::BuildSyntaxError(Napi::Env env, xmlError *error) {
   return err;
 }
 
-void XmlSyntaxError::PushToArray(void *errs, xmlError *error) {
+void XmlSyntaxError::PushToArray(void *errs, const xmlError *error) {
   ErrorArrayContext *ctx = static_cast<ErrorArrayContext *>(errs);
   Napi::Env env = ctx->env;
   Napi::Array errors = ctx->errors;
