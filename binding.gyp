@@ -115,10 +115,10 @@
                     "OS==\"win\"",
                     {
                         "include_dirs": [
-                            "<!(echo %LIBICONV_ROOT%)"
+                            "C:/libiconv/libiconv-for-Windows_prebuilt"
                         ],
                         "libraries": [
-                            "<!(echo %LIBICONV_ROOT%)/x64/ReleaseStatic/libiconvStatic.lib",
+                            "C:/libiconv/libiconv-for-Windows_prebuilt/x64/ReleaseStatic/libiconvStatic.lib",
                             "bcrypt.lib",
                             "ws2_32.lib"
                         ]

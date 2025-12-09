@@ -40,7 +40,7 @@ jobs:
           $libiconvPath = "C:\libiconv"
           Invoke-WebRequest -Uri $libiconvUrl -OutFile $libiconvZip
           Expand-Archive -Path $libiconvZip -DestinationPath $libiconvPath -Force
-          echo "LIBICONV_ROOT=$libiconvPath\libiconv-for-Windows_prebuilt" >> $env:GITHUB_ENV
+          Get-ChildItem -Recurse $libiconvPath | Select-Object FullName
       - run: bun init-submodules
       # - run: bun configure
       - run: bun install --frozen-lockfile
