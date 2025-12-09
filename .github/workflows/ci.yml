@@ -41,6 +41,7 @@ jobs:
             & $vcpkgPath\bootstrap-vcpkg.bat
           }
           & $vcpkgPath\vcpkg install libiconv
+          echo "VCPKG_INSTALLATION_ROOT=$vcpkgPath" >> $env:GITHUB_ENV
           echo "CMAKE_TOOLCHAIN_FILE=$vcpkgPath/scripts/buildsystems/vcpkg.cmake" >> $env:GITHUB_ENV
       - run: bun init-submodules
       # - run: bun configure

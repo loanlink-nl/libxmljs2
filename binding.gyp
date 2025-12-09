@@ -92,19 +92,30 @@
         "vendor/libxml2/xpath.c",
         "vendor/libxml2/xpointer.c",
 			],
-			"conditions": [
-				[
-					"OS==\"mac\"",
-					{
-						#  node-gyp 2.x doesn't add this anymore
-						#  https://github.com/TooTallNate/node-gyp/pull/612
-						"xcode_settings": {
-							"CLANG_CXX_LANGUAGE_STANDARD": "c++20",
-							"OTHER_LDFLAGS": ["-undefined dynamic_lookup"]
-						}
+		"conditions": [
+			[
+				"OS==\"mac\"",
+				{
+					#  node-gyp 2.x doesn't add this anymore
+					#  https://github.com/TooTallNate/node-gyp/pull/612
+					"xcode_settings": {
+						"CLANG_CXX_LANGUAGE_STANDARD": "c++20",
+						"OTHER_LDFLAGS": ["-undefined dynamic_lookup"]
 					}
-				]
+				}
+			],
+			[
+				"OS==\"win\"",
+				{
+					"include_dirs": [
+						"<!(echo %VCPKG_INSTALLATION_ROOT%)/installed/x64-windows/include"
+					],
+					"libraries": [
+						"<!(echo %VCPKG_INSTALLATION_ROOT%)/installed/x64-windows/lib/iconv.lib"
+					]
+				}
 			]
+		]
 		}
 	]
 }
