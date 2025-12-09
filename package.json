@@ -12,7 +12,7 @@
     ]
   },
   "description": "libxml bindings for v8 javascript engine",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "scripts": {
     "build": "node-gyp rebuild",
     "init-submodules": "git submodule update --init --recursive",
