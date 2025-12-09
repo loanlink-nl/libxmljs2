@@ -280,3 +280,4 @@ export interface ValidationError extends Error {
 
   xpath: string;
 }
+
