@@ -115,10 +115,11 @@
                     "OS==\"win\"",
                     {
                         "include_dirs": [
-                            "<!(echo %VCPKG_INSTALLATION_ROOT%)/installed/x64-windows/include"
+                            "<!(echo %VCPKG_INSTALLATION_ROOT%)/installed/x64-windows-static/include"
                         ],
                         "libraries": [
-                            "<!(echo %VCPKG_INSTALLATION_ROOT%)/installed/x64-windows/lib/iconv.lib",
+                            "<!(echo %VCPKG_INSTALLATION_ROOT%)/installed/x64-windows-static/lib/iconv.lib",
+                            "<!(echo %VCPKG_INSTALLATION_ROOT%)/installed/x64-windows-static/lib/charset.lib",
                             "bcrypt.lib",
                             "ws2_32.lib"
                         ]

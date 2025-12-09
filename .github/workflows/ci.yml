@@ -40,7 +40,7 @@ jobs:
             git clone https://github.com/Microsoft/vcpkg.git $vcpkgPath
             & $vcpkgPath\bootstrap-vcpkg.bat
           }
-          & $vcpkgPath\vcpkg install libiconv
+          & $vcpkgPath\vcpkg install libiconv:x64-windows-static
           echo "VCPKG_INSTALLATION_ROOT=$vcpkgPath" >> $env:GITHUB_ENV
           echo "CMAKE_TOOLCHAIN_FILE=$vcpkgPath/scripts/buildsystems/vcpkg.cmake" >> $env:GITHUB_ENV
       - run: bun init-submodules
