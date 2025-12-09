@@ -12,7 +12,7 @@ export default {
   parseXml: Document.fromXml,
   parseHtml: Document.fromHtml,
   parseHtmlFragment: Document.fromHtmlFragment,
-  version: "0.0.6",
+  version: "0.0.7",
   libxml_version: bindings.libxml_version,
   libxml_parser_version: bindings.libxml_parser_version,
   libxml_debug_enabled: bindings.libxml_debug_enabled,
