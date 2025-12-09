@@ -18,7 +18,7 @@
     "init-submodules": "git submodule update --init --recursive",
     "test:bun": "bun test --timeout 1000",
     "test:node": "NODE_OPTIONS='--expose-gc' vitest --globals --test-timeout=1000 --pool=vmForks",
-    "prebuildify": "prebuildify --napi --strip --arch x64+arm64",
+    "prebuildify": "prebuildify --napi --strip",
     "typecheck": "tsd",
     "install": "node-gyp-build"
   },
