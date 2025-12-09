@@ -20,9 +20,9 @@
                 "vendor/libxml2.config/libxml",
                 "vendor/libxml2/include",
                 "vendor/libxml2/include/libxml",
-                "<!(node -p \"require('node-addon-api').include_dir\")",
-                "<!(node -p \"require('node-addon-api').include\")"
+                "<!@(node -p \"require('node-addon-api').include\")"
             ],
+            "dependencies": ["<!(node -p \"require('node-addon-api').gyp\")"],
             "cflags": [
                 "-Wall"
             ],
