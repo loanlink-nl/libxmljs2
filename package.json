@@ -13,7 +13,7 @@
   "version": "0.0.4",
   "scripts": {
     "configure": "bun run scripts/configure.ts",
-    "build": "bun configure && node-gyp rebuild",
+    "build": "node-gyp rebuild",
     "init-submodules": "git submodule update --init --recursive",
     "test:bun": "bun test --timeout 1000",
     "test:node": "NODE_OPTIONS='--expose-gc' vitest --globals --test-timeout=1000 --pool=vmForks",
