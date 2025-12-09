@@ -118,7 +118,9 @@
                             "<!(echo %VCPKG_INSTALLATION_ROOT%)/installed/x64-windows/include"
                         ],
                         "libraries": [
-                            "<!(echo %VCPKG_INSTALLATION_ROOT%)/installed/x64-windows/lib/iconv.lib"
+                            "<!(echo %VCPKG_INSTALLATION_ROOT%)/installed/x64-windows/lib/iconv.lib",
+                            "bcrypt.lib",
+                            "ws2_32.lib"
                         ]
                     }
                 ]
