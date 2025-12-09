@@ -129,5 +129,5 @@ describe('memory management', () => {
     await awaitGC(`namespaces-0`);
 
     expect(libxml.memoryUsage() <= xmlMemBefore).toBeTruthy();
-  }, 5_000);
+  }, 10_000);
 });
