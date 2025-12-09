@@ -32,18 +32,18 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - if: ${{ matrix.os == 'macos-latest' || matrix.os == 'macos-15-intel' }}
         run: brew install automake libtool
-      - if: ${{ matrix.os == 'windows-latest' }}
-        name: Setup vcpkg and install libiconv
-        run: |
-          $vcpkgPath = "C:\vcpkg"
-          if (-not (Test-Path $vcpkgPath)) {
-            git clone https://github.com/Microsoft/vcpkg.git $vcpkgPath
-            & $vcpkgPath\bootstrap-vcpkg.bat
-          }
-          & $vcpkgPath\vcpkg install libiconv
-          echo "CMAKE_TOOLCHAIN_FILE=$vcpkgPath/scripts/buildsystems/vcpkg.cmake" >> $env:GITHUB_ENV
+      # - if: ${{ matrix.os == 'windows-latest' }}
+      #   name: Setup vcpkg and install libiconv
+      #   run: |
+      #     $vcpkgPath = "C:\vcpkg"
+      #     if (-not (Test-Path $vcpkgPath)) {
+      #       git clone https://github.com/Microsoft/vcpkg.git $vcpkgPath
+      #       & $vcpkgPath\bootstrap-vcpkg.bat
+      #     }
+      #     & $vcpkgPath\vcpkg install libiconv
+      #     echo "CMAKE_TOOLCHAIN_FILE=$vcpkgPath/scripts/buildsystems/vcpkg.cmake" >> $env:GITHUB_ENV
       - run: bun init-submodules
-      - run: bun configure
+      # - run: bun configure
       - run: bun install --frozen-lockfile
       - run: bun run typecheck
       - run: bun run test:node
