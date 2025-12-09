@@ -14,18 +14,23 @@ jobs:
       fail-fast: true
       matrix:
         include:
-          - os: windows-latest
+          - runner: windows-latest
+            os: win32
             arch: x64
-          - os: macos-latest
+          - runner: macos-latest
+            os: darwin
             arch: arm64
-          - os: macos-15-intel
+          - runner: macos-15-intel
+            os: darwin
             arch: x64
-          - os: ubuntu-latest
+          - runner: ubuntu-latest
+            os: linux
             arch: x64
-          - os: ubuntu-24.04-arm
+          - runner: ubuntu-24.04-arm
+            os: linux
             arch: arm64
 
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.runner }}
 
     steps:
       - uses: actions/checkout@v4
@@ -34,9 +39,9 @@ jobs:
           python-version: "3.11"
       - uses: actions/setup-node@v4
       - uses: oven-sh/setup-bun@v2
-      - if: ${{ startsWith(matrix.os, 'macos') }}
+      - if: ${{ matrix.os == 'darwin' }}
         run: brew install automake libtool
-      - if: ${{ matrix.os == 'windows-latest' }}
+      - if: ${{ matrix.os == 'win32' }}
         name: Download and extract libiconv
         run: |
           $libiconvUrl = "https://github.com/pffang/libiconv-for-Windows/releases/download/1.18/libiconv-for-Windows_prebuilt.zip"
@@ -46,7 +51,7 @@ jobs:
           Expand-Archive -Path $libiconvZip -DestinationPath $libiconvPath -Force
           echo "LIBICONV_ROOT=$libiconvPath\libiconv-for-Windows_prebuilt" >> $env:GITHUB_ENV
       - run: bun init-submodules
-      - if: ${{ matrix.os == 'windows-latest' }}
+      - if: ${{ matrix.os == 'win32' }}
         run: npm install --global node-gyp
       - run: bun install --ignore-scripts --frozen-lockfile
       - run: bun run prebuildify
