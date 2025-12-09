@@ -1,5 +1,5 @@
 import fs from "node:fs";
-import libxml from "../index.js";
+import * as libxml from "../index.js";
 
 global.gc ??= (typeof Bun !== 'undefined' ? Bun.gc : undefined);
 

@@ -1,4 +1,4 @@
-import libxml from "../index.js";
+import * as libxml from "../index.js";
 import { setupGC } from "./setup.js";
 
 function makeDocument() {

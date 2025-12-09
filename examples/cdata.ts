@@ -1,4 +1,4 @@
-import libxml from "../index.js";
+import * as libxml from "../index.js";
 
 const doc = new libxml.Document();
 const elem = doc.node('name1');

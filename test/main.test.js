@@ -1,4 +1,4 @@
-import libxml from "../index.js";
+import * as libxml from "../index.js";
 import pkg from "../package.json" with { type: "json" };
 
 describe('main', () => {

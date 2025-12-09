@@ -1,4 +1,4 @@
-import libxml from "../index.js";
+import * as libxml from "../index.js";
 import path from "node:path";
 
 describe('xinclude', () => {

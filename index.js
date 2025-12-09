@@ -4,8 +4,10 @@
 import bindings from "./lib/bindings.js";
 
 import Document from "./lib/document.js";
-import Element from "./lib/element.js";
-import { SaxParser, SaxPushParser } from "./lib/sax_parser.js";
+export { SaxParser, SaxPushParser } from "./lib/sax_parser.js";
+
+export { default as Document } from "./lib/document.js";
+export { default as Element } from "./lib/element.js";
 
 export const parseXml = Document.fromXml;
 export const parseHtml = Document.fromHtml;
@@ -18,12 +20,8 @@ export const libxml_parser_version = bindings.libxml_parser_version;
 export const libxml_debug_enabled = bindings.libxml_debug_enabled;
 export const features = bindings.features;
 export const Comment = bindings.Comment;
-export const Document = Document;
-export const Element = Element;
 export const ProcessingInstruction = bindings.ProcessingInstruction;
 export const Text = bindings.Text;
-export const SaxParser = SaxParser;
-export const SaxPushParser = SaxPushParser;
 export const memoryUsage = bindings.xmlMemUsed;
 export const nodeCount = bindings.xmlNodeCount;
 export const TextWriter = bindings.TextWriter;

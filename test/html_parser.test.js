@@ -1,6 +1,6 @@
 /* eslint-disable unicorn/text-encoding-identifier-case */
 import fs from "node:fs";
-import libxml from "../index.js";
+import * as libxml from "../index.js";
 
 function make_error(object) {
   const err = new Error(object.message);

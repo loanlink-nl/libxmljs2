@@ -1,4 +1,4 @@
-import libxml from "../index.js";
+import * as libxml from "../index.js";
 
 describe('node attributes', () => {
   it('basic', () => {
