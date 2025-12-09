@@ -42,7 +42,6 @@ jobs:
           Expand-Archive -Path $libiconvZip -DestinationPath $libiconvPath -Force
           Get-ChildItem -Recurse $libiconvPath | Select-Object FullName
       - run: bun init-submodules
-      # - run: bun configure
       - run: bun install --frozen-lockfile
       - run: bun run typecheck
       - run: bun run test:node
