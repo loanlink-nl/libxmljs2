@@ -115,11 +115,10 @@
                     "OS==\"win\"",
                     {
                         "include_dirs": [
-                            "<!(echo %VCPKG_INSTALLATION_ROOT%)/installed/x64-windows-static/include"
+                            "<!(echo %LIBICONV_ROOT%)/libiconv-for-Windows_prebuilt"
                         ],
                         "libraries": [
-                            "<!(echo %VCPKG_INSTALLATION_ROOT%)/installed/x64-windows-static/lib/iconv.lib",
-                            "<!(echo %VCPKG_INSTALLATION_ROOT%)/installed/x64-windows-static/lib/charset.lib",
+                            "<!(echo %LIBICONV_ROOT%)/libiconv-for-Windows_prebuilt/x64/ReleaseStatic/libiconvStatic.lib",
                             "bcrypt.lib",
                             "ws2_32.lib"
                         ]
