@@ -470,7 +470,12 @@ template <class T> void XmlNode<T>::ref_wrapped_ancestor() {
 template <class T> void XmlNode<T>::unref_wrapped_ancestor() {
   if ((this->ancestor != NULL) && (this->ancestor->_private != NULL)) {
     XmlNode *ancestor = static_cast<XmlNode *>(this->ancestor->_private);
-    ancestor->Unref();
+    try {
+      ancestor->Unref();
+    } catch (...) {
+      // Ignore errors during shutdown - the environment is being torn down
+      // anyway
+    }
   }
 
   this->ancestor = NULL;
