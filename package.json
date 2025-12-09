@@ -41,7 +41,7 @@
   "types": "./index.d.ts",
   "license": "MIT",
   "engines": {
-    "node": ">=20"
+    "node": ">=20.11"
   },
   "files": [
     "index.js",
