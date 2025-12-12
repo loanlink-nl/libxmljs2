@@ -55,7 +55,7 @@ jobs:
         run: npm install --global node-gyp
       - run: bun install --ignore-scripts --frozen-lockfile
       - run: bun run prebuildify
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.os }}-${{ matrix.arch }}
           path: "prebuilds/**/*.node"
