@@ -1,6 +1,6 @@
 # @loanlink-nl/libxmljs2
 
-N-API bindings to the native [libxml2](https://gitlab.gnome.org/GNOME/libxml2) library. 
+Node-API bindings to the native [libxml2](https://gitlab.gnome.org/GNOME/libxml2) library. 
 
 Works with Node >= 20 (Bun support experimental). 
 
@@ -71,7 +71,7 @@ bun run test:bun
 
 Compared to [libxmljs](https://githubcom/libxmljs/libxmljs) and [libxmljs2](https://github.com/marudor/libxmljs2):
 
-- Migrated from NAN to N-API
+- Migrated from NAN to Node-API
 - Running + passing test-suite
 - Support for Node >= 20
 - Experimental Bun support
