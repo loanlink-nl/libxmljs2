@@ -4,7 +4,7 @@ N-API bindings to the native [libxml2](https://gitlab.gnome.org/GNOME/libxml2) l
 
 Works with Node >= 20 (Bun support experimental). 
 
-## Features:
+## Features
 - XSD validation
 - RelaxNG validation
 - Schematron validation
@@ -15,7 +15,7 @@ Works with Node >= 20 (Bun support experimental).
 
 If you need anything that's included in libxml2 but not exposed by this module, don't hesitate to [open an issue](https://github.com/loanlink-nl/libxmljs2/issues/new) or to create a PR.
 
-## Usage:
+## Usage
 
 ```javascript
 import * as libxmljs from '@loanlink-nl/libxmljs2';
@@ -41,6 +41,30 @@ const child = children[0];
 
 console.log(child.attr('foo').value()); 
 // "bar"
+```
+
+## Contributing
+
+Contributions are welcome! Follow the following steps to get started:
+
+```sh
+# Make sure Bun is installed:
+bun --version
+
+# Make sure Python is installed:
+python --version
+
+# Initialize the libxml2 submodule (synced from https://gitlab.gnome.org/GNOME/libxml2):
+bun run init-submodules
+
+# Install (this will also build the project):
+bun install
+
+# Run tests under Node:
+bun run test:node
+
+# Run tests under Bun:
+bun run test:bun
 ```
 
 ## Changes
