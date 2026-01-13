@@ -1,4 +1,5 @@
 # @loanlink-nl/libxmljs2
+![this package on npm](https://img.shields.io/npm/v/@loanlink-nl/libxmljs2)
 
 Node-API bindings to the native [libxml2](https://gitlab.gnome.org/GNOME/libxml2) library. 
 
