@@ -57,7 +57,7 @@
     "node-gyp-build": "4.8.4"
   },
   "devDependencies": {
-    "@types/node": "24.10.4",
+    "@types/node": "24.10.11",
     "node-gyp": "12.1.0",
     "prebuildify": "6.0.1",
     "tsd": "0.33.0",
